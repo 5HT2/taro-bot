@@ -10,7 +10,9 @@ import (
 var client *session.Session
 
 func main() {
-	loadConfig()
+	LoadConfig()
+	RegisterCommands()
+
 	var token = config.BotToken
 	if token == "" {
 		log.Fatalln("No bot_token given")
@@ -22,7 +24,7 @@ func main() {
 	}
 
 	// Add handlers
-	client.AddHandler(guildEmojisUpdateEvent)
+	client.AddHandler(GuildEmojisUpdateEvent)
 
 	// Add the needed Gateway intents.
 	client.AddIntents(gateway.IntentGuildMessages)

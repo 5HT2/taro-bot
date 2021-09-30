@@ -22,14 +22,14 @@ type AuditChannel struct {
 	ChannelID int64 `json:"channel_id"`
 }
 
-func loadConfig() {
+func LoadConfig() {
 	bytes, err := os.ReadFile("config/config.json")
 	if err != nil {
 		log.Fatalf("Error loading config: %v\n", err)
 	}
 
 	if err := json.Unmarshal(bytes, &config); err != nil {
-		log.Fatalf("Error unmarshalling config: %v", err)
+		log.Fatalf("Error unmarshalling config: %v\n", err)
 	}
 }
 
@@ -46,11 +46,8 @@ func setAuditChannel(channel discord.Channel, guildID int64, channelID int64) {
 	auditChannel := AuditChannel{guildID, channelID}
 	config.AuditChannels = append(config.AuditChannels, auditChannel)
 
-	_, err := client.SendEmbeds(
-		channel.ID,
-		embed("", "Set audit channel to <#"+strconv.FormatInt(channelID, 10)+">", successColor),
-	)
-	if err != nil {
-		log.Printf("Error sending embed: %v", err)
-	}
+	SendEmbed(channel.ID,
+		"",
+		"Set audit channel to <#"+strconv.FormatInt(channelID, 10)+">",
+		successColor)
 }
