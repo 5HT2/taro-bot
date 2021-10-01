@@ -1,28 +1,31 @@
 package main
 
-import (
-	"github.com/diamondburned/arikawa/v3/gateway"
-)
+import "strings"
 
 var (
-	commands []func(c Command)
+	commands = map[string]string{
+		"ping":  "PingCommand",
+		"fuck":  "FuckCommand",
+		"kirby": "KirbyCommand",
+	}
 )
 
-type Command struct{ e *gateway.MessageCreateEvent }
-
-func RegisterCommands() {
-	commands = make([]func(c Command), 0)
-	commands[0] = PingCommand
-}
-
-func PingCommand(c Command) {
-	id := c.e.Message.ChannelID
-
-	msg, err := SendEmbed(id,
+func (c Command) PingCommand() {
+	msg, err := SendEmbed(c,
 		"Ping!",
 		"Unfinished", // TODO do
 		defaultColor)
 	if err != nil {
-		_, _ = SendEmbed(id, "Pong!", msg.Timestamp.Format(timeFormat), defaultColor)
+		_, _ = SendEmbed(c, "Pong!", msg.Timestamp.Format(timeFormat), defaultColor)
 	}
+}
+
+func (c Command) FuckCommand() {
+	_, _ = SendEmbed(c, "that's right", "fucker\n\nthis is all automatically reflected with generics", successColor)
+}
+
+func (c Command) KirbyCommand() {
+	content := strings.Join(strings.Split(c.e.Content, " ")[1:], " ")
+	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
+	_, _ = SendMessage(c, content)
 }

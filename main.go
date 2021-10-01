@@ -2,45 +2,49 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
 	"log"
+	"runtime"
 )
 
-var client *session.Session
+var client session.Session
 
 func main() {
+	fmt.Printf("Go version: %s\n", runtime.Version())
 	LoadConfig()
-	RegisterCommands()
-
 	var token = config.BotToken
 	if token == "" {
 		log.Fatalln("No bot_token given")
 	}
 
-	client, err := session.New("Bot " + token)
+	c, err := session.New("Bot " + token)
+
 	if err != nil {
 		log.Fatalln("Session failed:", err)
 	}
 
 	// Add handlers
-	client.AddHandler(GuildEmojisUpdateEvent)
+	c.AddHandler(GuildEmojisUpdateEvent)
+	c.AddHandler(MessageCreateEvent)
 
 	// Add the needed Gateway intents.
-	client.AddIntents(gateway.IntentGuildMessages)
-	client.AddIntents(gateway.IntentGuildEmojis)
-	client.AddIntents(gateway.IntentDirectMessages)
+	c.AddIntents(gateway.IntentGuildMessages)
+	c.AddIntents(gateway.IntentGuildEmojis)
+	c.AddIntents(gateway.IntentDirectMessages)
 
-	if err := client.Open(context.Background()); err != nil {
+	if err := c.Open(context.Background()); err != nil {
 		log.Fatalln("Failed to connect:", err)
 	}
-	defer client.Close()
+	defer c.Close()
 
-	u, err := client.Me()
+	u, err := c.Me()
 	if err != nil {
 		log.Fatalln("Failed to get bot user:", err)
 	}
 
+	client = *c
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
 	// Block forever.

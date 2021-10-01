@@ -5,7 +5,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"os"
-	"strconv"
 )
 
 var (
@@ -46,8 +45,8 @@ func setAuditChannel(channel discord.Channel, guildID int64, channelID int64) {
 	auditChannel := AuditChannel{guildID, channelID}
 	config.AuditChannels = append(config.AuditChannels, auditChannel)
 
-	SendEmbed(channel.ID,
-		"",
-		"Set audit channel to <#"+strconv.FormatInt(channelID, 10)+">",
-		successColor)
+	//SendEmbed(channel.ID,
+	//	"",
+	//	"Set audit channel to <#"+strconv.FormatInt(channelID, 10)+">",
+	//	successColor)
 }

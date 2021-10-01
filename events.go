@@ -11,5 +11,5 @@ func GuildEmojisUpdateEvent(e *gateway.GuildEmojisUpdateEvent) {
 }
 
 func MessageCreateEvent(e *gateway.MessageCreateEvent) {
-
+	CommandHandler(e)
 }
