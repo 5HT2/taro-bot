@@ -1,6 +1,8 @@
 taro-bot: clean
-	go get -u github.com/diamondburned/arikawa/v3
 	go build -o taro .
+
+deps:
+	go get -u github.com/diamondburned/arikawa/v3
 
 clean:
 	rm -f discord-pretty-audit
