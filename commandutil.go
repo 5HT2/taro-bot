@@ -57,6 +57,17 @@ func extractCommandName(message discord.Message) string {
 	return contentArr[0]
 }
 
+func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
+	msg, err := client.SendEmbeds(
+		c,
+		embed,
+	)
+	if err != nil {
+		log.Printf("Error sending embed: %v", err)
+	}
+	return msg, err
+}
+
 func SendEmbed(c Command, title string, description string, color discord.Color) (*discord.Message, error) {
 	msg, err := client.SendEmbeds(
 		c.e.ChannelID,

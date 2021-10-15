@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
 	"log"
@@ -12,7 +11,8 @@ import (
 var client session.Session
 
 func main() {
-	fmt.Printf("Go version: %s\n", runtime.Version())
+	log.Printf("Running on Go version: %s\n", runtime.Version())
+
 	LoadConfig()
 	var token = config.BotToken
 	if token == "" {
@@ -20,6 +20,7 @@ func main() {
 	}
 
 	c, err := session.New("Bot " + token)
+	client = *c
 
 	if err != nil {
 		log.Fatalln("Session failed:", err)
@@ -44,7 +45,6 @@ func main() {
 		log.Fatalln("Failed to get bot user:", err)
 	}
 
-	client = *c
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
 	// Block forever.

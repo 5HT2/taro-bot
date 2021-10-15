@@ -6,7 +6,7 @@ import (
 
 func GuildEmojisUpdateEvent(e *gateway.GuildEmojisUpdateEvent) {
 	//for _, emoji := range e.Emojis {
-	//
+	// PrintEmojiUpdate(emoji) // TODO: fix this
 	//}
 }
 
