@@ -83,11 +83,13 @@ func SetGuildConfig(guildConfig GuildConfig) GuildConfig {
 	for n, cfg := range config.GuildConfigs {
 		if cfg.ID == guildConfig.ID {
 			config.GuildConfigs[n] = guildConfig
+			SaveConfig()
 			return guildConfig
 		}
 	}
 
 	// Append if not found in existing configs
 	config.GuildConfigs = append(config.GuildConfigs, guildConfig)
+	SaveConfig()
 	return guildConfig
 }

@@ -10,8 +10,12 @@ func (e *TaroError) Error() string {
 	return "taro." + e.Func + ":\n    error with: " + e.Action + "\n    because: " + e.Err
 }
 
+func GenericSyntaxError(fn, input, reason string) *TaroError {
+	return &TaroError{fn, "parsing \"" + input + "\"", reason}
+}
+
 func SyntaxError(input string) *TaroError {
-	return &TaroError{"ParseHexColorFast", "parsing \"" + input + "\"", "invalid syntax"}
+	return GenericSyntaxError("ParseHexColorFast", input, "invalid syntax")
 }
 
 func GenericError(fn, action, err string) *TaroError {

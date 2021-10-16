@@ -31,11 +31,37 @@ func (ci CommandInfo) String() string {
 var (
 	commands = []CommandInfo{
 		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
+		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
 		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 		{FnName: "KirbyCommand", Name: "kirby"},
 	}
 )
+
+func (c Command) PrefixCommand() error {
+	// TODO: when command args are added, use them instead
+	split := strings.Split(c.e.Content, " ")
+	if len(split) <= 1 {
+		return GenericError("PrefixCommand", "getting args", "not enough arguments")
+	}
+
+	arg := split[1]
+	if strings.Contains(arg, " ") {
+		return GenericSyntaxError("PrefixCommand", arg, "spaces are not allowed")
+	}
+
+	guild := GetGuildConfig(int64(c.e.GuildID))
+	guild.Prefix = arg
+	SetGuildConfig(guild)
+
+	embed := discord.Embed{
+		Description: "Set prefix to `" + arg + "`.",
+		Footer:      &discord.EmbedFooter{Text: "At any time you can ping the bot with the word \"prefix\" to get the current prefix"},
+		Color:       successColor,
+	}
+	_, err := SendCustomEmbed(c.e.ChannelID, embed)
+	return err
+}
 
 func (c Command) HelpCommand() error {
 	fmtCmds := make([]string, 0)
