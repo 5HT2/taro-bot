@@ -14,8 +14,9 @@ var (
 )
 
 type Config struct {
-	BotToken     string        `json:"bot_token"`
-	GuildConfigs []GuildConfig `json:"guild_configs,omitempty"`
+	BotToken        string        `json:"bot_token"`
+	GlobalResponses []Response    `json:"global_responses,omitempty"`
+	GuildConfigs    []GuildConfig `json:"guild_configs,omitempty"`
 }
 
 type GuildConfig struct {
