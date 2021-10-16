@@ -50,6 +50,7 @@ func main() {
 		log.Fatalln("Failed to get bot user:", err)
 	}
 
+	go SetupConfigSaving()
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
 	// Block forever.

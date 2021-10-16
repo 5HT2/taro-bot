@@ -2,23 +2,39 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"os"
+	"time"
 )
 
 var (
-	config Config
+	config        Config
+	fileMode      = os.FileMode(0700)
+	defaultPrefix = "."
 )
 
 type Config struct {
-	BotToken      string         `json:"bot_token"`
-	AuditChannels []AuditChannel `json:"audit_channels,omitempty"`
+	BotToken     string        `json:"bot_token"`
+	GuildConfigs []GuildConfig `json:"guild_configs,omitempty"`
 }
 
-type AuditChannel struct {
-	GuildID   int64 `json:"guild_id"`
-	ChannelID int64 `json:"channel_id"`
+type GuildConfig struct {
+	ID         int64  `json:"id"`
+	Prefix     string `json:"prefix,omitempty"`
+	LogChannel string `json:"log_channel,omitempty"`
+}
+
+// SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker
+func SetupConfigSaving() {
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				SaveConfig()
+			}
+		}
+	}()
 }
 
 func LoadConfig() {
@@ -32,21 +48,45 @@ func LoadConfig() {
 	}
 }
 
-func setAuditChannel(channel discord.Channel, guildID int64, channelID int64) {
-	// look for existing guild entry, and edit it
-	for n, auditChannel := range config.AuditChannels {
-		if auditChannel.GuildID == guildID {
-			config.AuditChannels[n].ChannelID = channelID
+func SaveConfig() {
+	bytes, err := json.MarshalIndent(config, "", "    ")
+	if err != nil {
+		log.Printf("Failed to marshal config: %v\n", err)
+		return
+	}
+
+	err = os.WriteFile("config/config.json", bytes, fileMode)
+	if err != nil {
+		log.Printf("Failed to write config: %v\n", err)
+	} else {
+		log.Printf("Successfully saved config\n")
+	}
+}
+
+func GetGuildConfig(guild int64) GuildConfig {
+	defaultConfig := GuildConfig{ID: guild, Prefix: defaultPrefix}
+
+	if len(config.GuildConfigs) == 0 {
+		return defaultConfig
+	}
+
+	for _, config := range config.GuildConfigs {
+		if config.ID == guild {
+			return config
+		}
+	}
+
+	return defaultConfig
+}
+
+func SetGuildConfig(guildConfig GuildConfig) {
+	for n, cfg := range config.GuildConfigs {
+		if cfg.ID == guildConfig.ID {
+			config.GuildConfigs[n] = guildConfig
 			return
 		}
 	}
 
-	// didn't find an existing entry, so add one
-	auditChannel := AuditChannel{guildID, channelID}
-	config.AuditChannels = append(config.AuditChannels, auditChannel)
-
-	//SendEmbed(channel.ID,
-	//	"",
-	//	"Set audit channel to <#"+strconv.FormatInt(channelID, 10)+">",
-	//	successColor)
+	// Append if not found in existing configs
+	config.GuildConfigs = append(config.GuildConfigs, guildConfig)
 }
