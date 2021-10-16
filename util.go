@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/diamondburned/arikawa/v3/discord"
-	"strconv"
+	"image/color"
+	"io/ioutil"
+	"net/http"
 )
 
 var (
@@ -20,7 +22,64 @@ func PrintEmojiUpdate(emoji discord.Emoji) {
 	_, _ = SendCustomEmbed(id, embed)
 }
 
-func CreateEmbedAuthor(user discord.User) *discord.EmbedAuthor {
-	url := "https://cdn.discordapp.com/avatars/" + strconv.FormatUint(uint64(user.ID), 10) + "/" + user.Avatar + ".png?size=2048"
-	return &discord.EmbedAuthor{Name: user.Username, Icon: url}
+func RequestUrl(url string, method string) ([]byte, error) {
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+func ConvertColorToInt32(c color.RGBA) int32 {
+	return int32((uint32(c.R) << 24) | (uint32(c.G) << 16) | (uint32(c.B) << 8) | uint32(c.A))
+}
+
+func ParseHexColorFast(s string) (c color.RGBA, err error) {
+	c.A = 0xff
+
+	if s[0] != '#' {
+		return c, SyntaxError(s)
+	}
+
+	hexToByte := func(b byte) byte {
+		switch {
+		case b >= '0' && b <= '9':
+			return b - '0'
+		case b >= 'a' && b <= 'f':
+			return b - 'a' + 10
+		case b >= 'A' && b <= 'F':
+			return b - 'A' + 10
+		}
+		err = SyntaxError(s)
+		return 0
+	}
+
+	switch len(s) {
+	case 7:
+		c.R = hexToByte(s[1])<<4 + hexToByte(s[2])
+		c.G = hexToByte(s[3])<<4 + hexToByte(s[4])
+		c.B = hexToByte(s[5])<<4 + hexToByte(s[6])
+	case 4:
+		c.R = hexToByte(s[1]) * 17
+		c.G = hexToByte(s[2]) * 17
+		c.B = hexToByte(s[3]) * 17
+	default:
+		err = SyntaxError(s)
+	}
+	return
 }

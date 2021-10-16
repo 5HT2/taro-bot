@@ -5,10 +5,15 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
 	"log"
+	"net/http"
 	"runtime"
+	"time"
 )
 
-var client session.Session
+var (
+	discordClient session.Session
+	httpClient    = http.Client{Timeout: 5 * time.Second}
+)
 
 func main() {
 	log.Printf("Running on Go version: %s\n", runtime.Version())
@@ -20,7 +25,7 @@ func main() {
 	}
 
 	c, err := session.New("Bot " + token)
-	client = *c
+	discordClient = *c
 
 	if err != nil {
 		log.Fatalln("Session failed:", err)
