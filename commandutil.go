@@ -57,5 +57,6 @@ func extractCommandName(message discord.Message) string {
 	content = content[1:]
 	// Split by space to remove
 	contentArr := strings.Split(content, " ")
-	return contentArr[0]
+	contentLower := strings.ToLower(contentArr[0])
+	return contentLower
 }
