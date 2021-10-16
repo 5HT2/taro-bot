@@ -38,8 +38,8 @@ func (c Command) FrogCommand() error {
 		MedianColor string `json:"median_color"`
 	}
 	var frogPicture FrogPicture
-	err = json.Unmarshal(frogData, &frogPicture)
-	if err != nil {
+
+	if err := json.Unmarshal(frogData, &frogPicture); err != nil {
 		return err
 	}
 
@@ -52,6 +52,7 @@ func (c Command) FrogCommand() error {
 		Color: discord.Color(ConvertColorToInt32(color)),
 		Image: &discord.EmbedImage{URL: frogPicture.ImageUrl},
 	}
+
 	_, err = SendCustomEmbed(c.e.ChannelID, embed)
 	return err
 }
