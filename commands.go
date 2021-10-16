@@ -43,7 +43,7 @@ func (c Command) FrogCommand() error {
 		return nil
 	}
 
-	color, err := ParseHexColorFast(frogPicture.MedianColor)
+	color, err := ParseHexColorFast("#" + frogPicture.MedianColor)
 	if err != nil {
 		SendErrorEmbed(c, err)
 		return err

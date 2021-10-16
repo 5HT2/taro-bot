@@ -46,14 +46,14 @@ func RequestUrl(url string, method string) ([]byte, error) {
 }
 
 func ConvertColorToInt32(c color.RGBA) int32 {
-	return int32((uint32(c.R) << 24) | (uint32(c.G) << 16) | (uint32(c.B) << 8) | uint32(c.A))
+	return int32((uint32(c.R) << 16) | (uint32(c.G) << 8) | (uint32(c.B) << 0))
 }
 
 func ParseHexColorFast(s string) (c color.RGBA, err error) {
 	c.A = 0xff
 
 	if s[0] != '#' {
-		return c, SyntaxError(s)
+		return c, GenericError("ParseHexColorFast", "parsing \""+s+"\"", "missing #")
 	}
 
 	hexToByte := func(b byte) byte {
