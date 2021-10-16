@@ -7,11 +7,18 @@ import (
 	"strings"
 )
 
+type CommandInfo struct {
+	FnName      string
+	Name        string
+	Description string
+	Aliases     []string
+}
+
 var (
-	commands = map[string]string{
-		"ping":  "PingCommand",
-		"frog":  "FrogCommand",
-		"kirby": "KirbyCommand",
+	commands = []CommandInfo{
+		{FnName: "PingCommand", Name: "ping"},
+		{FnName: "FrogCommand", Name: "frog"},
+		{FnName: "KirbyCommand", Name: "kirby"},
 	}
 )
 

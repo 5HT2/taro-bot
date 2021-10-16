@@ -20,10 +20,10 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 		return
 	}
 
-	funcName, exists := commands[cmdName]
-	if exists {
+	cmdInfo := getCommandWithName(cmdName)
+	if cmdInfo != nil {
 		command := Command{e, cmdName}
-		result := invokeFunc(command, funcName)
+		result := invokeFunc(command, cmdInfo.FnName)
 		if len(result) > 0 {
 			err, _ := result[0].Interface().(error)
 			if err != nil {
@@ -59,4 +59,13 @@ func extractCommandName(message discord.Message) string {
 	contentArr := strings.Split(content, " ")
 	contentLower := strings.ToLower(contentArr[0])
 	return contentLower
+}
+
+func getCommandWithName(name string) *CommandInfo {
+	for _, cmd := range commands {
+		if cmd.Name == name || StringSliceContains(cmd.Aliases, name) {
+			return &cmd
+		}
+	}
+	return nil
 }

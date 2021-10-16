@@ -22,6 +22,15 @@ func PrintEmojiUpdate(emoji discord.Emoji) {
 	_, _ = SendCustomEmbed(id, embed)
 }
 
+func StringSliceContains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func RequestUrl(url string, method string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
