@@ -4,7 +4,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
-	"reflect"
 	"strings"
 )
 
@@ -23,7 +22,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 	cmdInfo := getCommandWithName(cmdName)
 	if cmdInfo != nil {
 		command := Command{e, cmdName}
-		result := invokeFunc(command, cmdInfo.FnName)
+		result := InvokeFunc(command, cmdInfo.FnName)
 		if len(result) > 0 {
 			err, _ := result[0].Interface().(error)
 			if err != nil {
@@ -32,15 +31,6 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 			}
 		}
 	}
-}
-
-// invokeFunc will magically invoke a function
-func invokeFunc(any interface{}, name string, args ...interface{}) []reflect.Value {
-	inputs := make([]reflect.Value, len(args))
-	for i := range args {
-		inputs[i] = reflect.ValueOf(args[i])
-	}
-	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
 // extractCommandName will extract a command name from a message with a prefix
