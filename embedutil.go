@@ -30,7 +30,7 @@ func SendErrorEmbed(c Command, err error) {
 func SendEmbed(c Command, title string, description string, color discord.Color) (*discord.Message, error) {
 	msg, err := discordClient.SendEmbeds(
 		c.e.ChannelID,
-		embed(title, description, color),
+		makeEmbed(title, description, color),
 	)
 	if err != nil {
 		log.Printf("Error sending embed: %v", err)
@@ -54,7 +54,7 @@ func CreateEmbedAuthor(user discord.User) *discord.EmbedAuthor {
 	return &discord.EmbedAuthor{Name: user.Username, Icon: url}
 }
 
-func embed(title string, description string, color discord.Color) discord.Embed {
+func makeEmbed(title string, description string, color discord.Color) discord.Embed {
 	return discord.Embed{
 		Title:       title,
 		Description: description,
