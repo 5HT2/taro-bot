@@ -14,6 +14,6 @@ type ResponseReflection struct {
 	e *gateway.MessageCreateEvent
 }
 
-func (rr ResponseReflection) PrefixResponse() string {
-	return GetGuildConfig(int64(rr.e.GuildID)).Prefix
+func (rr ResponseReflection) PrefixResponse() []string {
+	return []string{GetGuildConfig(int64(rr.e.GuildID)).Prefix}
 }

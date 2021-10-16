@@ -27,7 +27,11 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 	if len(response.ReflectFunc) > 0 {
 		result := CallStringFunc(ResponseReflection{e}, response.ReflectFunc)
 		if len(result) > 0 {
-			embed.Description = fmt.Sprintf(embed.Description, result)
+			slice := make([]interface{}, 0)
+			for _, str := range result {
+				slice = append(slice, str)
+			}
+			embed.Description = fmt.Sprintf(embed.Description, slice...)
 		}
 	}
 

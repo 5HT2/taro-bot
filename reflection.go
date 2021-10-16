@@ -14,16 +14,16 @@ func InvokeFunc(any interface{}, name string, args ...interface{}) []reflect.Val
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
-// CallStringFunc will invoke a function with a string return value
-func CallStringFunc(any interface{}, name string) string {
+// CallStringFunc will invoke a function with a []string return value
+func CallStringFunc(any interface{}, name string) []string {
 	result := InvokeFunc(any, name)
 	if len(result) > 0 {
-		str, ok := result[0].Interface().(string)
+		str, ok := result[0].Interface().([]string)
 		if !ok {
 			log.Printf("Error with CallStringFunc: %s %v", name, any)
-			return ""
+			return []string{}
 		}
 		return str
 	}
-	return ""
+	return []string{}
 }
