@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"net/http"
 	"strings"
@@ -14,13 +15,40 @@ type CommandInfo struct {
 	Aliases     []string
 }
 
+func (ci CommandInfo) String() string {
+	aliases := ""
+	if len(ci.Aliases) > 0 {
+		aliases = "(" + strings.Join(ci.Aliases, ", ") + ")"
+	}
+	description := ci.Description
+	if len(description) == 0 {
+		description = "No Description"
+	}
+
+	return fmt.Sprintf("**%s** %s\n%s", ci.Name, aliases, description)
+}
+
 var (
 	commands = []CommandInfo{
-		{FnName: "PingCommand", Name: "ping"},
-		{FnName: "FrogCommand", Name: "frog"},
+		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
+		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
+		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 		{FnName: "KirbyCommand", Name: "kirby"},
 	}
 )
+
+func (c Command) HelpCommand() error {
+	fmtCmds := make([]string, 0)
+	for _, cmd := range commands {
+		fmtCmds = append(fmtCmds, cmd.String())
+	}
+
+	_, err := SendEmbed(c,
+		"Taro Help",
+		strings.Join(fmtCmds, "\n\n"),
+		defaultColor)
+	return err
+}
 
 func (c Command) PingCommand() error {
 	msg, err := SendEmbed(c,
