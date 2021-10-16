@@ -7,7 +7,7 @@ type TaroError struct {
 }
 
 func (e *TaroError) Error() string {
-	return "taro." + e.Func + ":\n    `error with: " + e.Action + "\n    because: " + e.Err
+	return "taro." + e.Func + ":\n    error with: " + e.Action + "\n    because: " + e.Err
 }
 
 func SyntaxError(input string) *TaroError {

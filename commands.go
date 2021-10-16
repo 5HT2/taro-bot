@@ -15,21 +15,22 @@ var (
 	}
 )
 
-func (c Command) PingCommand() {
+func (c Command) PingCommand() error {
 	msg, err := SendEmbed(c,
 		"Ping!",
 		"Unfinished", // TODO do
 		defaultColor)
 	if err != nil {
-		_, _ = SendEmbed(c, "Pong!", msg.Timestamp.Format(timeFormat), defaultColor)
+		_, err = SendEmbed(c, "Pong!", msg.Timestamp.Format(timeFormat), defaultColor)
+		return err
 	}
+	return err
 }
 
 func (c Command) FrogCommand() error {
 	frogData, err := RequestUrl("https://frog.pics/api/random", http.MethodGet)
 	if err != nil {
-		SendErrorEmbed(c, err)
-		return nil
+		return err
 	}
 
 	type FrogPicture struct {
@@ -39,13 +40,11 @@ func (c Command) FrogCommand() error {
 	var frogPicture FrogPicture
 	err = json.Unmarshal(frogData, &frogPicture)
 	if err != nil {
-		SendErrorEmbed(c, err)
-		return nil
+		return err
 	}
 
 	color, err := ParseHexColorFast("#" + frogPicture.MedianColor)
 	if err != nil {
-		SendErrorEmbed(c, err)
 		return err
 	}
 
