@@ -67,26 +67,27 @@ func GetGuildConfig(guild int64) GuildConfig {
 	defaultConfig := GuildConfig{ID: guild, Prefix: defaultPrefix}
 
 	if len(config.GuildConfigs) == 0 {
-		return defaultConfig
+		return SetGuildConfig(defaultConfig)
 	}
 
-	for _, config := range config.GuildConfigs {
-		if config.ID == guild {
-			return config
+	for _, cfg := range config.GuildConfigs {
+		if cfg.ID == guild {
+			return cfg
 		}
 	}
 
-	return defaultConfig
+	return SetGuildConfig(defaultConfig)
 }
 
-func SetGuildConfig(guildConfig GuildConfig) {
+func SetGuildConfig(guildConfig GuildConfig) GuildConfig {
 	for n, cfg := range config.GuildConfigs {
 		if cfg.ID == guildConfig.ID {
 			config.GuildConfigs[n] = guildConfig
-			return
+			return guildConfig
 		}
 	}
 
 	// Append if not found in existing configs
 	config.GuildConfigs = append(config.GuildConfigs, guildConfig)
+	return guildConfig
 }

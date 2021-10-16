@@ -44,18 +44,18 @@ func invokeFunc(any interface{}, name string, args ...interface{}) []reflect.Val
 }
 
 // extractCommandName will extract a command name from a message with a prefix
-// TODO: add custom prefix support
 func extractCommandName(message discord.Message) string {
 	content := message.Content
+	cfg := GetGuildConfig(int64(message.GuildID))
 
 	// If command doesn't start with a dot, or it's just a dot
-	if !strings.HasPrefix(content, ".") || len(content) < 2 {
+	if !strings.HasPrefix(content, cfg.Prefix) || len(content) < (1+len(cfg.Prefix)) {
 		return ""
 	}
 
 	// Remove prefix
-	content = content[1:]
-	// Split by space to remove
+	content = content[1*len(cfg.Prefix):]
+	// Split by space to remove everything after the prefix
 	contentArr := strings.Split(content, " ")
 	contentLower := strings.ToLower(contentArr[0])
 	return contentLower
