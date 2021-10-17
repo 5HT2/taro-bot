@@ -1,3 +1,8 @@
+NAME   := l1ving/taro-bot
+TAG    := $(shell git log -1 --pretty=%h)
+IMG    := ${NAME}:${TAG}
+LATEST := ${NAME}:latest
+
 taro-bot: clean
 	go build -o taro .
 
