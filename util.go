@@ -74,7 +74,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 		case b >= 'A' && b <= 'F':
 			return b - 'A' + 10
 		}
-		err = SyntaxError(s)
+		err = SyntaxError("ParseHexColorFast", s)
 		return 0
 	}
 
@@ -88,7 +88,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 		c.G = hexToByte(s[2]) * 17
 		c.B = hexToByte(s[3]) * 17
 	default:
-		err = SyntaxError(s)
+		err = SyntaxError("ParseHexColorFast", s)
 	}
 	return
 }

@@ -10,18 +10,19 @@ import (
 type Command struct {
 	e    *gateway.MessageCreateEvent
 	name string
+	args []string
 }
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
-	cmdName := extractCommandName(e.Message)
+	cmdName, cmdArgs := extractCommand(e.Message)
 	if len(cmdName) == 0 {
 		return
 	}
 
 	cmdInfo := getCommandWithName(cmdName)
 	if cmdInfo != nil {
-		command := Command{e, cmdName}
+		command := Command{e, cmdName, cmdArgs}
 		result := InvokeFunc(command, cmdInfo.FnName)
 		if len(result) > 0 {
 			err, _ := result[0].Interface().(error)
@@ -33,22 +34,25 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 	}
 }
 
-// extractCommandName will extract a command name from a message with a prefix
-func extractCommandName(message discord.Message) string {
+// extractCommand will extract a command name and args from a message with a prefix
+func extractCommand(message discord.Message) (string, []string) {
 	content := message.Content
 	cfg := GetGuildConfig(int64(message.GuildID))
 
 	// If command doesn't start with a dot, or it's just a dot
 	if !strings.HasPrefix(content, cfg.Prefix) || len(content) < (1+len(cfg.Prefix)) {
-		return ""
+		return "", []string{}
 	}
 
 	// Remove prefix
 	content = content[1*len(cfg.Prefix):]
 	// Split by space to remove everything after the prefix
 	contentArr := strings.Split(content, " ")
+	// Get first element of slice (the command name)
 	contentLower := strings.ToLower(contentArr[0])
-	return contentLower
+	// Remove first element of slice (the command name)
+	contentArr = append(contentArr[:0], contentArr[1:]...)
+	return contentLower, contentArr
 }
 
 func getCommandWithName(name string) *CommandInfo {

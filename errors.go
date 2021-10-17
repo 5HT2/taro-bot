@@ -14,8 +14,8 @@ func GenericSyntaxError(fn, input, reason string) *TaroError {
 	return &TaroError{fn, "parsing \"" + input + "\"", reason}
 }
 
-func SyntaxError(input string) *TaroError {
-	return GenericSyntaxError("ParseHexColorFast", input, "invalid syntax")
+func SyntaxError(fn, input string) *TaroError {
+	return GenericSyntaxError(fn, input, "invalid syntax")
 }
 
 func GenericError(fn, action, err string) *TaroError {
