@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"net/http"
 	"strings"
@@ -30,6 +31,7 @@ func (ci CommandInfo) String() string {
 
 var (
 	commands = []CommandInfo{
+		{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels"},
 		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
 		{FnName: "KirbyCommand", Name: "kirby"},
@@ -39,12 +41,75 @@ var (
 	}
 )
 
+func (c Command) ChannelCommand() error {
+	arg1, _ := ParseStringArg(c.args, 1, true)
+
+	switch arg1 {
+	case "archive":
+		err := HasPermission("channels", c)
+		if err == nil {
+			guild := GetGuildConfig(int64(c.e.GuildID))
+			if guild.ArchiveRole == 0 {
+				return GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
+			}
+
+			channel, err := discordClient.Channel(c.e.ChannelID)
+			if err != nil {
+				return err
+			}
+
+			overwrites := make([]discord.Overwrite, 0)
+
+			// Copy everything except the archive and @everyone roles to overwrites
+			for _, overwrite := range channel.Overwrites {
+				id := int64(overwrite.ID)
+				if id != int64(c.e.GuildID) && id != guild.ArchiveRole {
+					overwrites = append(overwrites, overwrite)
+					break
+				}
+			}
+
+			overwrites = append(
+				overwrites,
+				discord.Overwrite{
+					ID:   discord.Snowflake(c.e.GuildID),
+					Type: discord.OverwriteRole,
+					Deny: discord.PermissionViewChannel,
+				},
+				discord.Overwrite{
+					ID:    discord.Snowflake(guild.ArchiveRole),
+					Type:  discord.OverwriteRole,
+					Allow: discord.PermissionViewChannel,
+				},
+			)
+
+			data := api.ModifyChannelData{Overwrites: &overwrites}
+			err = discordClient.ModifyChannel(c.e.ChannelID, data)
+			if err != nil {
+				return err
+			} else {
+				_, err = SendEmbed(c, "Channels", "Successfully archived channel", successColor)
+				return err
+			}
+		} else {
+			return err
+		}
+	default:
+		_, err := SendEmbed(c,
+			"Channels",
+			"Available arguments are:\n- `archive`",
+			defaultColor)
+		return err
+	}
+}
+
 func (c Command) PermissionCommand() error {
 	arg1, _ := ParseStringArg(c.args, 1, true)
 
 	switch arg1 {
 	case "give":
-		if HasPermission("permissions", c) {
+		err := HasPermission("permissions", c)
+		if err == nil {
 			permission, argErr := ParseStringArg(c.args, 2, true)
 			if argErr != nil {
 				return argErr
@@ -64,7 +129,6 @@ func (c Command) PermissionCommand() error {
 				return err
 			}
 		} else {
-			_, err := SendEmbed(c, "Permissions", "You do not have permission to manage permissions!", errorColor)
 			return err
 		}
 	default:
@@ -85,7 +149,7 @@ func (c Command) PrefixCommand() error {
 	// Filter spaces
 	arg = strings.ReplaceAll(arg, " ", "")
 	if len(arg) == 0 {
-		return GenericError("PrefixCommand", "getting prefix", "prefix is empty")
+		return GenericError(c.fnName, "getting prefix", "prefix is empty")
 	}
 
 	guild := GetGuildConfig(int64(c.e.GuildID))

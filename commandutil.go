@@ -8,9 +8,10 @@ import (
 )
 
 type Command struct {
-	e    *gateway.MessageCreateEvent
-	name string
-	args []string
+	e      *gateway.MessageCreateEvent
+	name   string
+	fnName string
+	args   []string
 }
 
 // CommandHandler will parse commands and run the appropriate command func
@@ -22,7 +23,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 
 	cmdInfo := getCommandWithName(cmdName)
 	if cmdInfo != nil {
-		command := Command{e, cmdName, cmdArgs}
+		command := Command{e, cmdName, cmdInfo.FnName, cmdArgs}
 		result := InvokeFunc(command, cmdInfo.FnName)
 		if len(result) > 0 {
 			err, _ := result[0].Interface().(error)

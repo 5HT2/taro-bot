@@ -21,6 +21,7 @@ type Config struct {
 
 type GuildConfig struct {
 	ID          int64            `json:"id"`
+	ArchiveRole int64            `json:"archive_role,omitempty"`
 	Prefix      string           `json:"prefix,omitempty"`
 	LogChannel  string           `json:"log_channel,omitempty"`
 	Permissions PermissionGroups `json:"permissions,omitempty"`

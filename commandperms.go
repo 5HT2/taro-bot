@@ -12,11 +12,17 @@ type PermissionGroups struct {
 }
 
 // HasPermission will return if the author of a command has said permission
-func HasPermission(permission string, c Command) bool {
+func HasPermission(permission string, c Command) *TaroError {
 	guild := GetGuildConfig(int64(c.e.GuildID))
 	id := int64(c.e.Author.ID)
+	mention := GetUserMention(id)
 	users := getPermissionSlice(permission, guild)
-	return Int64SliceContains(users, id)
+
+	if Int64SliceContains(users, id) {
+		return nil
+	} else {
+		return GenericError(c.fnName, "running command", mention+" is missing the \""+permission+"\" permission")
+	}
 }
 
 // UserHasPermission will return if the user with id has said permission
