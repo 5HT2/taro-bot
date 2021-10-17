@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 var (
@@ -22,8 +23,23 @@ func PrintEmojiUpdate(emoji discord.Emoji) {
 	_, _ = SendCustomEmbed(id, embed)
 }
 
+// GetUserMention will return a formatted user mention from an id
+func GetUserMention(id int64) string {
+	return "<@!" + strconv.FormatInt(id, 10) + ">"
+}
+
 // StringSliceContains will return if slice s contains e
 func StringSliceContains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+// Int64SliceContains will return if slice s contains e
+func Int64SliceContains(s []int64, e int64) bool {
 	for _, a := range s {
 		if a == e {
 			return true

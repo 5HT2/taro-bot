@@ -38,8 +38,47 @@ var (
 	}
 )
 
+func (c Command) PermissionCommand() error {
+	arg1, argErr := ParseStringArg(c.args, 1, true)
+	if argErr != nil {
+		return argErr
+	}
+
+	switch arg1 {
+	case "give":
+		if HasPermission("permissions", c) {
+			permission, argErr := ParseStringArg(c.args, 2, true)
+			if argErr != nil {
+				return argErr
+			}
+			id, argErr := ParseUserArg(c.args, 3)
+			if argErr != nil {
+				return argErr
+			}
+
+			if err := GivePermission(permission, id, c); err != nil {
+				return err
+			} else {
+				_, err = SendEmbed(c,
+					"Permissions",
+					"Successfully gave "+GetUserMention(id)+" permission to use \""+permission+"\"",
+					successColor)
+				return err
+			}
+		}
+	default:
+		_, err := SendEmbed(c,
+			"Permissions",
+			"Available arguments are:\n- give <permission> <user>",
+			defaultColor)
+		return err
+	}
+
+	return nil
+}
+
 func (c Command) PrefixCommand() error {
-	arg, argErr := ParseStringArg(c.args, 1)
+	arg, argErr := ParseStringArg(c.args, 1, false)
 	if argErr != nil {
 		return argErr
 	}

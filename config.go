@@ -20,9 +20,10 @@ type Config struct {
 }
 
 type GuildConfig struct {
-	ID         int64  `json:"id"`
-	Prefix     string `json:"prefix,omitempty"`
-	LogChannel string `json:"log_channel,omitempty"`
+	ID          int64            `json:"id"`
+	Prefix      string           `json:"prefix,omitempty"`
+	LogChannel  string           `json:"log_channel,omitempty"`
+	Permissions PermissionGroups `json:"permissions,omitempty"`
 }
 
 // SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker

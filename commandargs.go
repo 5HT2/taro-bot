@@ -3,6 +3,7 @@ package main
 import (
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -44,10 +45,13 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 }
 
 // ParseStringArg will return the selected string, or "" with an error
-func ParseStringArg(a []string, pos int) (string, *TaroError) {
+func ParseStringArg(a []string, pos int, toLower bool) (string, *TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseStringArg")
 	if argErr != nil {
 		return "", argErr
+	}
+	if toLower {
+		return strings.ToLower(s), nil
 	}
 	return s, nil
 }
