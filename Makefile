@@ -9,3 +9,10 @@ clean:
 
 run: taro-bot
 	./taro
+
+docker-build:
+	@docker build -t ${IMG} .
+	@docker tag ${IMG} ${LATEST}
+
+docker-push:
+	@docker push ${NAME}
