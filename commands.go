@@ -119,7 +119,7 @@ func (c Command) FrogCommand() error {
 }
 
 func (c Command) KirbyCommand() {
-	content := strings.Join(strings.Split(c.e.Content, " ")[1:], " ")
+	content := strings.Join(c.args, " ")
 	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
 	_, _ = SendMessage(c, content)
 }
