@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"regexp"
 	"strconv"
 )
@@ -44,8 +43,16 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 	return -1, GenericSyntaxError("ParseUserArg", s, "expected user mention")
 }
 
+// ParseStringArg will return the selected string, or "" with an error
+func ParseStringArg(a []string, pos int) (string, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseStringArg")
+	if argErr != nil {
+		return "", argErr
+	}
+	return s, nil
+}
+
 func checkArgExists(a []string, pos int, fn string) (s string, err *TaroError) {
-	log.Printf("%s[%v]: %v", fn, pos, a)
 	pos -= 1 // we want to increment this so ParseGenericArg(c.args, 1) will return the first arg
 	// prevent panic if dev made an error
 	if pos < 0 {

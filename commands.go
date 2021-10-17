@@ -39,15 +39,15 @@ var (
 )
 
 func (c Command) PrefixCommand() error {
-	// TODO: when command args are added, use them instead
-	split := strings.Split(c.e.Content, " ")
-	if len(split) <= 1 {
-		return GenericError("PrefixCommand", "getting args", "not enough arguments")
+	arg, argErr := ParseStringArg(c.args, 1)
+	if argErr != nil {
+		return argErr
 	}
 
-	arg := split[1]
-	if strings.Contains(arg, " ") {
-		return GenericSyntaxError("PrefixCommand", arg, "spaces are not allowed")
+	// Filter spaces
+	arg = strings.ReplaceAll(arg, " ", "")
+	if len(arg) == 0 {
+		return GenericError("PrefixCommand", "getting prefix", "prefix is empty")
 	}
 
 	guild := GetGuildConfig(int64(c.e.GuildID))
