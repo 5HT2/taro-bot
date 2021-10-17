@@ -22,6 +22,7 @@ func PrintEmojiUpdate(emoji discord.Emoji) {
 	_, _ = SendCustomEmbed(id, embed)
 }
 
+// StringSliceContains will return if slice s contains e
 func StringSliceContains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -31,6 +32,7 @@ func StringSliceContains(s []string, e string) bool {
 	return false
 }
 
+// RequestUrl will return the bytes of the body of url
 func RequestUrl(url string, method string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
@@ -54,10 +56,12 @@ func RequestUrl(url string, method string) ([]byte, error) {
 	return body, nil
 }
 
+// ConvertColorToInt32 will convert 3 uint8s into one int32
 func ConvertColorToInt32(c color.RGBA) int32 {
 	return int32((uint32(c.R) << 16) | (uint32(c.G) << 8) | (uint32(c.B) << 0))
 }
 
+// ParseHexColorFast will take a hex string, and convert it to a color.RGBA
 func ParseHexColorFast(s string) (c color.RGBA, err error) {
 	c.A = 0xff
 

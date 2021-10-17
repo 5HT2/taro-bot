@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// InvokeFunc will magically invoke a function
+// InvokeFunc will magically invoke a function with the matching name
 func InvokeFunc(any interface{}, name string, args ...interface{}) []reflect.Value {
 	inputs := make([]reflect.Value, len(args))
 	for i := range args {

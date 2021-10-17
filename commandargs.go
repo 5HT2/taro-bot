@@ -52,6 +52,7 @@ func ParseStringArg(a []string, pos int) (string, *TaroError) {
 	return s, nil
 }
 
+// checkArgExists will return a[pos - 1] if said index exists, otherwise it will return an error
 func checkArgExists(a []string, pos int, fn string) (s string, err *TaroError) {
 	pos -= 1 // we want to increment this so ParseGenericArg(c.args, 1) will return the first arg
 	// prevent panic if dev made an error

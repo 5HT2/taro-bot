@@ -55,6 +55,7 @@ func extractCommand(message discord.Message) (string, []string) {
 	return contentLower, contentArr
 }
 
+// getCommandWithName will return the found CommandInfo with a matching name or alias
 func getCommandWithName(name string) *CommandInfo {
 	for _, cmd := range commands {
 		if cmd.Name == name || StringSliceContains(cmd.Aliases, name) {
