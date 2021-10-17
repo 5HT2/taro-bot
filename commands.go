@@ -30,19 +30,17 @@ func (ci CommandInfo) String() string {
 
 var (
 	commands = []CommandInfo{
-		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
-		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
-		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
+		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
 		{FnName: "KirbyCommand", Name: "kirby"},
+		{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions"},
+		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
+		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
 	}
 )
 
 func (c Command) PermissionCommand() error {
-	arg1, argErr := ParseStringArg(c.args, 1, true)
-	if argErr != nil {
-		return argErr
-	}
+	arg1, _ := ParseStringArg(c.args, 1, true)
 
 	switch arg1 {
 	case "give":
@@ -65,16 +63,17 @@ func (c Command) PermissionCommand() error {
 					successColor)
 				return err
 			}
+		} else {
+			_, err := SendEmbed(c, "Permissions", "You do not have permission to manage permissions!", errorColor)
+			return err
 		}
 	default:
 		_, err := SendEmbed(c,
 			"Permissions",
-			"Available arguments are:\n- give <permission> <user>",
+			"Available arguments are:\n- `give` <permission> <user>",
 			defaultColor)
 		return err
 	}
-
-	return nil
 }
 
 func (c Command) PrefixCommand() error {
