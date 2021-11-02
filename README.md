@@ -46,3 +46,4 @@ Per-guild responses will be configurable with a command in the future, while `gl
 
 - [ ] Allow `"stuff here"` in order to create single args that contain spaces
   - [ ] Allow selecting a range of args to return as one
+- [ ] Each command should be able to register its own config settings
