@@ -4,10 +4,8 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 )
 
-func GuildEmojisUpdateEvent(e *gateway.GuildEmojisUpdateEvent) {
-	//for _, emoji := range e.Emojis {
-	// PrintEmojiUpdate(emoji) // TODO: fix this
-	//}
+func MessageReactionAddEvent(e *gateway.MessageReactionAddEvent) {
+	TopicReactionHandler(e)
 }
 
 func MessageCreateEvent(e *gateway.MessageCreateEvent) {

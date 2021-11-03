@@ -32,12 +32,13 @@ func main() {
 	}
 
 	// Add handlers
-	c.AddHandler(GuildEmojisUpdateEvent)
+	c.AddHandler(MessageReactionAddEvent)
 	c.AddHandler(MessageCreateEvent)
 
 	// Add the needed Gateway intents.
 	c.AddIntents(gateway.IntentGuildMessages)
 	c.AddIntents(gateway.IntentGuildEmojis)
+	c.AddIntents(gateway.IntentGuildMessageReactions)
 	c.AddIntents(gateway.IntentDirectMessages)
 
 	if err := c.Open(context.Background()); err != nil {

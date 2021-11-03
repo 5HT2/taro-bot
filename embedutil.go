@@ -23,6 +23,10 @@ func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message
 	return msg, err
 }
 
+func SendExternalErrorEmbed(c discord.ChannelID, cmdName string, err error) (*discord.Message, error) {
+	return SendCustomEmbed(c, makeEmbed("Error running `"+cmdName+"`", err.Error(), errorColor))
+}
+
 func SendErrorEmbed(c Command, err error) {
 	_, _ = SendEmbed(c, "Error running `"+c.name+"`", err.Error(), errorColor)
 }

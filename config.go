@@ -20,13 +20,15 @@ type Config struct {
 }
 
 type GuildConfig struct {
-	ID                   int64            `json:"id"`
-	ArchiveRole          int64            `json:"archive_role,omitempty"`
-	Prefix               string           `json:"prefix,omitempty"`
-	LogChannel           string           `json:"log_channel,omitempty"`
-	Permissions          PermissionGroups `json:"permissions,omitempty"`
-	EnabledTopicChannels []int64          `json:"enabled_topic_channels,omitempty"`
-	TopicVoteEmoji       string           `json:"topic_vote_emoji,omitempty"`
+	ID                   int64             `json:"id"`
+	ArchiveRole          int64             `json:"archive_role,omitempty"`
+	Prefix               string            `json:"prefix,omitempty"`
+	LogChannel           string            `json:"log_channel,omitempty"`
+	Permissions          PermissionGroups  `json:"permissions,omitempty"`
+	EnabledTopicChannels []int64           `json:"enabled_topic_channels,omitempty"`
+	ActiveTopicVotes     []ActiveTopicVote `json:"active_topic_votes,omitempty"`
+	TopicVoteThreshold   int64             `json:"topic_vote_threshold,omitempty"`
+	TopicVoteEmoji       string            `json:"topic_vote_emoji,omitempty"`
 }
 
 // SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker

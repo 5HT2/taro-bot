@@ -15,6 +15,15 @@ var (
 	mentionFormats    = regexp.MustCompile("[<@!#&>]")
 )
 
+// ParseAllArgs will return the combined existing args
+func ParseAllArgs(a []string) (string, *TaroError) {
+	s := strings.Join(a, " ")
+	if len(a) == 0 {
+		return "", GenericSyntaxError("ParseAllArgs", "nothing", "expected arguments!")
+	}
+	return s, nil
+}
+
 // ParseInt64Arg will return an int64 from s, or -1 and an error
 func ParseInt64Arg(a []string, pos int) (int64, *TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseInt64Arg")

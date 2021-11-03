@@ -38,8 +38,45 @@ var (
 		{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions"},
 		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
+		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel"},
 	}
 )
+
+func (c Command) TopicCommand() error {
+	topic, argErr := ParseAllArgs(c.args)
+	if argErr != nil {
+		return argErr
+	}
+
+	guild := GetGuildConfig(int64(c.e.GuildID))
+
+	if !Int64SliceContains(guild.EnabledTopicChannels, int64(c.e.ChannelID)) {
+		_, err := SendEmbed(c, "Topics are disabled in this channel!", "", errorColor)
+		return err
+	}
+
+	topic = strings.ReplaceAll(topic, "@everyone", "@\\everyone")
+	topic = strings.ReplaceAll(topic, "@here", "@\\here")
+
+	msg, err := SendEmbed(c, "New topic suggested!", c.e.Author.Mention()+" suggests: "+topic, defaultColor)
+	if err != nil {
+		return err
+	}
+
+	emoji, err := GuildTopicVoteApiEmoji(guild)
+	if err != nil {
+		return err
+	}
+
+	guild.ActiveTopicVotes = append(guild.ActiveTopicVotes, ActiveTopicVote{int64(msg.ID), int64(c.e.Author.ID), topic})
+	SetGuildConfig(guild)
+
+	if err := discordClient.React(msg.ChannelID, msg.ID, emoji); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (c Command) ChannelCommand() error {
 	arg1, _ := ParseStringArg(c.args, 1, true)
@@ -294,7 +331,7 @@ func (c Command) FrogCommand() error {
 }
 
 func (c Command) KirbyCommand() {
-	content := strings.Join(c.args, " ")
+	content, _ := ParseAllArgs(c.args)
 	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
 	_, _ = SendMessage(c, content)
 }
