@@ -128,8 +128,31 @@ func (c Command) ChannelCommand() error {
 					_, err := SendEmbed(c, "Channel Topic", "❌ Removed "+channelsStr+" from the allowed topic channels", errorColor)
 					return err
 				case "emoji":
-					// TODO
-					return nil
+					arg3, animated, err3 := ParseEmojiArg(c.args, 3, true)
+					if err3 != nil {
+						return err3
+					}
+
+					if arg3 == nil {
+						if emoji, err := GuildTopicVoteEmoji(guild); err != nil {
+							return err
+						} else {
+							_, err = SendEmbed(c, "Current Topic Vote Emoji:", emoji, defaultColor)
+							return err
+						}
+					} else {
+						configEmoji := ApiEmojiAsConfig(arg3, animated)
+						emoji, err := FormatEncodedEmoji(configEmoji)
+						if err != nil {
+							return err
+						}
+
+						guild.TopicVoteEmoji = configEmoji
+						SetGuildConfig(guild)
+
+						_, err = SendEmbed(c, "Set Topic Vote Emoji To:", emoji, successColor)
+						return err
+					}
 				default:
 					if len(guild.EnabledTopicChannels) == 0 {
 						_, err := SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", defaultColor)

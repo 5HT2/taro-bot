@@ -1,15 +1,18 @@
 package main
 
 import (
+	"github.com/diamondburned/arikawa/v3/discord"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
 var (
-	pingRegex, _      = regexp.Compile("<@!?[0-9]+>")
-	channelRegex, _   = regexp.Compile("<#[0-9]+>")
-	mentionFormats, _ = regexp.Compile("[<@!#&>]")
+	emojiRegex        = regexp.MustCompile(`([\x{2000}-\x{3300}]|[\x{D83C}\x{D000}-\x{D83C}\x{DFFF}]|[\x{D83D}\x{D000}-\x{D83D}\x{DFFF}]|[\x{D83E}\x{D000}-\x{D83E}\x{DFFF}])+`)
+	discordEmojiRegex = regexp.MustCompile("<(a|):([A-z0-9_]+):([0-9]+)>")
+	pingRegex         = regexp.MustCompile("<@!?[0-9]+>")
+	channelRegex      = regexp.MustCompile("<#[0-9]+>")
+	mentionFormats    = regexp.MustCompile("[<@!#&>]")
 )
 
 // ParseInt64Arg will return an int64 from s, or -1 and an error
@@ -24,6 +27,36 @@ func ParseInt64Arg(a []string, pos int) (int64, *TaroError) {
 		return -1, GenericSyntaxError("ParseInt64Arg", s, "expected int64")
 	}
 	return i, nil
+}
+
+// ParseEmojiArg will return a discord.APIEmoji and the animated status, or nil, false and an error
+func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
+	if argErr != nil {
+		if allowOmit {
+			return nil, false, nil
+		}
+		return nil, false, argErr
+	}
+
+	if emojiRegex.MatchString(s) {
+		emoji := discord.APIEmoji(s)
+		return &emoji, false, nil
+	}
+
+	emoji := discordEmojiRegex.FindStringSubmatch(s)
+	if len(emoji) < 3 {
+		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected full emoji")
+	}
+
+	id, err := strconv.Atoi(emoji[3])
+	if err != nil {
+		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected int")
+	}
+
+	apiEmoji := discord.NewCustomEmoji(discord.EmojiID(id), emoji[2])
+	animated := emoji[1] == "a"
+	return &apiEmoji, animated, nil
 }
 
 // ParseUserArg will return the ID of a mentioned user, or -1 and an error

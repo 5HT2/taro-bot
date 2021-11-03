@@ -26,6 +26,7 @@ type GuildConfig struct {
 	LogChannel           string           `json:"log_channel,omitempty"`
 	Permissions          PermissionGroups `json:"permissions,omitempty"`
 	EnabledTopicChannels []int64          `json:"enabled_topic_channels,omitempty"`
+	TopicVoteEmoji       string           `json:"topic_vote_emoji,omitempty"`
 }
 
 // SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker
