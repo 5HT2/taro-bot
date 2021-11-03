@@ -6,6 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -187,6 +188,20 @@ func (c Command) ChannelCommand() error {
 						_, err = SendEmbed(c, "Set Topic Vote Emoji To:", emoji, successColor)
 						return err
 					}
+				case "threshold":
+					arg3, err3 := ParseInt64Arg(c.args, 3)
+					if err3 != nil {
+						return err3
+					}
+
+					if arg3 <= 0 {
+						arg3 = 3
+					}
+					guild.TopicVoteThreshold = arg3
+					SetGuildConfig(guild)
+
+					_, err := SendEmbed(c, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), successColor)
+					return err
 				default:
 					if len(guild.EnabledTopicChannels) == 0 {
 						_, err := SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", defaultColor)
@@ -204,7 +219,7 @@ func (c Command) ChannelCommand() error {
 	default:
 		_, err := SendEmbed(c,
 			"Channel",
-			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji`",
+			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`",
 			defaultColor)
 		return err
 	}
