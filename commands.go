@@ -55,9 +55,6 @@ func (c Command) TopicCommand() error {
 		return err
 	}
 
-	topic = strings.ReplaceAll(topic, "@everyone", "@\\everyone")
-	topic = strings.ReplaceAll(topic, "@here", "@\\here")
-
 	msg, err := SendEmbed(c, "New topic suggested!", c.e.Author.Mention()+" suggests: "+topic, defaultColor)
 	if err != nil {
 		return err

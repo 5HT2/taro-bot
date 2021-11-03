@@ -50,7 +50,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 					embed := discord.Embed{
 						Title: "New channel topic!",
 						Description: "The topic is now **" + vote.Topic + "**, suggested by <@" +
-							strconv.FormatInt(vote.Author, 10) + ">!" + oldTopic,
+							strconv.FormatInt(vote.Author, 10) + ">!",
 						Footer: &discord.EmbedFooter{Text: oldTopic},
 						Color:  successColor,
 					}
