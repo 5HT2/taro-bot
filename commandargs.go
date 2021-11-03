@@ -8,7 +8,8 @@ import (
 
 var (
 	pingRegex, _      = regexp.Compile("<@!?[0-9]+>")
-	parsePingRegex, _ = regexp.Compile("[<@!>]")
+	channelRegex, _   = regexp.Compile("<#[0-9]+>")
+	mentionFormats, _ = regexp.Compile("[<@!#&>]")
 )
 
 // ParseInt64Arg will return an int64 from s, or -1 and an error
@@ -34,7 +35,7 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 
 	ok := pingRegex.MatchString(s)
 	if ok {
-		id := parsePingRegex.ReplaceAllString(s, "")
+		id := mentionFormats.ReplaceAllString(s, "")
 		i, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
 			return -1, GenericSyntaxError("ParseUserArg", s, err.Error())
@@ -42,6 +43,25 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 		return i, nil
 	}
 	return -1, GenericSyntaxError("ParseUserArg", s, "expected user mention")
+}
+
+// ParseChannelArg will return the ID of a mentioned channel, or -1 and an error
+func ParseChannelArg(a []string, pos int) (int64, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseChannelArg")
+	if argErr != nil {
+		return -1, argErr
+	}
+
+	ok := channelRegex.MatchString(s)
+	if ok {
+		id := mentionFormats.ReplaceAllString(s, "")
+		i, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			return -1, GenericSyntaxError("ParseChannelArg", s, err.Error())
+		}
+		return i, nil
+	}
+	return -1, GenericSyntaxError("ParseChannelArg", s, "expected channel mention")
 }
 
 // ParseStringArg will return the selected string, or "" with an error
