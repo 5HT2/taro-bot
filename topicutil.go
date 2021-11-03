@@ -35,7 +35,12 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		for _, reaction := range message.Reactions {
 			if reaction.Emoji.APIString() == emoji {
-				if int64(reaction.Count) >= guild.TopicVoteThreshold {
+				offset := 0
+				if reaction.Me {
+					offset = 1
+				}
+
+				if int64(reaction.Count-offset) >= guild.TopicVoteThreshold {
 					vote := removeActiveVote(e, guild)
 					channel, err := discordClient.Channel(e.ChannelID)
 					if err != nil {
