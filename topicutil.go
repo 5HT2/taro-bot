@@ -19,7 +19,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	if reactionMatchesActiveVote(e, guild) {
 		if guild.TopicVoteThreshold == 0 {
-			guild.TopicVoteThreshold = 4
+			guild.TopicVoteThreshold = 3
 			SetGuildConfig(guild)
 		}
 
