@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -28,6 +29,15 @@ func GetUserMention(id int64) string {
 	return "<@!" + strconv.FormatInt(id, 10) + ">"
 }
 
+// JoinInt64Slice will join i with sep
+func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string {
+	elems := make([]string, 0)
+	for _, e := range i {
+		elems = append(elems, prefix+strconv.FormatInt(e, 10)+suffix)
+	}
+	return strings.Join(elems, sep)
+}
+
 // StringSliceContains will return if slice s contains e
 func StringSliceContains(s []string, e string) bool {
 	for _, a := range s {
@@ -38,7 +48,7 @@ func StringSliceContains(s []string, e string) bool {
 	return false
 }
 
-// Int64SliceContains will return if slice s contains e
+// Int64SliceContains will return true if slice s contains e
 func Int64SliceContains(s []int64, e int64) bool {
 	for _, a := range s {
 		if a == e {

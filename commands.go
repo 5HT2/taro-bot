@@ -94,10 +94,60 @@ func (c Command) ChannelCommand() error {
 		} else {
 			return err
 		}
+	case "topic":
+		err := HasPermission("channels", c)
+		if err == nil {
+			guild := GetGuildConfig(int64(c.e.GuildID))
+			channels := []int64{int64(c.e.ChannelID)}
+
+			if argChannels, err := ParseChannelSliceArg(c.args, 3, -1); err == nil && len(argChannels) != 0 {
+				channels = argChannels
+			}
+			channelsStr := JoinInt64Slice(channels, ", ", "<#", ">")
+
+			if arg2, _ := ParseStringArg(c.args, 2, true); err != nil {
+				return err
+			} else {
+				switch arg2 {
+				case "enable":
+					for _, channel := range channels {
+						if !Int64SliceContains(guild.EnabledTopicChannels, channel) {
+							guild.EnabledTopicChannels = append(guild.EnabledTopicChannels, channel)
+						}
+					}
+					SetGuildConfig(guild)
+					_, err := SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", successColor)
+					return err
+				case "disable":
+					for _, channel := range channels {
+						if Int64SliceContains(guild.EnabledTopicChannels, channel) {
+							guild.EnabledTopicChannels = Int64SliceRemove(guild.EnabledTopicChannels, channel)
+						}
+					}
+					SetGuildConfig(guild)
+					_, err := SendEmbed(c, "Channel Topic", "❌ Removed "+channelsStr+" from the allowed topic channels", errorColor)
+					return err
+				case "emoji":
+					// TODO
+					return nil
+				default:
+					if len(guild.EnabledTopicChannels) == 0 {
+						_, err := SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", defaultColor)
+						return err
+					}
+
+					formattedChannels := JoinInt64Slice(guild.EnabledTopicChannels, "\n", "✅ <#", ">")
+					_, err := SendEmbed(c, "Channel Topic", "Allowed Topic Channels:\n\n"+formattedChannels, defaultColor)
+					return err
+				}
+			}
+		} else {
+			return err
+		}
 	default:
 		_, err := SendEmbed(c,
-			"Channels",
-			"Available arguments are:\n- `archive`",
+			"Channel",
+			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji`",
 			defaultColor)
 		return err
 	}
