@@ -48,6 +48,17 @@ func Int64SliceContains(s []int64, e int64) bool {
 	return false
 }
 
+// Int64SliceRemove will remove i from s
+func Int64SliceRemove(s []int64, i int64) []int64 {
+	ns := make([]int64, 0)
+	for _, in := range s {
+		if in != i {
+			ns = append(ns, in)
+		}
+	}
+	return ns
+}
+
 // RequestUrl will return the bytes of the body of url
 func RequestUrl(url string, method string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, nil)
