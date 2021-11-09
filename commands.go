@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type CommandInfo struct {
@@ -301,15 +302,19 @@ func (c Command) HelpCommand() error {
 }
 
 func (c Command) PingCommand() error {
-	msg, err := SendEmbed(c,
+	if msg, err := SendEmbed(c,
 		"Ping!",
-		"Unfinished", // TODO do
-		defaultColor)
-	if err != nil {
-		_, err = SendEmbed(c, "Pong!", msg.Timestamp.Format(timeFormat), defaultColor)
+		"Waiting for API response...",
+		defaultColor); err != nil {
+		return err
+	} else {
+		curTime := time.Now().UnixMilli()
+		msgTime := msg.Timestamp.Time().UnixMilli()
+
+		embed := makeEmbed("Pong!", "Latency is `"+strconv.FormatInt(curTime-msgTime, 10)+"`ms", successColor)
+		_, err = discordClient.EditMessage(msg.ChannelID, msg.ID, "", embed)
 		return err
 	}
-	return err
 }
 
 func (c Command) FrogCommand() error {
