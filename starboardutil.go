@@ -155,7 +155,9 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 
 		_, err = discordClient.SendMessage(postChannel.ID, content, embed)
-		log.Printf("Error sending starboard post: %v\n", err)
+		if err != nil {
+			log.Printf("Error sending starboard post: %v\n", err)
+		}
 		return
 	}
 
