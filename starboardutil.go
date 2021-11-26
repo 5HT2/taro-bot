@@ -126,18 +126,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		return
 	}
 
-	if !newPost {
-		pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
-		if err != nil {
-			log.Printf("Couldn't get pMsg %v\n", err)
-			return
-		}
+	// Attempt to get existing message, and make a new one if it isn't there
+	pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
+	if err != nil {
+		log.Printf("Couldn't get pMsg %v\n", err)
 
-		_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.ID), content, pMsg.Embeds...)
-		if err != nil && *debug {
-			log.Printf("Error updating starboard post: %v\n", err)
-		}
-	} else {
 		description := msg.Content
 		url := urlRegex.MatchString(msg.Content)
 		if url {
@@ -163,6 +156,13 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		_, err = discordClient.SendMessage(postChannel.ID, content, embed)
 		log.Printf("Error sending starboard post: %v\n", err)
+		return
+	}
+
+	// Edit the post if it exists
+	_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.ID), content, pMsg.Embeds...)
+	if err != nil && *debug {
+		log.Printf("Error updating starboard post: %v\n", err)
 	}
 }
 
