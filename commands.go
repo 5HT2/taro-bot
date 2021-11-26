@@ -161,7 +161,7 @@ func (c Command) ChannelCommand() error {
 						}
 					}
 					SetGuildConfig(guild)
-					_, err := SendEmbed(c, "Channel Topic", "❌ Removed "+channelsStr+" from the allowed topic channels", errorColor)
+					_, err := SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", errorColor)
 					return err
 				case "emoji":
 					arg3, animated, err3 := ParseEmojiArg(c.args, 3, true)
@@ -231,7 +231,7 @@ func (c Command) ChannelCommand() error {
 					if err != nil {
 						guild.Channel = arg3
 						SetStarboardConfig(guild)
-						_, err := SendEmbed(c, "Starboard Channels", "❌ Disabled regular starboard", errorColor)
+						_, err := SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", errorColor)
 						return err
 					} else {
 						guild.Channel = 0
@@ -243,7 +243,7 @@ func (c Command) ChannelCommand() error {
 					if err != nil {
 						guild.NsfwChannel = arg3
 						SetStarboardConfig(guild)
-						_, err := SendEmbed(c, "Starboard Channels", "❌ Disabled NSFW starboard", errorColor)
+						_, err := SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", errorColor)
 						return err
 					} else {
 						guild.NsfwChannel = 0
