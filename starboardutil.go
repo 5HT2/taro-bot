@@ -110,13 +110,24 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	log.Printf("sUserID: %v\nsMsg:%v\n", sUserID, sMsg)
 
 	stars := len(sMsg.Stars)
-	content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(int64(msg.ChannelID), 10) + ">"
 
-	// Not enough stars to make post
+	// Not enough stars in sMsg to make post, try checking the raw message
 	if int64(stars) < guild.Threshold {
 		log.Printf("Not enough stars: %v\n", sMsg.Stars)
-		return
+
+		for _, reaction := range msg.Reactions {
+			if reaction.Emoji.APIString().PathString() == escapedStar {
+				stars = reaction.Count
+				break
+			}
+		}
+
+		if int64(stars) < guild.Threshold {
+			return
+		}
 	}
+
+	content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(int64(msg.ChannelID), 10) + ">"
 
 	// Attempt to get existing message, and make a new one if it isn't there
 	pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
