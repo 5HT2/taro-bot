@@ -103,7 +103,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	// When adding a new star, ensure star user is not the same as author
 	// And also check if they've already been added
-	sUserID := int64(msg.Author.ID) // the author of the message a reaction is being added to
+	sUserID := int64(e.Member.User.ID)
 	if sMsg.Author != sUserID && !Int64SliceContains(sMsg.Stars, sUserID) {
 		sMsg.Stars = append(sMsg.Stars, sUserID)
 	}
