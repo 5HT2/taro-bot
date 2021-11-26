@@ -40,11 +40,13 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	// Not starred by a guild member
 	if e.Member == nil {
+		log.Printf("Not a guild member\n")
 		return
 	}
 
 	// Not a star
 	if e.Emoji.APIString().PathString() != escapedStar {
+		log.Printf("Not a star emoji\n")
 		return
 	}
 
@@ -88,12 +90,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	// Channel hasn't been set
 	if cID == 0 {
+		log.Printf("Channel ID is 0\n")
 		return
 	}
 
 	// Get post channel and ensure it exists
 	postChannel, err := discordClient.Channel(discord.ChannelID(cID))
 	if err != nil {
+		log.Printf("Couldn't get post channel\n")
 		return
 	}
 
@@ -117,12 +121,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	// Not enough stars to make post
 	if int64(stars) < guild.Threshold {
+		log.Printf("Not enough stars: %v\n", sMsg.Stars)
 		return
 	}
 
 	if !newPost {
 		pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
 		if err != nil {
+			log.Printf("Couldn't get pMsg %v\n", err)
 			return
 		}
 
@@ -139,6 +145,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		member, err := discordClient.Member(discord.GuildID(guild.ID), discord.UserID(sMsg.Author))
 		if err != nil {
+			log.Printf("Couldn't get member %v\n", err)
 			return
 		}
 
@@ -153,7 +160,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			Color:       starboardColor,
 		}
 
-		_, _ = discordClient.SendMessage(postChannel.ID, content, embed)
+		_, err = discordClient.SendMessage(postChannel.ID, content, embed)
+		log.Printf("Error sending starboard post: %v\n", err)
 	}
 }
 
