@@ -217,10 +217,66 @@ func (c Command) ChannelCommand() error {
 		} else {
 			return err
 		}
+	case "starboard":
+		err := HasPermission("channels", c)
+		if err == nil {
+			if arg2, _ := ParseStringArg(c.args, 2, true); err != nil {
+				return err
+			} else {
+				guild := GetStarboardConfig(int64(c.e.GuildID))
+				arg3, err := ParseChannelArg(c.args, 3)
+
+				switch arg2 {
+				case "regular":
+					if err != nil {
+						guild.Channel = arg3
+						SetStarboardConfig(guild)
+						_, err := SendEmbed(c, "Starboard Channels", "❌ Disabled regular starboard", errorColor)
+						return err
+					} else {
+						guild.Channel = 0
+						SetStarboardConfig(guild)
+						_, err := SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", successColor)
+						return err
+					}
+				case "nsfw":
+					if err != nil {
+						guild.NsfwChannel = arg3
+						SetStarboardConfig(guild)
+						_, err := SendEmbed(c, "Starboard Channels", "❌ Disabled NSFW starboard", errorColor)
+						return err
+					} else {
+						guild.NsfwChannel = 0
+						SetStarboardConfig(guild)
+						_, err := SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", successColor)
+						return err
+					}
+				default:
+					regularC := "✅ Regular Starboard <#" + strconv.FormatInt(guild.Channel, 10) + ">"
+					nsfwC := "✅ NSFW Starboard <#" + strconv.FormatInt(guild.NsfwChannel, 10) + ">"
+					if guild.Channel == 0 {
+						regularC = "⛔ Regular Starboard"
+					}
+					if guild.NsfwChannel == 0 {
+						nsfwC = "⛔ NSFW Starboard"
+					}
+
+					embed := discord.Embed{
+						Title:       "Starboard Channels",
+						Description: regularC + "\n" + nsfwC,
+						Color:       defaultColor,
+					}
+					_, err := SendCustomEmbed(c.e.ChannelID, embed)
+					return err
+				}
+			}
+		} else {
+			return err
+		}
 	default:
 		_, err := SendEmbed(c,
 			"Channel",
-			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`",
+			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`\n- `starboard set regular|nsfw [channel]`",
 			defaultColor)
 		return err
 	}
