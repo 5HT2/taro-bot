@@ -43,6 +43,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		return
 	}
 
+	// Not a star
+	if e.Emoji.APIString().PathString() != escapedStar {
+		return
+	}
+
 	msg, err := discordClient.Message(e.ChannelID, e.MessageID)
 	if err != nil {
 		if *debug {
