@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
 	"log"
@@ -13,9 +14,11 @@ import (
 var (
 	discordClient session.Session
 	httpClient    = http.Client{Timeout: 5 * time.Second}
+	debug         = flag.Bool("debug", false, "Debug messages and faster config saving")
 )
 
 func main() {
+	flag.Parse()
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
 	LoadConfig()
