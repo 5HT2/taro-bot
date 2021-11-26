@@ -132,11 +132,16 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			description = ""
 		}
 
+		member, err := discordClient.Member(discord.GuildID(guild.ID), discord.UserID(sMsg.Author))
+		if err != nil {
+			return
+		}
+
 		field := discord.EmbedField{Name: "Source", Value: CreateMessageLink(msg, true)}
 		footer := discord.EmbedFooter{Text: strconv.FormatInt(sMsg.Author, 10)}
 		embed := discord.Embed{
 			Description: description,
-			Author:      CreateEmbedAuthor(*e.Member),
+			Author:      CreateEmbedAuthor(*member),
 			Fields:      []discord.EmbedField{field},
 			Footer:      &footer,
 			Timestamp:   msg.Timestamp,
