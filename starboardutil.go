@@ -16,10 +16,11 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	ID     int64   `json:"id"`     // the starboard post message ID
-	Author int64   `json:"author"` // the original author ID
-	IsNsfw bool    `json:"nsfw"`   // if the original message was made in an NSFW channel
-	Stars  []int64 `json:"stars"`  // list of added user IDs
+	ID     int64   `json:"id"`      // the original message ID
+	Author int64   `json:"author"`  // the original author ID
+	PostID int64   `json:"message"` // the starboard post message ID
+	IsNsfw bool    `json:"nsfw"`    // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`   // list of added user IDs
 }
 
 var (
@@ -78,7 +79,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	if newPost {
-		sMsg = &StarboardMessage{ID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
+		sMsg = &StarboardMessage{ID: int64(msg.ID), PostID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
 	}
 
 	// Channel to send starboard message to
@@ -118,7 +119,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	// Attempt to get existing message, and make a new one if it isn't there
-	pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
+	pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
 	if err != nil {
 		log.Printf("Couldn't get pMsg %v\n", err)
 
@@ -151,11 +152,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		if err != nil {
 			log.Printf("Error sending starboard post: %v\n", err)
 		} else {
-			sMsg.ID = int64(msg.ID)
+			sMsg.PostID = int64(msg.ID)
 		}
 	} else {
 		// Edit the post if it exists
-		_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.ID), content, pMsg.Embeds...)
+		_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.PostID), content, pMsg.Embeds...)
 		if err != nil {
 			log.Printf("Error updating starboard post: %v\n", err)
 		}
