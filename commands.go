@@ -229,24 +229,24 @@ func (c Command) ChannelCommand() error {
 				switch arg2 {
 				case "regular":
 					if err != nil {
-						guild.Channel = arg3
+						guild.Channel = 0
 						SetStarboardConfig(guild)
 						_, err := SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", errorColor)
 						return err
 					} else {
-						guild.Channel = 0
+						guild.Channel = arg3
 						SetStarboardConfig(guild)
 						_, err := SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", successColor)
 						return err
 					}
 				case "nsfw":
 					if err != nil {
-						guild.NsfwChannel = arg3
+						guild.NsfwChannel = 0
 						SetStarboardConfig(guild)
 						_, err := SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", errorColor)
 						return err
 					} else {
-						guild.NsfwChannel = 0
+						guild.NsfwChannel = arg3
 						SetStarboardConfig(guild)
 						_, err := SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", successColor)
 						return err
