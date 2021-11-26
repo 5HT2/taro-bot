@@ -47,3 +47,5 @@ Per-guild responses will be configurable with a command in the future, while `gl
 - [ ] Allow `"stuff here"` in order to create single args that contain spaces
   - [x] Allow selecting a range of args to return as one
 - [ ] Each command should be able to register its own config settings
+- [ ] Asynchronous config states. Right now you need to store it in a variable.
+- [ ] Better scalability.
