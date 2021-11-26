@@ -8,15 +8,15 @@ import (
 )
 
 var (
-	config        Config
-	fileMode      = os.FileMode(0700)
-	defaultPrefix = "."
+	config   Config
+	fileMode = os.FileMode(0700)
 )
 
 type Config struct {
-	BotToken        string        `json:"bot_token"`
-	GlobalResponses []Response    `json:"global_responses,omitempty"`
-	GuildConfigs    []GuildConfig `json:"guild_configs,omitempty"`
+	BotToken         string            `json:"bot_token"`
+	GlobalResponses  []Response        `json:"global_responses,omitempty"`
+	GuildConfigs     []GuildConfig     `json:"guild_configs,omitempty"`
+	StarboardConfigs []StarboardConfig `json:"starboard_configs,omitempty"`
 }
 
 type GuildConfig struct {
@@ -71,7 +71,7 @@ func SaveConfig() {
 }
 
 func GetGuildConfig(guild int64) GuildConfig {
-	defaultConfig := GuildConfig{ID: guild, Prefix: defaultPrefix}
+	defaultConfig := GuildConfig{ID: guild, Prefix: "."}
 
 	if len(config.GuildConfigs) == 0 {
 		return SetGuildConfig(defaultConfig)
@@ -90,13 +90,48 @@ func SetGuildConfig(guildConfig GuildConfig) GuildConfig {
 	for n, cfg := range config.GuildConfigs {
 		if cfg.ID == guildConfig.ID {
 			config.GuildConfigs[n] = guildConfig
-			SaveConfig()
+			if *debug {
+				SaveConfig()
+			}
 			return guildConfig
 		}
 	}
 
 	// Append if not found in existing configs
 	config.GuildConfigs = append(config.GuildConfigs, guildConfig)
+	SaveConfig()
+	return guildConfig
+}
+
+func GetStarboardConfig(guild int64) StarboardConfig {
+	defaultConfig := StarboardConfig{ID: guild}
+
+	if len(config.GuildConfigs) == 0 {
+		return SetStarboardConfig(defaultConfig)
+	}
+
+	for _, cfg := range config.StarboardConfigs {
+		if cfg.ID == guild {
+			return cfg
+		}
+	}
+
+	return SetStarboardConfig(defaultConfig)
+}
+
+func SetStarboardConfig(guildConfig StarboardConfig) StarboardConfig {
+	for n, cfg := range config.StarboardConfigs {
+		if cfg.ID == guildConfig.ID {
+			config.StarboardConfigs[n] = guildConfig
+			if *debug {
+				SaveConfig()
+			}
+			return guildConfig
+		}
+	}
+
+	// Append if not found in existing configs
+	config.StarboardConfigs = append(config.StarboardConfigs, guildConfig)
 	SaveConfig()
 	return guildConfig
 }
