@@ -111,20 +111,20 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	stars := len(sMsg.Stars)
 
-	// Not enough stars in sMsg to make post, try checking the raw message
+	// Check if message reactions are larger than our cached ones
+	for _, reaction := range msg.Reactions {
+		if reaction.Emoji.APIString().PathString() == escapedStar {
+			if reaction.Count > stars {
+				stars = reaction.Count
+			}
+			break
+		}
+	}
+
+	// Not enough stars in sMsg to make post
 	if int64(stars) < guild.Threshold {
 		log.Printf("Not enough stars: %v\n", sMsg.Stars)
-
-		for _, reaction := range msg.Reactions {
-			if reaction.Emoji.APIString().PathString() == escapedStar {
-				stars = reaction.Count
-				break
-			}
-		}
-
-		if int64(stars) < guild.Threshold {
-			return
-		}
+		return
 	}
 
 	content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(int64(msg.ChannelID), 10) + ">"
