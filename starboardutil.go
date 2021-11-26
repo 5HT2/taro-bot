@@ -16,11 +16,10 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	ID      int64   `json:"id"`      // the starboard post message ID
-	Message int64   `json:"message"` // the original message ID
-	Author  int64   `json:"author"`  // the original author ID
-	IsNsfw  bool    `json:"nsfw"`    // if the original message was made in an NSFW channel
-	Stars   []int64 `json:"stars"`   // list of added user IDs
+	ID     int64   `json:"id"`     // the starboard post message ID
+	Author int64   `json:"author"` // the original author ID
+	IsNsfw bool    `json:"nsfw"`   // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`  // list of added user IDs
 }
 
 var (
@@ -79,7 +78,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	if newPost {
-		sMsg = &StarboardMessage{ID: 0, Message: int64(msg.ID), Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
+		sMsg = &StarboardMessage{ID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
 	}
 
 	// Channel to send starboard message to
