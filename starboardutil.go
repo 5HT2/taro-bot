@@ -115,6 +115,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	stars := len(sMsg.Stars)
 	content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(int64(msg.ChannelID), 10) + ">"
 
+	// Not enough stars to make post
+	if int64(stars) < guild.Threshold {
+		return
+	}
+
 	if !newPost {
 		pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
 		if err != nil {
