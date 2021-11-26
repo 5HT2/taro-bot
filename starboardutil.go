@@ -77,7 +77,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	if newPost {
-		sMsg = &StarboardMessage{ID: int64(msg.ID), Message: int64(msg.ID), Author: int64(msg.Author.ID), IsNsfw: channel.NSFW}
+		sMsg = &StarboardMessage{ID: int64(msg.ID), Message: int64(msg.ID), Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
 	}
 
 	// Channel to send starboard message to
