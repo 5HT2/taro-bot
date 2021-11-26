@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/diamondburned/arikawa/v3/discord"
 	"image/color"
 	"io/ioutil"
 	"net/http"
@@ -12,17 +11,6 @@ import (
 var (
 	timeFormat = "Jan 02 2006 15:04:05 MST"
 )
-
-func PrintEmojiUpdate(emoji discord.Emoji) {
-	// TODO: make dynamic, and make it only work on actual emoji updates
-	var id discord.ChannelID = 893249218003750952
-	embed := discord.Embed{
-		Author:    CreateEmbedAuthor(emoji.User),
-		Title:     "Emoji created/deleted",
-		Thumbnail: &discord.EmbedThumbnail{URL: emoji.EmojiURL()},
-	}
-	_, _ = SendCustomEmbed(id, embed)
-}
 
 // GetUserMention will return a formatted user mention from an id
 func GetUserMention(id int64) string {
