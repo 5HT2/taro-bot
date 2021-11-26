@@ -10,7 +10,7 @@ var (
 	successColor   discord.Color = 0x3cde5a
 	errorColor     discord.Color = 0xde413c
 	defaultColor   discord.Color = 0x493cde
-	starboardColor discord.Color = 0xe0a752
+	starboardColor discord.Color = 0xffac33
 )
 
 func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
