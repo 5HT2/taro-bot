@@ -79,7 +79,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	if newPost {
-		sMsg = &StarboardMessage{ID: int64(msg.ID), Message: int64(msg.ID), Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
+		sMsg = &StarboardMessage{ID: 0, Message: int64(msg.ID), Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
 	}
 
 	// Channel to send starboard message to
@@ -109,14 +109,6 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 	log.Printf("sUserID: %v\nsMsg:%v\n", sUserID, sMsg)
 
-	// Now that we have updated the stars, save it in the config
-	if sMsgPos >= 0 {
-		guild.Messages[sMsgPos] = *sMsg
-	} else {
-		guild.Messages = append(guild.Messages, *sMsg)
-	}
-	SetStarboardConfig(guild)
-
 	stars := len(sMsg.Stars)
 	content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(int64(msg.ChannelID), 10) + ">"
 
@@ -130,6 +122,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.ID))
 	if err != nil {
 		log.Printf("Couldn't get pMsg %v\n", err)
+
+		// Construct new starboard post if it couldn't retrieve an existing one
 
 		description := msg.Content
 		url := urlRegex.MatchString(msg.Content)
@@ -154,18 +148,27 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			Color:       starboardColor,
 		}
 
-		_, err = discordClient.SendMessage(postChannel.ID, content, embed)
+		msg, err = discordClient.SendMessage(postChannel.ID, content, embed)
 		if err != nil {
 			log.Printf("Error sending starboard post: %v\n", err)
+		} else {
+			sMsg.ID = int64(msg.ID)
 		}
-		return
+	} else {
+		// Edit the post if it exists
+		_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.ID), content, pMsg.Embeds...)
+		if err != nil {
+			log.Printf("Error updating starboard post: %v\n", err)
+		}
 	}
 
-	// Edit the post if it exists
-	_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.ID), content, pMsg.Embeds...)
-	if err != nil && *debug {
-		log.Printf("Error updating starboard post: %v\n", err)
+	// Now that we have updated the stars and starboard post ID, save it in the config
+	if sMsgPos >= 0 {
+		guild.Messages[sMsgPos] = *sMsg
+	} else {
+		guild.Messages = append(guild.Messages, *sMsg)
 	}
+	SetStarboardConfig(guild)
 }
 
 func getEmoji(stars int) (emoji string) {
