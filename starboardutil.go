@@ -126,16 +126,16 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			log.Printf("Error updating starboard post: %v\n", err)
 		}
 	} else {
-		content := msg.Content
+		description := msg.Content
 		url := urlRegex.MatchString(msg.Content)
 		if url {
-			content = ""
+			description = ""
 		}
 
 		field := discord.EmbedField{Name: "Source", Value: CreateMessageLink(msg, true)}
 		footer := discord.EmbedFooter{Text: strconv.FormatInt(sMsg.Author, 10)}
 		embed := discord.Embed{
-			Description: content,
+			Description: description,
 			Author:      CreateEmbedAuthor(*e.Member),
 			Fields:      []discord.EmbedField{field},
 			Footer:      &footer,
@@ -143,7 +143,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			Color:       starboardColor,
 		}
 
-		_, _ = SendCustomEmbed(postChannel.ID, embed)
+		_, _ = discordClient.SendMessage(postChannel.ID, content, embed)
 	}
 }
 
