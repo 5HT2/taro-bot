@@ -59,11 +59,11 @@ func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 	return &discord.EmbedAuthor{Name: member.Nick, Icon: url}
 }
 
-func CreateMessageLink(message *discord.Message, jump bool) string {
-	guild := strconv.FormatInt(int64(message.GuildID), 10)
+func CreateMessageLink(guild int64, message *discord.Message, jump bool) string {
+	guildID := strconv.FormatInt(guild, 10)
 	channel := strconv.FormatInt(int64(message.ChannelID), 10)
 	messageID := strconv.FormatInt(int64(message.ID), 10)
-	link := "https://discord.com/channels/" + guild + "/" + channel + "/" + messageID
+	link := "https://discord.com/channels/" + guildID + "/" + channel + "/" + messageID
 
 	if jump {
 		return "[Jump!](" + link + ")"
