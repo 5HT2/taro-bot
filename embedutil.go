@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	successColor discord.Color = 0x3cde5a
-	errorColor   discord.Color = 0xde413c
-	defaultColor discord.Color = 0x493cde
+	successColor   discord.Color = 0x3cde5a
+	errorColor     discord.Color = 0xde413c
+	defaultColor   discord.Color = 0x493cde
+	starboardColor discord.Color = 0xe0a752
 )
 
 func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
@@ -53,9 +54,21 @@ func SendMessage(c Command, content string) (*discord.Message, error) {
 	return msg, err
 }
 
-func CreateEmbedAuthor(user discord.User) *discord.EmbedAuthor {
-	url := "https://cdn.discordapp.com/avatars/" + strconv.FormatUint(uint64(user.ID), 10) + "/" + user.Avatar + ".png?size=2048"
-	return &discord.EmbedAuthor{Name: user.Username, Icon: url}
+func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
+	url := "https://cdn.discordapp.com/avatars/" + strconv.FormatUint(uint64(member.User.ID), 10) + "/" + member.User.Avatar + ".png?size=2048"
+	return &discord.EmbedAuthor{Name: member.Nick, Icon: url}
+}
+
+func CreateMessageLink(message *discord.Message, jump bool) string {
+	guild := strconv.FormatInt(int64(message.GuildID), 10)
+	channel := strconv.FormatInt(int64(message.ChannelID), 10)
+	messageID := strconv.FormatInt(int64(message.ID), 10)
+	link := "https://discord.com/channels/" + guild + "/" + channel + "/" + messageID
+
+	if jump {
+		return "[Jump!](" + link + ")"
+	}
+	return link
 }
 
 func makeEmbed(title string, description string, color discord.Color) discord.Embed {
