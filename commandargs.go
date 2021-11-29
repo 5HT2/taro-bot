@@ -88,6 +88,20 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 	return -1, GenericSyntaxError("ParseUserArg", s, "expected user mention")
 }
 
+// ParseUrlArg will return a URL, or "" and an error
+func ParseUrlArg(a []string, pos int) (string, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseUrlArg")
+	if argErr != nil {
+		return "", argErr
+	}
+
+	ok := urlRegex.MatchString(s)
+	if ok {
+		return s, nil
+	}
+	return "", GenericSyntaxError("ParseUrlArg", s, "expected http or https url")
+}
+
 // ParseChannelSliceArg will return the IDs of the mentioned channels, or nil and an error
 func ParseChannelSliceArg(a []string, pos1 int, pos2 int) ([]int64, *TaroError) {
 	if pos2 == -1 {
