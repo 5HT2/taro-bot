@@ -4,13 +4,27 @@ import (
 	"image/color"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 var (
-	timeFormat = "Jan 02 2006 15:04:05 MST"
+	imageExts = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
 )
+
+func FileExtMatches(s []string, file string) bool {
+	found := false
+
+	for _, e := range s {
+		if filepath.Ext(file) == e {
+			found = true
+			break
+		}
+	}
+
+	return found
+}
 
 // GetUserMention will return a formatted user mention from an id
 func GetUserMention(id int64) string {
