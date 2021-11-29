@@ -55,8 +55,13 @@ func SendMessage(c Command, content string) (*discord.Message, error) {
 }
 
 func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
+	name := member.Nick
+	if len(name) == 0 {
+		name = member.User.Username
+	}
+
 	url := "https://cdn.discordapp.com/avatars/" + strconv.FormatUint(uint64(member.User.ID), 10) + "/" + member.User.Avatar + ".png?size=2048"
-	return &discord.EmbedAuthor{Name: member.Nick, Icon: url}
+	return &discord.EmbedAuthor{Name: name, Icon: url}
 }
 
 func CreateMessageLink(guild int64, message *discord.Message, jump bool) string {
