@@ -153,7 +153,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		// If we found only a URL (no other text) in the message content, and the found URL has an image extension, and we didn't find an attached image
 		// Set the description to nothing and set the image to the found URL
-		if url && FileExtMatches(imageExts, msg.Content) {
+		if url && FileExtMatches(imageExtensions, msg.Content) {
 			description = ""
 			image = &discord.EmbedImage{URL: msg.Content}
 		}

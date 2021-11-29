@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	imageExts = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
+	imageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
 )
 
 func FileExtMatches(s []string, file string) bool {
