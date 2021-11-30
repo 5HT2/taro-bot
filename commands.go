@@ -88,6 +88,9 @@ func (c Command) ChannelCommand() error {
 			if guild.ArchiveRole == 0 {
 				return GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
 			}
+			if guild.ArchiveCategory == 0 {
+				return GenericError(c.fnName, "getting archive category", "`archive_category` not set in guild config")
+			}
 
 			channel, err := discordClient.Channel(c.e.ChannelID)
 			if err != nil {
@@ -119,7 +122,7 @@ func (c Command) ChannelCommand() error {
 				},
 			)
 
-			data := api.ModifyChannelData{Overwrites: &overwrites}
+			data := api.ModifyChannelData{Overwrites: &overwrites, CategoryID: discord.ChannelID(guild.ArchiveCategory)}
 			err = discordClient.ModifyChannel(c.e.ChannelID, data)
 			if err != nil {
 				return err
