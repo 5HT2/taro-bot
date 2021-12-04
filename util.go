@@ -15,6 +15,7 @@ var (
 
 func FileExtMatches(s []string, file string) bool {
 	found := false
+	file = strings.ToLower(file)
 
 	for _, e := range s {
 		if filepath.Ext(file) == e {
