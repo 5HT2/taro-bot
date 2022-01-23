@@ -8,9 +8,10 @@ taro-bot: clean
 
 deps:
 	go get -u github.com/diamondburned/arikawa/v3
+	go get -u golang.org/x/net
 
 clean:
-	rm -f discord-pretty-audit
+	rm -f taro
 
 run: taro-bot
 	./taro
