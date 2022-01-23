@@ -25,6 +25,7 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 		Description: response.Description,
 		Color:       defaultColor,
 	}
+	msgContent := response.Description
 
 	if len(response.ReflectFunc) > 0 {
 		result := CallStringFunc(ResponseReflection{e}, response.ReflectFunc)
@@ -33,13 +34,24 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 			for _, str := range result {
 				slice = append(slice, str)
 			}
-			embed.Description = fmt.Sprintf(embed.Description, slice...)
+			if response.Embed {
+				embed.Description = fmt.Sprintf(embed.Description, slice...)
+			} else {
+				msgContent = fmt.Sprintf(embed.Description, slice...)
+			}
 		}
 	}
 
-	_, err := SendCustomEmbed(e.ChannelID, embed)
-	if err != nil {
-		log.Printf("Error sending global response: %v\n", err)
+	if response.Embed {
+		_, err := SendCustomEmbed(e.ChannelID, embed)
+		if err != nil {
+			log.Printf("Error sending global response: %v\n", err)
+		}
+	} else {
+		_, err := SendCustomMessage(e.ChannelID, msgContent)
+		if err != nil {
+			log.Printf("Error sending global response: %v\n", err)
+		}
 	}
 }
 

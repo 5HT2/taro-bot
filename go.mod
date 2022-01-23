@@ -2,7 +2,10 @@ module github.com/l1ving/taro-bot
 
 go 1.17
 
-require github.com/diamondburned/arikawa/v3 v3.0.0-rc.2
+require (
+	github.com/diamondburned/arikawa/v3 v3.0.0-rc.2
+	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
+)
 
 require (
 	github.com/gorilla/schema v1.2.0 // indirect

@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"errors"
+	"golang.org/x/net/html"
 	"image/color"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -70,6 +74,38 @@ func Int64SliceRemove(s []int64, i int64) []int64 {
 		}
 	}
 	return ns
+}
+
+type extractNodeCondition func(string) bool
+
+// ExtractNode will select the first node to match extractNodeCondition, for example
+// res, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
+func ExtractNode(content string, fn extractNodeCondition) (*html.Node, error) {
+	doc, _ := html.Parse(strings.NewReader(string(content)))
+	var n *html.Node
+	var crawler func(*html.Node)
+
+	crawler = func(node *html.Node) {
+		if node.Type == html.ElementNode && fn(node.Data) {
+			n = node
+			return
+		}
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			crawler(child)
+		}
+	}
+	crawler(doc)
+	if n != nil {
+		return n, nil
+	}
+	return nil, errors.New("missing matching tag in the node tree")
+}
+
+func RenderNode(n *html.Node) string {
+	var buf bytes.Buffer
+	w := io.Writer(&buf)
+	html.Render(w, n)
+	return buf.String()
 }
 
 // RequestUrl will return the bytes of the body of url
