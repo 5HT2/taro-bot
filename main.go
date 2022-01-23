@@ -27,11 +27,12 @@ func main() {
 		log.Fatalln("No bot_token given")
 	}
 
-	c, err := session.New("Bot " + token)
+	// TODO: Migrate to NewWithIntents
+	c := session.New("Bot " + token)
 	discordClient = *c
 
-	if err != nil {
-		log.Fatalln("Session failed:", err)
+	if c == nil {
+		log.Fatalln("Session failed: is nil")
 	}
 
 	// Add handlers
