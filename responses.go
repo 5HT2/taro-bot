@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"net/http"
 	"net/url"
@@ -45,6 +46,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 	apiUri := ""
 	for _, instance := range instances {
+		// instance[0] is the instance URI, instance[1] is the object with said instance's info
 		if instance[1].API == true {
 			apiUri = instance[1].URI
 		}
@@ -65,7 +67,11 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(RenderNode(node), " | Spotify</title>"), "<title>"), " - song by ")
 
-	searchUrl := apiUri + "/api/v1/search?q=" + url.QueryEscape(strings.Join(res, " "))
+	if len(res) < 2 {
+		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}
+	}
+
+	searchUrl := apiUri + "/api/v1/search?q=" + url.QueryEscape(res[1]+" - "+res[0]) // Artist - Song Title
 	content, err = RequestUrl(searchUrl, http.MethodGet)
 	if err != nil {
 		return []string{"Error: " + err.Error()}
