@@ -109,15 +109,15 @@ func RenderNode(n *html.Node) string {
 }
 
 // RequestUrl will return the bytes of the body of url
-func RequestUrl(url string, method string) ([]byte, error) {
+func RequestUrl(url string, method string) ([]byte, *http.Response, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if res.Body != nil {
@@ -126,10 +126,22 @@ func RequestUrl(url string, method string) ([]byte, error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return body, nil
+	return body, res, nil
+}
+
+// RequestUrlRetry will return the bytes of the body of the first successful url
+func RequestUrlRetry(urls []string, method string, code int) (bytes []byte) {
+	for _, url := range urls {
+		content, res, err := RequestUrl(url, method)
+		if err == nil && res.StatusCode == code {
+			return content
+		}
+	}
+
+	return nil
 }
 
 // ConvertColorToInt32 will convert 3 uint8s into one int32

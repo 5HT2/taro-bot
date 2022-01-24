@@ -27,7 +27,29 @@ func (r ResponseReflection) PrefixResponse() []string {
 }
 
 func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
-	instancesStr, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=api,users", http.MethodGet)
+	// Get Artist and Song Title from Spotify
+	//
+
+	content, _, err := RequestUrl(r.e.Content, http.MethodGet)
+	if err != nil {
+		return []string{"Error: " + err.Error()}
+	}
+
+	node, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
+	if err != nil {
+		return []string{"Error: " + err.Error()}
+	}
+
+	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(RenderNode(node), " | Spotify</title>"), "<title>"), " - song by ")
+
+	if len(res) < 2 {
+		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}
+	}
+
+	// Get available instances from invidious
+	//
+
+	instancesStr, _, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
 	if err != nil {
 		return []string{"Error: " + err.Error()}
 	}
@@ -44,38 +66,32 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// For some reason this will always error even though it gives the expected result
 	_ = json.Unmarshal(instancesStr, &instances)
 
-	apiUri := ""
+	// Make list of instances to query
+	//
+
+	searchQuery := "/api/v1/search?q=" + url.QueryEscape(res[1]+" - "+res[0]) // Artist - Song Title
+	searchUrls := make([]string, 0)
+
 	for _, instance := range instances {
 		// instance[0] is the instance URI, instance[1] is the object with said instance's info
 		if instance[1].API == true {
-			apiUri = instance[1].URI
+			searchUrls = append(searchUrls, instance[1].URI+searchQuery) // this will use more memory but reduces code complexity
 		}
 	}
-	if apiUri == "" {
+	if len(searchUrls) == 0 {
 		return []string{"Error: Couldn't find any Invidious instance to search with"}
 	}
 
-	content, err := RequestUrl(r.e.Content, http.MethodGet)
-	if err != nil {
-		return []string{"Error: " + err.Error()}
+	// Query all available search URLs
+	//
+
+	content = RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
+	if content == nil {
+		return []string{"Error: no non-nil response from `searchUrls`"}
 	}
 
-	node, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
-	if err != nil {
-		return []string{"Error: " + err.Error()}
-	}
-
-	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(RenderNode(node), " | Spotify</title>"), "<title>"), " - song by ")
-
-	if len(res) < 2 {
-		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}
-	}
-
-	searchUrl := apiUri + "/api/v1/search?q=" + url.QueryEscape(res[1]+" - "+res[0]) // Artist - Song Title
-	content, err = RequestUrl(searchUrl, http.MethodGet)
-	if err != nil {
-		return []string{"Error: " + err.Error()}
-	}
+	// Parse returned YouTube result
+	//
 
 	type YoutubeSearchResult struct {
 		Title string `json:"title"`

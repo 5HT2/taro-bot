@@ -377,7 +377,7 @@ func (c Command) PingCommand() error {
 }
 
 func (c Command) FrogCommand() error {
-	frogData, err := RequestUrl("https://frog.pics/api/random", http.MethodGet)
+	frogData, _, err := RequestUrl("https://frog.pics/api/random", http.MethodGet)
 	if err != nil {
 		return err
 	}
