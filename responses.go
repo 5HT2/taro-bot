@@ -27,7 +27,7 @@ func (r ResponseReflection) PrefixResponse() []string {
 }
 
 func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
-	instancesStr, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health,api", http.MethodGet)
+	instancesStr, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=api,users", http.MethodGet)
 	if err != nil {
 		return []string{"Error: " + err.Error()}
 	}
