@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -71,7 +70,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// Make list of instances to query
 	//
 
-	searchQuery := "/api/v1/search?q=" + url.QueryEscape(res[1]+" - "+res[0]) // Artist - Song Title
+	searchQuery := "/api/v1/search?q=" + url.PathEscape(res[1]+" - "+res[0]) // Artist - Song Title
 	searchUrls := make([]string, 0)
 
 	for _, instance := range instances {
