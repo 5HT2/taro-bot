@@ -20,6 +20,11 @@ func ResponseHandler(e *gateway.MessageCreateEvent) {
 }
 
 func sendResponse(e *gateway.MessageCreateEvent, response Response) {
+	// If there is a channel whitelist, and it doesn't contain the original message's channel ID, return
+	if len(response.LockChannels) > 0 && !Int64SliceContains(response.LockChannels, int64(e.ChannelID)) {
+		return
+	}
+
 	embed := discord.Embed{
 		Title:       response.Title,
 		Description: response.Description,

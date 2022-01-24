@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
 type Response struct {
-	Embed       bool     `json:"embed"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	ReflectFunc string   `json:"reflect_func,omitempty"`
-	Regexes     []string `json:"regexes"`
-	MatchMin    int      `json:"match_min,omitempty"`
+	Embed        bool     `json:"embed"`
+	Title        string   `json:"title"`
+	Description  string   `json:"description"`
+	ReflectFunc  string   `json:"reflect_func,omitempty"`
+	Regexes      []string `json:"regexes"`
+	MatchMin     int      `json:"match_min,omitempty"`
+	LockChannels []int64  `json:"lock_channels,omitempty"`
 }
 
 type ResponseReflection struct {
