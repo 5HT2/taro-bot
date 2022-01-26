@@ -16,6 +16,11 @@ type Command struct {
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
+	// Don't respond to self messages.
+	if e.Author.ID == discordBot.ID {
+		return
+	}
+
 	cmdName, cmdArgs := extractCommand(e.Message)
 	if len(cmdName) == 0 {
 		return
