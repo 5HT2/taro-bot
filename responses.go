@@ -6,6 +6,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -31,9 +32,12 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// Get Artist and Song Title from Spotify
 	//
 
-	content, _, err := RequestUrl(r.e.Content, http.MethodGet)
+	content, resp, err := RequestUrl(r.e.Content, http.MethodGet)
 	if err != nil {
 		return []string{"Error: " + err.Error()}
+	}
+	if resp.StatusCode != http.StatusOK {
+		return []string{"Error: Spotify returned a `" + strconv.Itoa(resp.StatusCode) + "` status code, expected `200`"}
 	}
 
 	node, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
