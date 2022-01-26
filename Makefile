@@ -9,6 +9,7 @@ taro-bot: clean
 deps:
 	go get -u github.com/diamondburned/arikawa/v3
 	go get -u golang.org/x/net
+	go mod tidy
 
 clean:
 	rm -f taro
