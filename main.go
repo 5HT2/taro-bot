@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
 	"log"
@@ -14,7 +13,6 @@ import (
 
 var (
 	discordClient session.Session
-	discordBot    *discord.User
 	httpClient    = http.Client{Timeout: 5 * time.Second}
 	debug         = flag.Bool("debug", false, "Debug messages and faster config saving")
 )
@@ -36,12 +34,6 @@ func main() {
 	if c == nil {
 		log.Fatalln("Session failed: is nil")
 	}
-
-	me, err := c.Me()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	discordBot = me
 
 	// Add handlers
 	c.AddHandler(MessageReactionAddEvent)
