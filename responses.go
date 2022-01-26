@@ -29,10 +29,18 @@ func (r ResponseReflection) PrefixResponse() []string {
 }
 
 func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
+	// Get the Spotify link from the message
+	//
+
+	spotifyUrl := spotifyRegex.FindStringSubmatch(r.e.Content)
+	if len(spotifyUrl) == 0 {
+		return []string{"Error: Couldn't find Spotify link in message"}
+	}
+
 	// Get Artist and Song Title from Spotify
 	//
 
-	content, resp, err := RequestUrl(r.e.Content, http.MethodGet)
+	content, resp, err := RequestUrl(spotifyUrl[0], http.MethodGet)
 	if err != nil {
 		return []string{"Error: " + err.Error()}
 	}
