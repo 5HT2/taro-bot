@@ -82,7 +82,8 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// Make list of instances to query
 	//
 
-	searchQuery := "/api/v1/search?q=" + url.PathEscape(res[1]+" - "+res[0]) // Artist - Song Title
+	artistAndSong := strings.ReplaceAll(res[1]+" - "+res[0], "\"", "") // Remove quotes
+	searchQuery := "/api/v1/search?q=" + url.PathEscape(artistAndSong) // Artist - Song Title
 	searchUrls := make([]string, 0)
 
 	for _, instance := range instances {
