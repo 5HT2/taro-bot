@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -53,7 +54,9 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 		return []string{"Error: " + err.Error()}
 	}
 
-	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(RenderNode(node), " | Spotify</title>"), "<title>"), " - song by ")
+	text := &bytes.Buffer{}
+	ExtractNodeText(node, text)
+	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(text.String(), " | Spotify</title>"), "<title>"), " - song by ")
 
 	if len(res) < 2 {
 		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}

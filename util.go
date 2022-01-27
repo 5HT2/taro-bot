@@ -108,6 +108,15 @@ func RenderNode(n *html.Node) string {
 	return buf.String()
 }
 
+func ExtractNodeText(n *html.Node, buf *bytes.Buffer) {
+	if n.Type == html.TextNode {
+		buf.WriteString(n.Data)
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		ExtractNodeText(c, buf)
+	}
+}
+
 // RequestUrl will return the bytes of the body of url
 func RequestUrl(url string, method string) ([]byte, *http.Response, error) {
 	req, err := http.NewRequest(method, url, nil)
