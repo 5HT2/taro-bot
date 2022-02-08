@@ -13,7 +13,7 @@ import (
 
 var (
 	discordClient session.Session
-	httpClient    = http.Client{Timeout: 5 * time.Second}
+	httpClient    = http.Client{Timeout: 10 * time.Second}
 	debug         = flag.Bool("debug", false, "Debug messages and faster config saving")
 )
 
