@@ -17,6 +17,25 @@ var (
 	imageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
 )
 
+type retryFunction func() ([]byte, error)
+
+// RetryFunc will re-try fn by n number of times, in addition to one regular try
+func RetryFunc(fn retryFunction, n int) ([]byte, error) {
+	if n < 0 {
+		n = 0
+	}
+
+	for n > 0 {
+		b, err := fn()
+		if err == nil {
+			return b, err
+		}
+		n--
+	}
+
+	return fn()
+}
+
 func FileExtMatches(s []string, file string) bool {
 	found := false
 	file = strings.ToLower(file)

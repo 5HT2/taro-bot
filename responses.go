@@ -65,13 +65,14 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// Get available instances from invidious
 	//
 
-	instancesStr, _, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
+	fn := func() ([]byte, error) {
+		b, _, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
+		return b, err
+	}
+
+	instancesStr, err := RetryFunc(fn, 1) // This will take a max of ~20 seconds to execute, with a 10s timeout
 	if err != nil {
-		// Try again, because apparently this is just needed
-		instancesStr, _, err = RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
-		if err != nil {
-			return []string{"Error: " + err.Error()}
-		}
+		return []string{"Error: " + err.Error()}
 	}
 
 	type InvidiousInstance struct {
