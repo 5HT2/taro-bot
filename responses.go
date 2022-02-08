@@ -67,7 +67,11 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 	instancesStr, _, err := RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
 	if err != nil {
-		return []string{"Error: " + err.Error()}
+		// Try again, because apparently this is just needed
+		instancesStr, _, err = RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
+		if err != nil {
+			return []string{"Error: " + err.Error()}
+		}
 	}
 
 	type InvidiousInstance struct {
