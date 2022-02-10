@@ -130,6 +130,8 @@ func LoadConfig() {
 
 	// Load prefix cache
 	config.run(func(c *Config) {
+		c.PrefixCache = make(map[int64]string, 0)
+
 		for _, g := range c.GuildConfigs {
 			c.PrefixCache[g.ID] = g.Prefix
 		}
