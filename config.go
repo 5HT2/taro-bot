@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"os"
@@ -22,7 +21,7 @@ type starboardOperation func(starboardConfig *StarboardConfig) *StarboardConfig
 
 func StarboardContext(c discord.GuildID, s starboardOperation) {
 	id := int64(c)
-	now := time.Now().UnixMilli()
+	start := time.Now().UnixMilli()
 	found := false
 
 	config.run(func(c *Config) {
@@ -33,7 +32,7 @@ func StarboardContext(c discord.GuildID, s starboardOperation) {
 				c.StarboardConfigs[n] = *s(&guild)
 				found = true
 				exec := time.Now().UnixMilli()
-				fmt.Printf("Time to execute starboardOperation: %v\n", exec-now)
+				log.Printf("Time to execute starboardOperation: %v\n", exec-start)
 				break
 			}
 		}
@@ -51,7 +50,7 @@ func StarboardContext(c discord.GuildID, s starboardOperation) {
 // TODO: Having one "context" per command would be nice to have.
 func GuildContext(c discord.GuildID, g guildOperation) {
 	id := int64(c)
-	now := time.Now().UnixMilli()
+	start := time.Now().UnixMilli()
 	found := false
 
 	config.run(func(c *Config) {
@@ -62,7 +61,7 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 				c.GuildConfigs[n] = *g(&guild)
 				found = true
 				exec := time.Now().UnixMilli()
-				fmt.Printf("Time to execute guildOperation: %v\n", exec-now)
+				log.Printf("Time to execute guildOperation: %v\n", exec-start)
 				break
 			}
 		}
