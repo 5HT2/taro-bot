@@ -7,6 +7,7 @@ Notable features:
 - Automatic command registration, with info support such as aliases and descriptions
 - Strict arg parsing and selection
 - Automatic error handling via friendly messages given to the user :)
+- Asynchronous event handling with concurrency-safe configs
 
 ## Usage
 
