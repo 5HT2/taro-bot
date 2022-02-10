@@ -2,17 +2,90 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
 var (
-	config   Config
-	fileMode = os.FileMode(0700)
+	config        Config
+	fileMode      = os.FileMode(0700)
+	defaultPrefix = "."
 )
 
+type configOperation func(*Config)
+type guildOperation func(*GuildConfig) *GuildConfig
+type starboardOperation func(starboardConfig *StarboardConfig) *StarboardConfig
+
+func StarboardContext(c discord.GuildID, s starboardOperation) {
+	id := int64(c)
+	now := time.Now().UnixMilli()
+	found := false
+
+	config.run(func(c *Config) {
+		// Try to find an existing config, and if so, replace it with the result of executed guildOperation
+		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
+		for n, guild := range c.StarboardConfigs {
+			if guild.ID == id {
+				c.StarboardConfigs[n] = *s(&guild)
+				found = true
+				exec := time.Now().UnixMilli()
+				fmt.Printf("Time to execute starboardOperation: %v\n", exec-now)
+				break
+			}
+		}
+
+		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
+		if !found {
+			defaultConfig := StarboardConfig{ID: id}
+			c.StarboardConfigs = append(c.StarboardConfigs, *s(&defaultConfig))
+		}
+	})
+}
+
+// GuildContext will modify a GuildConfig non-concurrently.
+// Avoid using inside a network or hang-able context whenever possible.
+// TODO: Having one "context" per command would be nice to have.
+func GuildContext(c discord.GuildID, g guildOperation) {
+	id := int64(c)
+	now := time.Now().UnixMilli()
+	found := false
+
+	config.run(func(c *Config) {
+		// Try to find an existing config, and if so, replace it with the result of executed guildOperation
+		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
+		for n, guild := range c.GuildConfigs {
+			if guild.ID == id {
+				c.GuildConfigs[n] = *g(&guild)
+				found = true
+				exec := time.Now().UnixMilli()
+				fmt.Printf("Time to execute guildOperation: %v\n", exec-now)
+				break
+			}
+		}
+
+		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
+		if !found {
+			defaultConfig := GuildConfig{ID: id, Prefix: defaultPrefix}
+			c.GuildConfigs = append(c.GuildConfigs, *g(&defaultConfig))
+		}
+	})
+}
+
+// Config.run will modify a Config non-concurrently.
+// Avoid using inside a network or hang-able context whenever possible.
+func (c *Config) run(co configOperation) {
+	c.Mutex.Lock()
+	defer c.Mutex.Unlock()
+	co(c)
+}
+
 type Config struct {
+	Mutex            sync.Mutex        `json:"-"` // not saved in DB
+	PrefixCache      map[int64]string  `json:"-"` // not saved in DB // [guild id]prefix
 	BotToken         string            `json:"bot_token"`
 	GlobalResponses  []Response        `json:"global_responses,omitempty"`
 	GuildConfigs     []GuildConfig     `json:"guild_configs,omitempty"`
@@ -54,10 +127,23 @@ func LoadConfig() {
 	if err := json.Unmarshal(bytes, &config); err != nil {
 		log.Fatalf("Error unmarshalling config: %v\n", err)
 	}
+
+	// Load prefix cache
+	config.run(func(c *Config) {
+		for _, g := range c.GuildConfigs {
+			c.PrefixCache[g.ID] = g.Prefix
+		}
+	})
 }
 
 func SaveConfig() {
-	bytes, err := json.MarshalIndent(config, "", "    ")
+	var bytes []byte
+	var err error = nil
+
+	config.run(func(c *Config) {
+		bytes, err = json.MarshalIndent(c, "", "    ")
+	})
+
 	if err != nil {
 		log.Printf("Failed to marshal config: %v\n", err)
 		return
@@ -69,70 +155,4 @@ func SaveConfig() {
 	} else {
 		log.Printf("Successfully saved config\n")
 	}
-}
-
-func GetGuildConfig(guild int64) GuildConfig {
-	defaultConfig := GuildConfig{ID: guild, Prefix: "."}
-
-	if len(config.GuildConfigs) == 0 {
-		return SetGuildConfig(defaultConfig)
-	}
-
-	for _, cfg := range config.GuildConfigs {
-		if cfg.ID == guild {
-			return cfg
-		}
-	}
-
-	return SetGuildConfig(defaultConfig)
-}
-
-func SetGuildConfig(guildConfig GuildConfig) GuildConfig {
-	for n, cfg := range config.GuildConfigs {
-		if cfg.ID == guildConfig.ID {
-			config.GuildConfigs[n] = guildConfig
-			if *debug {
-				SaveConfig()
-			}
-			return guildConfig
-		}
-	}
-
-	// Append if not found in existing configs
-	config.GuildConfigs = append(config.GuildConfigs, guildConfig)
-	SaveConfig()
-	return guildConfig
-}
-
-func GetStarboardConfig(guild int64) StarboardConfig {
-	defaultConfig := StarboardConfig{ID: guild}
-
-	if len(config.GuildConfigs) == 0 {
-		return SetStarboardConfig(defaultConfig)
-	}
-
-	for _, cfg := range config.StarboardConfigs {
-		if cfg.ID == guild {
-			return cfg
-		}
-	}
-
-	return SetStarboardConfig(defaultConfig)
-}
-
-func SetStarboardConfig(guildConfig StarboardConfig) StarboardConfig {
-	for n, cfg := range config.StarboardConfigs {
-		if cfg.ID == guildConfig.ID {
-			config.StarboardConfigs[n] = guildConfig
-			if *debug {
-				SaveConfig()
-			}
-			return guildConfig
-		}
-	}
-
-	// Append if not found in existing configs
-	config.StarboardConfigs = append(config.StarboardConfigs, guildConfig)
-	SaveConfig()
-	return guildConfig
 }

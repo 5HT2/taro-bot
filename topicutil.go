@@ -15,20 +15,33 @@ type ActiveTopicVote struct {
 }
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
-	guild := GetGuildConfig(int64(e.GuildID))
-
-	if reactionMatchesActiveVote(e, guild) {
-		if guild.TopicVoteThreshold == 0 {
-			guild.TopicVoteThreshold = 3
-			SetGuildConfig(guild)
+	reactionMatchesActiveVote := false
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		// Find an activeTopicVote that matches `e`'s reaction
+		for _, vote := range g.ActiveTopicVotes {
+			if int64(e.MessageID) == vote.Message {
+				reactionMatchesActiveVote = true
+				break
+			}
 		}
+		return g
+	})
+
+	if reactionMatchesActiveVote {
+		// TODO: Honestly, why are we doing this?
+		GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+			if g.TopicVoteThreshold == 0 {
+				g.TopicVoteThreshold = 3
+			}
+			return g
+		})
 
 		message, err := discordClient.Message(e.ChannelID, e.MessageID)
 		if err != nil {
 			return
 		}
 
-		emoji, err := GuildTopicVoteApiEmoji(guild)
+		emoji, err := GuildTopicVoteApiEmoji(e.GuildID)
 		if err != nil {
 			return
 		}
@@ -40,8 +53,14 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 					offset = 1
 				}
 
-				if int64(reaction.Count-offset) >= guild.TopicVoteThreshold {
-					vote := removeActiveVote(e, guild)
+				meetsThreshold := false
+				GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+					meetsThreshold = int64(reaction.Count-offset) >= g.TopicVoteThreshold
+					return g
+				})
+
+				if meetsThreshold {
+					vote := removeActiveVote(e)
 					channel, err := discordClient.Channel(e.ChannelID)
 					if err != nil {
 						return
@@ -73,32 +92,23 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 }
 
-func reactionMatchesActiveVote(e *gateway.MessageReactionAddEvent, guild GuildConfig) bool {
-	found := false
-	for _, vote := range guild.ActiveTopicVotes {
-		if int64(e.MessageID) == vote.Message {
-			found = true
-			break
-		}
-	}
-	return found
-}
-
-func removeActiveVote(e *gateway.MessageReactionAddEvent, guild GuildConfig) ActiveTopicVote {
+func removeActiveVote(e *gateway.MessageReactionAddEvent) ActiveTopicVote {
 	oldVotes := make([]ActiveTopicVote, 0)
 	var removedVote ActiveTopicVote
 	message := int64(e.MessageID)
 
-	for _, vote := range guild.ActiveTopicVotes {
-		if message != vote.Message {
-			oldVotes = append(oldVotes, vote)
-		} else {
-			removedVote = vote
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		for _, vote := range g.ActiveTopicVotes {
+			if message != vote.Message {
+				oldVotes = append(oldVotes, vote)
+			} else {
+				removedVote = vote
+			}
 		}
-	}
 
-	guild.ActiveTopicVotes = oldVotes
-	SetGuildConfig(guild)
+		g.ActiveTopicVotes = oldVotes
+		return g
+	})
 
 	return removedVote
 }

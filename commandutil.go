@@ -43,15 +43,25 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 // extractCommand will extract a command name and args from a message with a prefix
 func extractCommand(message discord.Message) (string, []string) {
 	content := message.Content
-	cfg := GetGuildConfig(int64(message.GuildID))
+	prefix := defaultPrefix
+	ok := true
+
+	config.run(func(c *Config) {
+		prefix, ok = c.PrefixCache[int64(message.GuildID)]
+	})
+
+	if !ok {
+		log.Printf("expected prefix to be in prefix cache - how did this happen\n")
+		return "", []string{}
+	}
 
 	// If command doesn't start with a dot, or it's just a dot
-	if !strings.HasPrefix(content, cfg.Prefix) || len(content) < (1+len(cfg.Prefix)) {
+	if !strings.HasPrefix(content, prefix) || len(content) < (1+len(prefix)) {
 		return "", []string{}
 	}
 
 	// Remove prefix
-	content = content[1*len(cfg.Prefix):]
+	content = content[1*len(prefix):]
 	// Split by space to remove everything after the prefix
 	contentArr := strings.Split(content, " ")
 	// Get first element of slice (the command name)

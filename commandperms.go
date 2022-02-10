@@ -13,55 +13,61 @@ type PermissionGroups struct {
 
 // HasPermission will return if the author of a command has said permission
 func HasPermission(permission string, c Command) *TaroError {
-	guild := GetGuildConfig(int64(c.e.GuildID))
 	id := int64(c.e.Author.ID)
-	mention := GetUserMention(id)
-	users := getPermissionSlice(permission, guild)
 
-	if Int64SliceContains(users, id) {
+	if UserHasPermission(permission, c, id) {
 		return nil
 	} else {
-		return GenericError(c.fnName, "running command", mention+" is missing the \""+permission+"\" permission")
+		return GenericError(c.fnName, "running command", GetUserMention(id)+" is missing the \""+permission+"\" permission")
 	}
 }
 
 // UserHasPermission will return if the user with id has said permission
 func UserHasPermission(permission string, c Command, id int64) bool {
-	guild := GetGuildConfig(int64(c.e.GuildID))
-	users := getPermissionSlice(permission, guild)
+	users := make([]int64, 0)
+	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+		users = getPermissionSlice(permission, g)
+		return g
+	})
+
 	return Int64SliceContains(users, id)
 }
 
 // GivePermission will return nil if the permission was successfully given to the user with a matching id
 func GivePermission(permission string, id int64, c Command) error {
-	guild := GetGuildConfig(int64(c.e.GuildID))
-	users := getPermissionSlice(permission, guild)
-	mention := GetUserMention(id)
+	var err error = nil
 
-	if !Int64SliceContains(users, id) {
-		users = append(users, id)
-	} else {
-		return GenericError("GivePermission",
-			"giving permission to "+mention,
-			"user already has permission \""+permission+"\"")
-	}
+	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
 
-	switch permission {
-	case "channels":
-		guild.Permissions.ManageChannels = users
-	case "permissions":
-		guild.Permissions.ManagePermissions = users
-	default:
-		return GenericError("GivePermission",
-			"giving permission to "+mention,
-			"couldn't find permission type \""+permission+"\"")
-	}
+		users := getPermissionSlice(permission, g)
+		mention := GetUserMention(id)
 
-	SetGuildConfig(guild)
-	return nil
+		if !Int64SliceContains(users, id) {
+			users = append(users, id)
+		} else {
+			err = GenericError("GivePermission",
+				"giving permission to "+mention,
+				"user already has permission \""+permission+"\"")
+		}
+
+		switch permission {
+		case "channels":
+			g.Permissions.ManageChannels = users
+		case "permissions":
+			g.Permissions.ManagePermissions = users
+		default:
+			err = GenericError("GivePermission",
+				"giving permission to "+mention,
+				"couldn't find permission type \""+permission+"\"")
+		}
+
+		return g
+	})
+
+	return err
 }
 
-func getPermissionSlice(permission string, guild GuildConfig) []int64 {
+func getPermissionSlice(permission string, guild *GuildConfig) []int64 {
 	permission = strings.ToLower(permission)
 
 	switch permission {

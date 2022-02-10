@@ -26,7 +26,13 @@ type ResponseReflection struct {
 }
 
 func (r ResponseReflection) PrefixResponse() []string {
-	return []string{GetGuildConfig(int64(r.e.GuildID)).Prefix}
+	prefix := defaultPrefix
+	GuildContext(r.e.GuildID, func(g *GuildConfig) *GuildConfig {
+		prefix = g.Prefix
+		return g
+	})
+
+	return []string{prefix}
 }
 
 func (r ResponseReflection) SpotifyToYoutubeResponse() []string {

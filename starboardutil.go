@@ -32,12 +32,13 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
-	guild := GetStarboardConfig(int64(e.GuildID))
+	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+		if s.Threshold == 0 {
+			s.Threshold = 3
+		}
 
-	if guild.Threshold == 0 {
-		guild.Threshold = 3
-		SetStarboardConfig(guild)
-	}
+		return s
+	})
 
 	// Not starred by a guild member
 	if e.Member == nil {
@@ -70,24 +71,29 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	newPost := true
 	sMsgPos := -1
 
-	for i, m := range guild.Messages {
-		if m.ID == int64(msg.ID) {
-			sMsg = &m
-			newPost = false
-			sMsgPos = i
-			break
+	var cID int64 = 0
+
+	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+		for i, m := range s.Messages {
+			if m.ID == int64(msg.ID) {
+				sMsg = &m
+				newPost = false
+				sMsgPos = i
+				break
+			}
 		}
-	}
 
-	if newPost {
-		sMsg = &StarboardMessage{ID: int64(msg.ID), PostID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
-	}
+		if newPost {
+			sMsg = &StarboardMessage{ID: int64(msg.ID), PostID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
+		}
 
-	// Channel to send starboard message to
-	cID := guild.Channel
-	if sMsg.IsNsfw == true {
-		cID = guild.NsfwChannel
-	}
+		// Channel to send starboard message to
+		cID = s.Channel
+		if sMsg.IsNsfw == true {
+			cID = s.NsfwChannel
+		}
+		return s
+	})
 
 	// Channel hasn't been set
 	if cID == 0 {
@@ -122,8 +128,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 	}
 
+	notEnoughStars := false
+	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+		notEnoughStars = int64(stars) < s.Threshold
+		return s
+	})
+
 	// Not enough stars in sMsg to make post
-	if int64(stars) < guild.Threshold {
+	if notEnoughStars {
 		log.Printf("Not enough stars: %v\n", sMsg.Stars)
 		return
 	}
@@ -158,13 +170,13 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			image = &discord.EmbedImage{URL: msg.Content}
 		}
 
-		member, err := discordClient.Member(discord.GuildID(guild.ID), discord.UserID(sMsg.Author))
+		member, err := discordClient.Member(e.GuildID, discord.UserID(sMsg.Author))
 		if err != nil {
 			log.Printf("Couldn't get member %v\n", err)
 			return
 		}
 
-		field := discord.EmbedField{Name: "Source", Value: CreateMessageLink(guild.ID, msg, true)}
+		field := discord.EmbedField{Name: "Source", Value: CreateMessageLink(int64(e.GuildID), msg, true)}
 		footer := discord.EmbedFooter{Text: strconv.FormatInt(sMsg.Author, 10)}
 		embed := discord.Embed{
 			Description: description,
@@ -192,13 +204,16 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 	}
 
-	// Now that we have updated the stars and starboard post ID, save it in the config
-	if sMsgPos >= 0 {
-		guild.Messages[sMsgPos] = *sMsg
-	} else {
-		guild.Messages = append(guild.Messages, *sMsg)
-	}
-	SetStarboardConfig(guild)
+	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+		// Now that we have updated the stars and starboard post ID, save it in the config
+		if sMsgPos >= 0 {
+			s.Messages[sMsgPos] = *sMsg
+		} else {
+			s.Messages = append(s.Messages, *sMsg)
+		}
+
+		return s
+	})
 }
 
 func getEmoji(stars int) (emoji string) {

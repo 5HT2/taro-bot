@@ -12,26 +12,32 @@ var (
 	checkmarkEmoji   = discord.APIEmoji(escapedCheckmark)
 )
 
-func GuildTopicVoteEmoji(guild GuildConfig) (string, error) {
-	e := guild.TopicVoteEmoji
+func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
+	e := ""
+	GuildContext(id, func(g *GuildConfig) *GuildConfig {
+		e = g.TopicVoteEmoji
 
-	if len(e) == 0 {
-		guild.TopicVoteEmoji = escapedCheckmark
-		SetGuildConfig(guild)
-	} else {
-		e = strings.TrimSuffix(e, "a:")
-	}
+		if len(e) == 0 {
+			g.TopicVoteEmoji = escapedCheckmark
+		} else {
+			e = strings.TrimSuffix(e, "a:")
+		}
+		return g
+	})
 
 	return FormatEncodedEmoji(e)
 }
 
-func GuildTopicVoteApiEmoji(guild GuildConfig) (discord.APIEmoji, error) {
-	e := guild.TopicVoteEmoji
+func GuildTopicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
+	e := ""
+	GuildContext(id, func(g *GuildConfig) *GuildConfig {
+		e := g.TopicVoteEmoji
 
-	if len(e) == 0 {
-		guild.TopicVoteEmoji = escapedCheckmark
-		SetGuildConfig(guild)
-	}
+		if len(e) == 0 {
+			g.TopicVoteEmoji = escapedCheckmark
+		}
+		return g
+	})
 
 	return ConfigEmojiAsApiEmoji(e)
 }
