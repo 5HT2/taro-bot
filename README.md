@@ -37,6 +37,16 @@ Per-guild responses will be configurable with a command in the future, while `gl
                 "prefix"
             ],
             "match_min": 2
+        },
+        {
+            "embed": false,
+            "title": "",
+            "description": "%s",
+            "reflect_func": "SpotifyToYoutubeResponse",
+            "regexes": [
+                "https?:\\/\\/open\\.spotify\\.com\\/track\\/[a-zA-Z0-9][^\\s]{2,}"
+            ],
+            "match_min": 1
         }
     ]
 }
