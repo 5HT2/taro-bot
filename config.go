@@ -37,7 +37,7 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 				found = true
 
 				exec := time.Now().UnixMilli()
-				log.Printf("Execute g: %vms (%s)\n", exec-start, fnName)
+				log.Printf("Execute: %vms (%s)\n", exec-start, fnName)
 				break
 			}
 		}
