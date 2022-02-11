@@ -9,7 +9,6 @@ import (
 )
 
 type StarboardConfig struct {
-	ID          int64              `json:"id"`                     // guild ID
 	Channel     int64              `json:"channel,omitempty"`      // channel post ID
 	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
 	Messages    []StarboardMessage `json:"messages,omitempty"`
@@ -32,12 +31,12 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
-	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
-		if s.Threshold == 0 {
-			s.Threshold = 3
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		if g.Starboard.Threshold == 0 {
+			g.Starboard.Threshold = 3
 		}
 
-		return s
+		return g
 	})
 
 	// Not starred by a guild member
@@ -73,8 +72,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	var cID int64 = 0
 
-	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
-		for i, m := range s.Messages {
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		for i, m := range g.Starboard.Messages {
 			if m.ID == int64(msg.ID) {
 				sMsg = &m
 				newPost = false
@@ -88,11 +87,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 
 		// Channel to send starboard message to
-		cID = s.Channel
+		cID = g.Starboard.Channel
 		if sMsg.IsNsfw == true {
-			cID = s.NsfwChannel
+			cID = g.Starboard.NsfwChannel
 		}
-		return s
+		return g
 	})
 
 	// Channel hasn't been set
@@ -129,9 +128,9 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	notEnoughStars := false
-	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
-		notEnoughStars = int64(stars) < s.Threshold
-		return s
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		notEnoughStars = int64(stars) < g.Starboard.Threshold
+		return g
 	})
 
 	// Not enough stars in sMsg to make post
@@ -204,15 +203,15 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 	}
 
-	StarboardContext(e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
 		// Now that we have updated the stars and starboard post ID, save it in the config
 		if sMsgPos >= 0 {
-			s.Messages[sMsgPos] = *sMsg
+			g.Starboard.Messages[sMsgPos] = *sMsg
 		} else {
-			s.Messages = append(s.Messages, *sMsg)
+			g.Starboard.Messages = append(g.Starboard.Messages, *sMsg)
 		}
 
-		return s
+		return g
 	})
 }
 

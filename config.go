@@ -17,33 +17,6 @@ var (
 
 type configOperation func(*Config)
 type guildOperation func(*GuildConfig) *GuildConfig
-type starboardOperation func(starboardConfig *StarboardConfig) *StarboardConfig
-
-func StarboardContext(c discord.GuildID, s starboardOperation) {
-	id := int64(c)
-	start := time.Now().UnixMilli()
-	found := false
-
-	config.run(func(c *Config) {
-		// Try to find an existing config, and if so, replace it with the result of executed guildOperation
-		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
-		for n, guild := range c.StarboardConfigs {
-			if guild.ID == id {
-				c.StarboardConfigs[n] = *s(&guild)
-				found = true
-				exec := time.Now().UnixMilli()
-				log.Printf("Time to execute starboardOperation: %vms\n", exec-start)
-				break
-			}
-		}
-
-		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
-		if !found {
-			defaultConfig := StarboardConfig{ID: id}
-			c.StarboardConfigs = append(c.StarboardConfigs, *s(&defaultConfig))
-		}
-	})
-}
 
 // GuildContext will modify a GuildConfig non-concurrently.
 // Avoid using inside a network or hang-able context whenever possible.
@@ -83,12 +56,11 @@ func (c *Config) run(co configOperation) {
 }
 
 type Config struct {
-	Mutex            sync.Mutex        `json:"-"` // not saved in DB
-	PrefixCache      map[int64]string  `json:"-"` // not saved in DB // [guild id]prefix
-	BotToken         string            `json:"bot_token"`
-	GlobalResponses  []Response        `json:"global_responses,omitempty"`
-	GuildConfigs     []GuildConfig     `json:"guild_configs,omitempty"`
-	StarboardConfigs []StarboardConfig `json:"starboard_configs,omitempty"`
+	Mutex           sync.Mutex       `json:"-"` // not saved in DB
+	PrefixCache     map[int64]string `json:"-"` // not saved in DB // [guild id]prefix
+	BotToken        string           `json:"bot_token"`
+	GlobalResponses []Response       `json:"global_responses,omitempty"`
+	GuildConfigs    []GuildConfig    `json:"guild_configs,omitempty"`
 }
 
 type GuildConfig struct {
@@ -102,6 +74,7 @@ type GuildConfig struct {
 	ActiveTopicVotes     []ActiveTopicVote `json:"active_topic_votes,omitempty"`
 	TopicVoteThreshold   int64             `json:"topic_vote_threshold,omitempty"`
 	TopicVoteEmoji       string            `json:"topic_vote_emoji,omitempty"`
+	Starboard            StarboardConfig   `json:"starboard_config"`
 }
 
 // SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker

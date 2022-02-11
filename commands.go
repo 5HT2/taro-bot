@@ -262,35 +262,35 @@ func (c Command) ChannelCommand() error {
 				arg3, errParse := ParseChannelArg(c.args, 3)
 				var err error = nil
 
-				StarboardContext(c.e.GuildID, func(s *StarboardConfig) *StarboardConfig {
+				GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
 					switch arg2 {
 					case "regular":
 						if errParse != nil {
-							s.Channel = 0
+							g.Starboard.Channel = 0
 							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", errorColor)
-							return s
+							return g
 						} else {
-							s.Channel = arg3
+							g.Starboard.Channel = arg3
 							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", successColor)
-							return s
+							return g
 						}
 					case "nsfw":
 						if errParse != nil {
-							s.NsfwChannel = 0
+							g.Starboard.NsfwChannel = 0
 							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", errorColor)
-							return s
+							return g
 						} else {
-							s.NsfwChannel = arg3
+							g.Starboard.NsfwChannel = arg3
 							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", successColor)
-							return s
+							return g
 						}
 					default:
-						regularC := "✅ Regular Starboard <#" + strconv.FormatInt(s.Channel, 10) + ">"
-						nsfwC := "✅ NSFW Starboard <#" + strconv.FormatInt(s.NsfwChannel, 10) + ">"
-						if s.Channel == 0 {
+						regularC := "✅ Regular Starboard <#" + strconv.FormatInt(g.Starboard.Channel, 10) + ">"
+						nsfwC := "✅ NSFW Starboard <#" + strconv.FormatInt(g.Starboard.NsfwChannel, 10) + ">"
+						if g.Starboard.Channel == 0 {
 							regularC = "⛔ Regular Starboard"
 						}
-						if s.NsfwChannel == 0 {
+						if g.Starboard.NsfwChannel == 0 {
 							nsfwC = "⛔ NSFW Starboard"
 						}
 
@@ -300,7 +300,7 @@ func (c Command) ChannelCommand() error {
 							Color:       defaultColor,
 						}
 						_, err = SendCustomEmbed(c.e.ChannelID, embed)
-						return s
+						return g
 					}
 				})
 				return err
