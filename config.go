@@ -32,7 +32,7 @@ func StarboardContext(c discord.GuildID, s starboardOperation) {
 				c.StarboardConfigs[n] = *s(&guild)
 				found = true
 				exec := time.Now().UnixMilli()
-				log.Printf("Time to execute starboardOperation: %v\n", exec-start)
+				log.Printf("Time to execute starboardOperation: %vms\n", exec-start)
 				break
 			}
 		}
@@ -61,7 +61,7 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 				c.GuildConfigs[n] = *g(&guild)
 				found = true
 				exec := time.Now().UnixMilli()
-				log.Printf("Time to execute guildOperation: %v\n", exec-start)
+				log.Printf("Time to execute guildOperation: %vms\n", exec-start)
 				break
 			}
 		}
