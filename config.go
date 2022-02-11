@@ -16,7 +16,7 @@ var (
 )
 
 type configOperation func(*Config)
-type guildOperation func(*GuildConfig) *GuildConfig
+type guildOperation func(*GuildConfig) (*GuildConfig, string)
 
 // GuildContext will modify a GuildConfig non-concurrently.
 // Avoid using inside a network or hang-able context whenever possible.
@@ -31,10 +31,13 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
 		for n, guild := range c.GuildConfigs {
 			if guild.ID == id {
-				c.GuildConfigs[n] = *g(&guild)
+				// Correct guild found, execute guildOperation
+				res, fnName := g(&guild)
+				c.GuildConfigs[n] = *res
 				found = true
+
 				exec := time.Now().UnixMilli()
-				log.Printf("Time to execute guildOperation: %vms\n", exec-start)
+				log.Printf("Time to execute guildOperation: %vms (%s)\n", exec-start, fnName)
 				break
 			}
 		}
@@ -42,7 +45,8 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
 		if !found {
 			defaultConfig := GuildConfig{ID: id, Prefix: defaultPrefix}
-			c.GuildConfigs = append(c.GuildConfigs, *g(&defaultConfig))
+			res, _ := g(&defaultConfig)
+			c.GuildConfigs = append(c.GuildConfigs, *res)
 		}
 	})
 }

@@ -14,7 +14,7 @@ var (
 
 func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 	e := ""
-	GuildContext(id, func(g *GuildConfig) *GuildConfig {
+	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
 		e = g.TopicVoteEmoji
 
 		if len(e) == 0 {
@@ -22,7 +22,7 @@ func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 		} else {
 			e = strings.TrimSuffix(e, "a:")
 		}
-		return g
+		return g, "GuildTopicVoteEmoji"
 	})
 
 	return FormatEncodedEmoji(e)
@@ -30,13 +30,13 @@ func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 
 func GuildTopicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
 	e := ""
-	GuildContext(id, func(g *GuildConfig) *GuildConfig {
+	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
 		e := g.TopicVoteEmoji
 
 		if len(e) == 0 {
 			g.TopicVoteEmoji = escapedCheckmark
 		}
-		return g
+		return g, "GuildTopicVoteApiEmoji"
 	})
 
 	return ConfigEmojiAsApiEmoji(e)

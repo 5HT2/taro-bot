@@ -25,9 +25,9 @@ func HasPermission(permission string, c Command) *TaroError {
 // UserHasPermission will return if the user with id has said permission
 func UserHasPermission(permission string, c Command, id int64) bool {
 	users := make([]int64, 0)
-	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		users = getPermissionSlice(permission, g)
-		return g
+		return g, "UserHasPermission: " + c.fnName
 	})
 
 	return Int64SliceContains(users, id)
@@ -37,7 +37,7 @@ func UserHasPermission(permission string, c Command, id int64) bool {
 func GivePermission(permission string, id int64, c Command) error {
 	var err error = nil
 
-	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 
 		users := getPermissionSlice(permission, g)
 		mention := GetUserMention(id)
@@ -61,7 +61,7 @@ func GivePermission(permission string, id int64, c Command) error {
 				"couldn't find permission type \""+permission+"\"")
 		}
 
-		return g
+		return g, "GivePermission: " + c.fnName
 	})
 
 	return err

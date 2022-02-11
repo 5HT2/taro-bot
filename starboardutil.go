@@ -31,12 +31,12 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		if g.Starboard.Threshold == 0 {
 			g.Starboard.Threshold = 3
 		}
 
-		return g
+		return g, "StarboardReactionHandler: update threshold"
 	})
 
 	// Not starred by a guild member
@@ -72,7 +72,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	var cID int64 = 0
 
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		for i, m := range g.Starboard.Messages {
 			if m.ID == int64(msg.ID) {
 				sMsg = &m
@@ -91,7 +91,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		if sMsg.IsNsfw == true {
 			cID = g.Starboard.NsfwChannel
 		}
-		return g
+		return g, "StarboardReactionHandler: generate starboard post"
 	})
 
 	// Channel hasn't been set
@@ -128,9 +128,9 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 
 	notEnoughStars := false
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		notEnoughStars = int64(stars) < g.Starboard.Threshold
-		return g
+		return g, "StarboardReactionHandler: check notEnoughStars"
 	})
 
 	// Not enough stars in sMsg to make post
@@ -203,7 +203,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 	}
 
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		// Now that we have updated the stars and starboard post ID, save it in the config
 		if sMsgPos >= 0 {
 			g.Starboard.Messages[sMsgPos] = *sMsg
@@ -211,7 +211,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			g.Starboard.Messages = append(g.Starboard.Messages, *sMsg)
 		}
 
-		return g
+		return g, "StarboardReactionHandler: update post"
 	})
 }
 

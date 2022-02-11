@@ -27,9 +27,9 @@ type ResponseReflection struct {
 
 func (r ResponseReflection) PrefixResponse() []string {
 	prefix := defaultPrefix
-	GuildContext(r.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(r.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		prefix = g.Prefix
-		return g
+		return g, "PrefixResponse"
 	})
 
 	return []string{prefix}

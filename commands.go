@@ -51,9 +51,9 @@ func (c Command) TopicCommand() error {
 	}
 
 	topicsEnabled := false
-	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		topicsEnabled = Int64SliceContains(g.EnabledTopicChannels, int64(c.e.ChannelID))
-		return g
+		return g, "TopicCommand: check topicsEnabled"
 	})
 
 	if !topicsEnabled {
@@ -71,9 +71,9 @@ func (c Command) TopicCommand() error {
 		return err
 	}
 
-	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		g.ActiveTopicVotes = append(g.ActiveTopicVotes, ActiveTopicVote{int64(msg.ID), int64(c.e.Author.ID), topic})
-		return g
+		return g, "TopicCommand: append ActiveTopicVotes"
 	})
 
 	if err := discordClient.React(msg.ChannelID, msg.ID, emoji); err != nil {
@@ -90,14 +90,14 @@ func (c Command) ChannelCommand() error {
 	case "archive":
 		err := HasPermission("channels", c)
 		if err == nil {
-			GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+			GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 				if g.ArchiveRole == 0 {
 					err = GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
 				}
 				if g.ArchiveCategory == 0 {
 					err = GenericError(c.fnName, "getting archive category", "`archive_category` not set in guild config")
 				}
-				return g
+				return g, "ChannelCommand: check archive permission"
 			})
 
 			if err != nil {
@@ -112,7 +112,7 @@ func (c Command) ChannelCommand() error {
 			overwrites := make([]discord.Overwrite, 0)
 			var data api.ModifyChannelData
 
-			GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+			GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 				// Copy everything except the archive and @everyone roles to overwrites
 				for _, overwrite := range channel.Overwrites {
 					id := int64(overwrite.ID)
@@ -137,7 +137,7 @@ func (c Command) ChannelCommand() error {
 				)
 				data = api.ModifyChannelData{Overwrites: &overwrites, CategoryID: discord.ChannelID(g.ArchiveCategory)}
 
-				return g
+				return g, "ChannelCommand: create overwrites data"
 			})
 
 			err = discordClient.ModifyChannel(c.e.ChannelID, data)
@@ -165,24 +165,24 @@ func (c Command) ChannelCommand() error {
 			} else {
 				switch arg2 {
 				case "enable":
-					GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						for _, channel := range channels {
 							if !Int64SliceContains(g.EnabledTopicChannels, channel) {
 								g.EnabledTopicChannels = append(g.EnabledTopicChannels, channel)
 							}
 						}
-						return g
+						return g, "ChannelCommand: topic enable"
 					})
 					_, err := SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", successColor)
 					return err
 				case "disable":
-					GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						for _, channel := range channels {
 							if Int64SliceContains(g.EnabledTopicChannels, channel) {
 								g.EnabledTopicChannels = Int64SliceRemove(g.EnabledTopicChannels, channel)
 							}
 						}
-						return g
+						return g, "ChannelCommand: topic disable"
 					})
 					_, err := SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", errorColor)
 					return err
@@ -206,9 +206,9 @@ func (c Command) ChannelCommand() error {
 							return err
 						}
 
-						GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+						GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 							g.TopicVoteEmoji = configEmoji
-							return g
+							return g, "ChannelCommand: update TopicVoteEmoji"
 						})
 
 						_, err = SendEmbed(c, "Set Topic Vote Emoji To:", emoji, successColor)
@@ -220,13 +220,13 @@ func (c Command) ChannelCommand() error {
 						return err3
 					}
 
-					GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						if arg3 <= 0 {
 							arg3 = 3
 						}
 
 						g.TopicVoteThreshold = arg3
-						return g
+						return g, "ChannelCommand: update topic vote threshold"
 					})
 
 					_, err := SendEmbed(c, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), successColor)
@@ -235,10 +235,10 @@ func (c Command) ChannelCommand() error {
 					noTopicChan := false
 					formattedChannels := ""
 
-					GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						formattedChannels = JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
 						noTopicChan = len(g.EnabledTopicChannels) == 0
-						return g
+						return g, "ChannelCommand: get enabled topic channels"
 					})
 
 					if noTopicChan {
@@ -262,27 +262,27 @@ func (c Command) ChannelCommand() error {
 				arg3, errParse := ParseChannelArg(c.args, 3)
 				var err error = nil
 
-				GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+				GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 					switch arg2 {
 					case "regular":
 						if errParse != nil {
 							g.Starboard.Channel = 0
 							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", errorColor)
-							return g
+							return g, "ChannelCommand: enable regular starboard"
 						} else {
 							g.Starboard.Channel = arg3
 							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", successColor)
-							return g
+							return g, "ChannelCommand: disable regular starboard"
 						}
 					case "nsfw":
 						if errParse != nil {
 							g.Starboard.NsfwChannel = 0
 							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", errorColor)
-							return g
+							return g, "ChannelCommand: enable nsfw starboard"
 						} else {
 							g.Starboard.NsfwChannel = arg3
 							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", successColor)
-							return g
+							return g, "ChannelCommand: disable nsfw starboard"
 						}
 					default:
 						regularC := "✅ Regular Starboard <#" + strconv.FormatInt(g.Starboard.Channel, 10) + ">"
@@ -300,7 +300,7 @@ func (c Command) ChannelCommand() error {
 							Color:       defaultColor,
 						}
 						_, err = SendCustomEmbed(c.e.ChannelID, embed)
-						return g
+						return g, "ChannelCommand: format starboard channels"
 					}
 				})
 				return err
@@ -376,9 +376,9 @@ func (c Command) PrefixCommand() error {
 	// Also set it in the guild
 	//
 
-	GuildContext(c.e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		g.Prefix = arg
-		return g
+		return g, "PrefixCommand"
 	})
 
 	embed := discord.Embed{

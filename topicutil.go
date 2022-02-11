@@ -16,7 +16,7 @@ type ActiveTopicVote struct {
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 	reactionMatchesActiveVote := false
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		// Find an activeTopicVote that matches `e`'s reaction
 		for _, vote := range g.ActiveTopicVotes {
 			if int64(e.MessageID) == vote.Message {
@@ -24,16 +24,16 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 				break
 			}
 		}
-		return g
+		return g, "TopicReactionHandler: check matching `e`'s reaction"
 	})
 
 	if reactionMatchesActiveVote {
 		// TODO: Honestly, why are we doing this?
-		GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+		GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 			if g.TopicVoteThreshold == 0 {
 				g.TopicVoteThreshold = 3
 			}
-			return g
+			return g, "TopicReactionHandler: check TopicVoteThreshold"
 		})
 
 		message, err := discordClient.Message(e.ChannelID, e.MessageID)
@@ -54,9 +54,9 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 				}
 
 				meetsThreshold := false
-				GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+				GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 					meetsThreshold = int64(reaction.Count-offset) >= g.TopicVoteThreshold
-					return g
+					return g, "TopicReactionHandler: check meetsThreshold"
 				})
 
 				if meetsThreshold {
@@ -97,7 +97,7 @@ func removeActiveVote(e *gateway.MessageReactionAddEvent) ActiveTopicVote {
 	var removedVote ActiveTopicVote
 	message := int64(e.MessageID)
 
-	GuildContext(e.GuildID, func(g *GuildConfig) *GuildConfig {
+	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		for _, vote := range g.ActiveTopicVotes {
 			if message != vote.Message {
 				oldVotes = append(oldVotes, vote)
@@ -107,7 +107,7 @@ func removeActiveVote(e *gateway.MessageReactionAddEvent) ActiveTopicVote {
 		}
 
 		g.ActiveTopicVotes = oldVotes
-		return g
+		return g, "removeActiveVote"
 	})
 
 	return removedVote
