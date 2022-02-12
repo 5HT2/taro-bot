@@ -65,7 +65,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	ExtractNodeText(node, text)
 	log.Printf("SpotifyToYoutube: text: %s\n", text.String())
 
-	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(text.String(), " | Spotify</title>"), "<title>"), " - song by ")
+	res := strings.Split(strings.TrimSuffix(text.String(), " | Spotify"), " - song by ")
 	log.Printf("SpotifyToYoutube: res: %s\n", res)
 
 	if len(res) < 2 {
