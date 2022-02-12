@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -62,7 +63,10 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 	text := &bytes.Buffer{}
 	ExtractNodeText(node, text)
+	log.Printf("SpotifyToYoutube: text: %s\n", text.String())
+
 	res := strings.Split(strings.TrimPrefix(strings.TrimSuffix(text.String(), " | Spotify</title>"), "<title>"), " - song by ")
+	log.Printf("SpotifyToYoutube: res: %s\n", res)
 
 	if len(res) < 2 {
 		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}
@@ -109,6 +113,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	if len(searchUrls) == 0 {
 		return []string{"Error: Couldn't find any Invidious instance to search with"}
 	}
+	log.Printf("SpotifyToYoutube: searchUrls %s\n", searchUrls)
 
 	// Query all available search URLs
 	//
@@ -134,6 +139,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	if len(searchResults) == 0 {
 		return []string{"Error: No search results found"}
 	}
+	log.Printf("SpotifyToYoutube: searchResults[0] %s\n", searchResults[0])
 
 	return []string{"https://youtu.be/" + searchResults[0].ID}
 }
