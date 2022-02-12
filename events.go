@@ -5,8 +5,8 @@ import (
 )
 
 func MessageReactionAddEvent(e *gateway.MessageReactionAddEvent) {
-	go TopicReactionHandler(e)
 	go StarboardReactionHandler(e)
+	go TopicReactionHandler(e)
 }
 
 func MessageCreateEvent(e *gateway.MessageCreateEvent) {
