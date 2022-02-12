@@ -6,21 +6,23 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type StarboardConfig struct {
-	Channel     int64              `json:"channel,omitempty"`      // channel post ID
-	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
-	Messages    []StarboardMessage `json:"messages,omitempty"`
-	Threshold   int64              `json:"threshold,omitempty"`
+	Channel     int64               `json:"channel,omitempty"`      // channel post ID
+	NsfwChannel int64               `json:"nsfw_channel,omitempty"` // nsfw post channel ID
+	Messages    []*StarboardMessage `json:"messages,omitempty"`
+	Threshold   int64               `json:"threshold,omitempty"`
 }
 
 type StarboardMessage struct {
-	ID     int64   `json:"id"`      // the original message ID
-	Author int64   `json:"author"`  // the original author ID
-	PostID int64   `json:"message"` // the starboard post message ID
-	IsNsfw bool    `json:"nsfw"`    // if the original message was made in an NSFW channel
-	Stars  []int64 `json:"stars"`   // list of added user IDs
+	Mutex  sync.Mutex `json:"-"`       // not saved in DB
+	ID     int64      `json:"id"`      // the original message ID
+	Author int64      `json:"author"`  // the original author ID
+	PostID int64      `json:"message"` // the starboard post message ID
+	IsNsfw bool       `json:"nsfw"`    // if the original message was made in an NSFW channel
+	Stars  []int64    `json:"stars"`   // list of added user IDs
 }
 
 var (
@@ -68,19 +70,32 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	var sMsg *StarboardMessage = nil
 	newPost := true
-	sMsgPos := -1
-
-	var cID int64 = 0
+	cID := int64(channel.ID)
 
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
-		for i, m := range g.Starboard.Messages {
-			if m.ID == int64(msg.ID) {
-				sMsg = &m
-				newPost = false
-				sMsgPos = i
-				break
+		// If user reacts to a post in a starboard channel
+		if cID == g.Starboard.Channel || cID == g.Starboard.NsfwChannel {
+			for _, m := range g.Starboard.Messages {
+				if m.PostID == int64(msg.ID) {
+					sMsg = m
+					newPost = false
+					break
+				}
+			}
+		} else { // else if a user reacts to a post in a regular channel
+			for _, m := range g.Starboard.Messages {
+				if m.ID == int64(msg.ID) {
+					sMsg = m
+					newPost = false
+					break
+				}
 			}
 		}
+
+		// Lock sMsg to avoid it being modified by other star reacts in the meantime
+		sMsg.Mutex.Lock()
+		defer sMsg.Mutex.Unlock()
+		log.Printf("sMsg: %v is %v\n", sMsg.ID, &sMsg.Mutex)
 
 		if newPost {
 			sMsg = &StarboardMessage{ID: int64(msg.ID), PostID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
@@ -205,10 +220,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		// Now that we have updated the stars and starboard post ID, save it in the config
-		if sMsgPos >= 0 {
-			g.Starboard.Messages[sMsgPos] = *sMsg
+		if newPost {
+			g.Starboard.Messages = append(g.Starboard.Messages, sMsg)
 		} else {
-			g.Starboard.Messages = append(g.Starboard.Messages, *sMsg)
+			for i, m := range g.Starboard.Messages {
+				if m.ID == sMsg.ID {
+					g.Starboard.Messages[i] = sMsg
+				}
+			}
 		}
 
 		return g, "StarboardReactionHandler: update post"
