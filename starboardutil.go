@@ -245,7 +245,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		return g, "StarboardReactionHandler: update post"
 	})
 
-	log.Printf("Execute: %vms\n (StarboardReactionHandler)", time.Now().UnixMilli()-start)
+	log.Printf("Execute: %vms (StarboardReactionHandler)\n", time.Now().UnixMilli()-start)
 }
 
 func getEmoji(stars int) (emoji string) {
