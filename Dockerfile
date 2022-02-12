@@ -7,5 +7,6 @@ WORKDIR /taro-bot
 
 RUN go build -o taro .
 
+ENV DEBUG "false"
 WORKDIR /taro-files
-CMD /taro-bot/taro
+CMD /taro-bot/taro -debug $DEBUG
