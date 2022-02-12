@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type StarboardConfig struct {
@@ -18,8 +19,8 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	ID     int64   `json:"id"`      // the original message ID
 	Author int64   `json:"author"`  // the original author ID
+	ID     int64   `json:"id"`      // the original message ID
 	PostID int64   `json:"message"` // the starboard post message ID
 	IsNsfw bool    `json:"nsfw"`    // if the original message was made in an NSFW channel
 	Stars  []int64 `json:"stars"`   // list of added user IDs
@@ -33,6 +34,8 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
+	start := time.Now().UnixMilli()
+
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		if g.Starboard.Threshold == 0 {
 			g.Starboard.Threshold = 3
@@ -128,9 +131,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 	log.Printf("sUserID: %v\nsMsg:%v\n", sUserID, sMsg)
 
-	stars := len(sMsg.Stars)
-
-	// Check if message reactions are larger than our cached ones
+	// Update our reactions in case any are missing from the API
 	for _, reaction := range msg.Reactions {
 		if reaction.Emoji.APIString().PathString() == escapedStar {
 			userReactions, err := discordClient.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
@@ -150,6 +151,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 	}
 
+	stars := len(sMsg.Stars)
 	notEnoughStars := false
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		notEnoughStars = int64(stars) < g.Starboard.Threshold
@@ -242,6 +244,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		return g, "StarboardReactionHandler: update post"
 	})
+
+	log.Printf("Execute: %vms\n (StarboardReactionHandler)", time.Now().UnixMilli()-start)
 }
 
 func getEmoji(stars int) (emoji string) {
