@@ -10,6 +10,7 @@ import (
 )
 
 type StarboardConfig struct {
+	Mutex       sync.Mutex         `json:"-"`                      // not saved in DB
 	Channel     int64              `json:"channel,omitempty"`      // channel post ID
 	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
 	Messages    []StarboardMessage `json:"messages,omitempty"`
@@ -17,12 +18,11 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	Mutex  *sync.Mutex `json:"-"`       // not saved in DB
-	ID     int64       `json:"id"`      // the original message ID
-	Author int64       `json:"author"`  // the original author ID
-	PostID int64       `json:"message"` // the starboard post message ID
-	IsNsfw bool        `json:"nsfw"`    // if the original message was made in an NSFW channel
-	Stars  []int64     `json:"stars"`   // list of added user IDs
+	ID     int64   `json:"id"`      // the original message ID
+	Author int64   `json:"author"`  // the original author ID
+	PostID int64   `json:"message"` // the starboard post message ID
+	IsNsfw bool    `json:"nsfw"`    // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`   // list of added user IDs
 }
 
 var (
@@ -37,6 +37,9 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		if g.Starboard.Threshold == 0 {
 			g.Starboard.Threshold = 3
 		}
+
+		// Prevent inadvertent modifying of the starboard while this runs
+		g.Starboard.Mutex.Lock()
 
 		return g, "StarboardReactionHandler: update threshold"
 	})
@@ -92,11 +95,6 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			}
 		}
 
-		// Lock sMsg to avoid it being modified by other star reacts in the meantime
-		sMsg.Mutex.Lock()
-		defer sMsg.Mutex.Unlock()
-		log.Printf("sMsg: %v is %v\n", sMsg.ID, &sMsg.Mutex)
-
 		if newPost {
 			sMsg = &StarboardMessage{ID: int64(msg.ID), PostID: 0, Author: int64(msg.Author.ID), IsNsfw: channel.NSFW, Stars: make([]int64, 0)}
 		}
@@ -135,8 +133,18 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	// Check if message reactions are larger than our cached ones
 	for _, reaction := range msg.Reactions {
 		if reaction.Emoji.APIString().PathString() == escapedStar {
-			if reaction.Count > stars {
-				stars = reaction.Count
+			userReactions, err := discordClient.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
+			if err != nil {
+				log.Printf("Failed to get userReactions: %s\n", err)
+				return
+			}
+
+			for _, userReaction := range userReactions {
+				sUserID = int64(userReaction.ID)
+
+				if sMsg.Author != sUserID && !Int64SliceContains(sMsg.Stars, sUserID) {
+					sMsg.Stars = append(sMsg.Stars, sUserID)
+				}
 			}
 			break
 		}
@@ -229,6 +237,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 				}
 			}
 		}
+		// We are done with the starboard, unlock it
+		g.Starboard.Mutex.Unlock()
 
 		return g, "StarboardReactionHandler: update post"
 	})
