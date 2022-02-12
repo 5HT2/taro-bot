@@ -24,7 +24,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 				break
 			}
 		}
-		return g, "TopicReactionHandler: check matching `e`'s reaction"
+		return g, "TopicReactionHandler: check reaction emoji"
 	})
 
 	if reactionMatchesActiveVote {
