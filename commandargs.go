@@ -148,6 +148,23 @@ func ParseStringArg(a []string, pos int, toLower bool) (string, *TaroError) {
 	return s, nil
 }
 
+// ParseBoolArg will return a bool (True / true / 1), or false with an error
+func ParseBoolArg(a []string, pos int) (bool, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseStringArg")
+	if argErr != nil {
+		return false, argErr
+	}
+
+	switch strings.ToLower(s) {
+	case "true", "1":
+		return true, nil
+	case "false", "0":
+		return false, nil
+	default:
+		return false, GenericSyntaxError("ParseBoolArg", s, "expected boolean")
+	}
+}
+
 // validateChannelArg will return a valid channel mention, or nil and an error if it is invalid
 func validateChannelArg(s string, fn string) (int64, *TaroError) {
 	ok := channelRegex.MatchString(s)
