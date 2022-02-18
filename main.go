@@ -65,5 +65,5 @@ func main() {
 }
 
 func checkExited() {
-	log.Printf("Last exit code was %v\n", lastExitCode)
+	log.Printf("Last exit code was %v\n", *lastExitCode)
 }
