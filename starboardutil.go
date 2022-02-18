@@ -17,12 +17,12 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	Author int64   `json:"author"`     // the original author ID
-	CID    int64   `json:"channel_id"` // the original channel ID
-	ID     int64   `json:"id"`         // the original message ID
-	PostID int64   `json:"message"`    // the starboard post message ID
-	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
-	Stars  []int64 `json:"stars"`      // list of added user IDs
+	Author int64   `json:"author"`               // the original author ID
+	CID    int64   `json:"channel_id,omitempty"` // the original channel ID
+	ID     int64   `json:"id"`                   // the original message ID
+	PostID int64   `json:"message"`              // the starboard post message ID
+	IsNsfw bool    `json:"nsfw"`                 // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`                // list of added user IDs
 }
 
 var (
