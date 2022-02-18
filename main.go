@@ -15,12 +15,14 @@ var (
 	discordClient session.Session
 	httpClient    = http.Client{Timeout: 10 * time.Second}
 	debug         = flag.Bool("debug", false, "Debug messages and faster config saving")
+	lastExitCode  = flag.Int64("exited", 0, "Called by Dockerfile")
 )
 
 func main() {
 	flag.Parse()
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
+	checkExited()
 	LoadConfig()
 	var token = config.BotToken
 	if token == "" {
@@ -60,4 +62,8 @@ func main() {
 
 	// Block forever.
 	select {}
+}
+
+func checkExited() {
+	log.Printf("Last exit code was %v\n", lastExitCode)
 }
