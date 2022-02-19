@@ -72,6 +72,10 @@ func main() {
 		checkExited()
 		os.Exit(int(*lastExitCode))
 		return
+	} else { // clear old logs
+		if err := os.Remove(logFile); err != nil {
+			log.Printf("error removing logFile: %v\n", err)
+		}
 	}
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
