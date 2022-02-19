@@ -20,7 +20,7 @@ import (
 var (
 	discordClient session.Session
 	httpClient    = http.Client{Timeout: 10 * time.Second}
-	debugLog      = flag.Bool("debugLog", false, "Debug messages and faster config saving")
+	debugLog      = flag.Bool("debug", false, "Debug messages and faster config saving")
 	lastExitCode  = flag.Int64("exited", 0, "Called by Dockerfile")
 	logFile       = "/tmp/taro-bot.log"
 )
