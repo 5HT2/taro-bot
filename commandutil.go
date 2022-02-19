@@ -16,6 +16,8 @@ type Command struct {
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
+	defer LogPanic()
+
 	// Don't respond to bot messages.
 	if e.Author.Bot {
 		return

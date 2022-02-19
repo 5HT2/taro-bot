@@ -15,6 +15,8 @@ type ActiveTopicVote struct {
 }
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
+	defer LogPanic()
+
 	reactionMatchesActiveVote := false
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 		// Find an activeTopicVote that matches `e`'s reaction

@@ -10,6 +10,8 @@ import (
 
 // ResponseHandler will find a global response from the config and send it, if found
 func ResponseHandler(e *gateway.MessageCreateEvent) {
+	defer LogPanic()
+
 	// TODO: Per-guild responses and configuration
 	// TODO: compiling and caching support could be added here to improve speed
 	for _, response := range config.GlobalResponses {

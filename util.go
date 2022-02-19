@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,13 @@ var (
 )
 
 type retryFunction func() ([]byte, error)
+
+func LogPanic() {
+	if x := recover(); x != nil {
+		// recovering from a panic; x contains whatever was passed to panic()
+		log.Printf("runtime panic: %v", x)
+	}
+}
 
 // RetryFunc will re-try fn by n number of times, in addition to one regular try
 func RetryFunc(fn retryFunction, n int) ([]byte, error) {

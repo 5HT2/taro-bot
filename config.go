@@ -63,6 +63,8 @@ type Config struct {
 	Mutex           sync.Mutex       `json:"-"` // not saved in DB
 	PrefixCache     map[int64]string `json:"-"` // not saved in DB // [guild id]prefix
 	BotToken        string           `json:"bot_token"`
+	OperatorChannel int64            `json:"operator_channel,omitempty"`
+	OperatorID      int64            `json:"operator_id,omitempty"`
 	GlobalResponses []Response       `json:"global_responses,omitempty"`
 	GuildConfigs    []GuildConfig    `json:"guild_configs,omitempty"`
 }

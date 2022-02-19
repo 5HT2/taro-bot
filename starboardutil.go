@@ -33,6 +33,8 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
+	defer LogPanic()
+
 	start := time.Now().UnixMilli()
 
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
