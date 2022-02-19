@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -23,7 +24,7 @@ type retryFunction func() ([]byte, error)
 func LogPanic() {
 	if x := recover(); x != nil {
 		// recovering from a panic; x contains whatever was passed to panic()
-		log.Printf("runtime panic: %v", x)
+		log.Printf("panic: %s\n", debug.Stack())
 		panic(x)
 	}
 }

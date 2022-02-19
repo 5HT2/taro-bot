@@ -20,7 +20,7 @@ import (
 var (
 	discordClient session.Session
 	httpClient    = http.Client{Timeout: 10 * time.Second}
-	debug         = flag.Bool("debug", false, "Debug messages and faster config saving")
+	debugLog      = flag.Bool("debugLog", false, "Debug messages and faster config saving")
 	lastExitCode  = flag.Int64("exited", 0, "Called by Dockerfile")
 	logFile       = "/tmp/taro-bot.log"
 )
@@ -106,7 +106,7 @@ func checkExited() {
 	found := false
 	lines := make([]string, 0)
 	for scanner.Scan() {
-		if found || strings.HasPrefix(scanner.Text(), "panic:") {
+		if found || strings.HasPrefix(scanner.Text()[20:], "panic:") {
 			found = true
 			lines = append(lines, scanner.Text())
 		}

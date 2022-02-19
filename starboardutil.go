@@ -56,14 +56,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		msg, err := discordClient.Message(e.ChannelID, e.MessageID)
 		if err != nil {
-			if *debug {
+			if *debugLog {
 				log.Printf("Error retrieving starred message: %v\n", err)
 			}
 			return g, "StarboardReactionHandler: get reaction message"
 		}
 		channel, err := discordClient.Channel(e.ChannelID)
 		if err != nil {
-			if *debug {
+			if *debugLog {
 				log.Printf("Error retrieving starred message channel: %v\n", err)
 			}
 			return g, "StarboardReactionHandler: get reaction channel"
