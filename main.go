@@ -92,7 +92,7 @@ func setupLogging() {
 func checkExited() {
 	log.Printf("Last exit code was %v\n", *lastExitCode)
 	if config.OperatorChannel == 0 || config.OperatorID == 0 {
-		log.Printf("Not uploading logs, OperatorChannel not set\n")
+		log.Printf("Not uploading logs, OperatorChannel or OperatorID were not set\n")
 		return
 	}
 
@@ -106,7 +106,7 @@ func checkExited() {
 	found := false
 	lines := make([]string, 0)
 	for scanner.Scan() {
-		if found || strings.HasPrefix(scanner.Text(), "panic:") || strings.HasPrefix(scanner.Text(), "runtime panic:") {
+		if found || strings.HasPrefix(scanner.Text(), "panic:") {
 			found = true
 			lines = append(lines, scanner.Text())
 		}
