@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -43,24 +41,8 @@ var (
 		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
 		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel"},
-		{FnName: "ExitCommand", Name: "exit"},
 	}
 )
-
-func (c Command) ExitCommand() error {
-	crash, err := ParseBoolArg(c.args, 1)
-	if err != nil {
-		return err
-	}
-
-	if crash {
-		s := []string{"s"}
-		log.Printf(s[1])
-	}
-
-	defer os.Exit(0)
-	return nil
-}
 
 func (c Command) TopicCommand() error {
 	topic, argErr := ParseAllArgs(c.args)
