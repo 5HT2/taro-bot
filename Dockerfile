@@ -10,4 +10,4 @@ RUN go build -o taro .
 
 ENV DEBUG "false"
 WORKDIR /taro-files
-CMD /taro-bot/scripts/run.sh
+CMD DEBUG="$DEBUG" /taro-bot/scripts/run.sh
