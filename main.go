@@ -68,11 +68,12 @@ func main() {
 	go SetupConfigSaving()
 
 	// program has been called with -exited, upload the logs and don't run the bot
-	if *lastExitCode != 0 {
+	if lastExitCode != nil && *lastExitCode > 0 {
 		checkExited()
 		os.Exit(int(*lastExitCode))
 		return
 	} else { // clear old logs
+		log.Printf("Removing old logs %s\n", logFile)
 		if err := os.Remove(logFile); err != nil {
 			log.Printf("error removing logFile: %v\n", err)
 		}
