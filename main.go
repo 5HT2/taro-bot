@@ -7,7 +7,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -20,14 +19,12 @@ import (
 var (
 	discordClient session.Session
 	httpClient    = http.Client{Timeout: 10 * time.Second}
-	debugLog      = flag.Bool("debug", false, "Debug messages and faster config saving")
 	lastExitCode  = flag.Int64("exited", 0, "Called by Dockerfile")
-	logFile       = "/tmp/taro-bot.log"
+	debugLog      = flag.Bool("debug", false, "Debug messages and faster config saving")
+	debugLogFile  = "/tmp/taro-bot.log"
 )
 
 func main() {
-	setupLogging()
-
 	flag.Parse()
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
@@ -72,26 +69,12 @@ func main() {
 		checkExited()
 		os.Exit(int(*lastExitCode))
 		return
-	} else { // clear old logs
-		log.Printf("Removing old logs %s\n", logFile)
-		if err := os.Remove(logFile); err != nil {
-			log.Printf("error removing logFile: %v\n", err)
-		}
 	}
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
 	// Block forever.
 	select {}
-}
-
-func setupLogging() {
-	logFile, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
 }
 
 func checkExited() {
@@ -101,24 +84,20 @@ func checkExited() {
 		return
 	}
 
-	file, err := os.Open(logFile)
+	file, err := os.Open(debugLogFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	found := false
 	lines := make([]string, 0)
 	for scanner.Scan() {
-		if found || strings.HasPrefix(scanner.Text()[20:], "panic:") {
-			found = true
-			lines = append(lines, scanner.Text())
-		}
+		lines = append(lines, scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	// Format stacktrace
@@ -128,8 +107,7 @@ func checkExited() {
 	}
 	stack += "\n```"
 
-	_, err = discordClient.SendMessage(discord.ChannelID(config.OperatorChannel), stack)
-	if err != nil {
+	if _, err = discordClient.SendMessage(discord.ChannelID(config.OperatorChannel), stack); err != nil {
 		log.Fatalln(err)
 	}
 }
