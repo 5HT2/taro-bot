@@ -73,6 +73,8 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		newPost := true
 		cID := int64(channel.ID)
 
+		log.Printf("Checking channel for starboard message %s\n", CreateMessageLink(int64(e.GuildID), msg, false))
+
 		// If user reacts to a post in a starboard channel
 		if cID == g.Starboard.Channel || cID == g.Starboard.NsfwChannel {
 			for _, m := range g.Starboard.Messages {
