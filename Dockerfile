@@ -9,4 +9,4 @@ RUN go build -o taro .
 
 ENV DEBUG "false"
 WORKDIR /taro-files
-CMD /taro-bot/taro -debug $DEBUG 2> /tmp/taro-bot.log || /taro-bot/taro -exited $?
+CMD { /taro-bot/taro -debug "$DEBUG" 2>/tmp/taro-bot.log; } || { /taro-bot/taro -exited $?; }
