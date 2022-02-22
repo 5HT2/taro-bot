@@ -17,12 +17,12 @@ type StarboardConfig struct {
 }
 
 type StarboardMessage struct {
-	Author int64   `json:"author"`     // the original author ID
-	CID    int64   `json:"channel_id"` // the original channel ID
-	ID     int64   `json:"id"`         // the original message ID
-	PostID int64   `json:"message"`    // the starboard post message ID
-	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
-	Stars  []int64 `json:"stars"`      // list of added user IDs
+	Author int64   `json:"author"`               // the original author ID
+	CID    *int64  `json:"channel_id,omitempty"` // the original channel ID
+	ID     int64   `json:"id"`                   // the original message ID
+	PostID int64   `json:"message"`              // the starboard post message ID
+	IsNsfw bool    `json:"nsfw"`                 // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`                // list of added user IDs
 }
 
 var (
@@ -94,15 +94,17 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			}
 
 			// If starred before channel ID was added, and the reaction is from the origin channel, update the stored one
-			if sMsg.CID == 0 {
-				sMsg.CID = int64(msg.ChannelID)
+			if sMsg.CID == nil || *sMsg.CID == 0 {
+				sMsgCID := int64(msg.ChannelID)
+				sMsg.CID = &sMsgCID
 			}
 		}
 
 		if newPost {
+			sMsgCID := int64(msg.ChannelID)
 			sMsg = &StarboardMessage{
 				Author: int64(msg.Author.ID),
-				CID:    int64(msg.ChannelID),
+				CID:    &sMsgCID,
 				ID:     int64(msg.ID),
 				PostID: 0,
 				IsNsfw: channel.NSFW,
@@ -165,7 +167,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			return g, "StarboardReactionHandler: check notEnoughStars"
 		}
 
-		content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(sMsg.CID, 10) + ">"
+		content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(*sMsg.CID, 10) + ">"
 
 		// Attempt to get existing message, and make a new one if it isn't there
 		pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
