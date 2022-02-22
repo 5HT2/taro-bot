@@ -94,7 +94,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			}
 
 			// If starred before channel ID was added, and the reaction is from the origin channel, update the stored one
-			if &sMsg.CID == nil || sMsg.CID == 0 {
+			if sMsg.CID == 0 {
 				sMsg.CID = int64(msg.ChannelID)
 			}
 		}
