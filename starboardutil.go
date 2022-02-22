@@ -92,6 +92,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 					break
 				}
 			}
+
+			// If starred before channel ID was added, and the reaction is from the origin channel, update the stored one
+			if !newPost && sMsg.CID == 0 {
+				sMsg.CID = int64(msg.ChannelID)
+			}
 		}
 
 		if newPost {
