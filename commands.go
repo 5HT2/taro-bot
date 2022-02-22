@@ -413,7 +413,7 @@ func (c Command) PingCommand() error {
 		curTime := time.Now().UnixMilli()
 		msgTime := msg.Timestamp.Time().UnixMilli()
 
-		embed := makeEmbed("Pong!", "Latency is `"+strconv.FormatInt(curTime-msgTime, 10)+"`ms", successColor)
+		embed := makeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", successColor)
 		_, err = discordClient.EditMessage(msg.ChannelID, msg.ID, "", embed)
 		return err
 	}
