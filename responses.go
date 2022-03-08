@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"net/http"
@@ -69,7 +68,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	log.Printf("SpotifyToYoutube: res: %s\n", res)
 
 	if len(res) < 2 {
-		return []string{"Error: `res` is less than 2: `" + fmt.Sprint(res) + "`"}
+		return []string{"Error: `res` is less than 2: `" + strings.Join(res, ", ") + "`"}
 	}
 
 	// Get available instances from invidious
