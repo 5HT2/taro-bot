@@ -12,7 +12,7 @@ Notable features:
 ## Usage
 
 ```
-git clone git@github.com:l1ving/taro-bot.git && cd taro-bot
+git clone git@github.com:5HT2/taro-bot.git && cd taro-bot
 make
 ./taro
 ```

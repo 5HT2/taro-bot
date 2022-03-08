@@ -1,4 +1,4 @@
-module github.com/l1ving/taro-bot
+module github.com/5HT2/taro-bot
 
 go 1.17
 
