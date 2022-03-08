@@ -9,6 +9,7 @@ import (
 
 var (
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
+	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
 	urlRegex          = regexp.MustCompile(`https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)`)
 	emojiRegex        = regexp.MustCompile(`([\x{2000}-\x{3300}]|[\x{D83C}\x{D000}-\x{D83C}\x{DFFF}]|[\x{D83D}\x{D000}-\x{D83D}\x{DFFF}]|[\x{D83E}\x{D000}-\x{D83E}\x{DFFF}])+`)
 	discordEmojiRegex = regexp.MustCompile("<(a|):([A-z0-9_]+):([0-9]+)>")

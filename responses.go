@@ -64,11 +64,15 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	ExtractNodeText(node, text)
 	log.Printf("SpotifyToYoutube: text: %s\n", text.String())
 
-	res := strings.Split(strings.TrimSuffix(text.String(), " | Spotify"), " - song by ")
-	log.Printf("SpotifyToYoutube: res: %s\n", res)
+	res := spotifyTitleRegex.FindStringSubmatch(text.String())
+	if len(res) == 0 {
+		return []string{"Error: Couldn't parse Spotify song title"}
+	}
 
-	if len(res) < 2 {
-		return []string{"Error: `res` is less than 2: `[" + strings.Join(res, ", ") + "]`"}
+	log.Printf("SpotifyToYoutube: res: [%s]\n", strings.Join(res, ", "))
+
+	if len(res) != 4 {
+		return []string{"Error: `res` is not 4: `[" + strings.Join(res, ", ") + "]`"}
 	}
 
 	// Get available instances from invidious
@@ -99,7 +103,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	// Make list of instances to query
 	//
 
-	artistAndSong := strings.ReplaceAll(res[1]+" - "+res[0], "\"", "") // Remove quotes
+	artistAndSong := strings.ReplaceAll(res[3]+" - "+res[1], "\"", "") // Remove quotes
 	searchQuery := "/api/v1/search?q=" + url.PathEscape(artistAndSong) // Artist - Song Title
 	searchUrls := make([]string, 0)
 
