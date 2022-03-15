@@ -34,8 +34,12 @@ func main() {
 		log.Fatalln("No bot_token given")
 	}
 
-	// TODO: Migrate to NewWithIntents
-	c := session.New("Bot " + token)
+	c := session.NewWithIntents("Bot "+token,
+		gateway.IntentGuildMessages,
+		gateway.IntentGuildEmojis,
+		gateway.IntentGuildMessageReactions,
+		gateway.IntentDirectMessages,
+	)
 	discordClient = *c
 
 	if c == nil {
