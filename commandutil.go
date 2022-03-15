@@ -51,6 +51,8 @@ func extractCommand(message discord.Message) (string, []string) {
 	if message.GuildID.IsNull() {
 		prefix = ""
 	} else {
+		log.Printf("guildID: %v\n", message.GuildID)
+
 		config.run(func(c *Config) {
 			prefix, ok = c.PrefixCache[int64(message.GuildID)]
 		})
