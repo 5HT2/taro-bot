@@ -48,13 +48,17 @@ func extractCommand(message discord.Message) (string, []string) {
 	prefix := defaultPrefix
 	ok := true
 
-	config.run(func(c *Config) {
-		prefix, ok = c.PrefixCache[int64(message.GuildID)]
-	})
+	if message.GuildID.IsNull() {
+		prefix = ""
+	} else {
+		config.run(func(c *Config) {
+			prefix, ok = c.PrefixCache[int64(message.GuildID)]
+		})
 
-	if !ok {
-		log.Printf("expected prefix to be in prefix cache - how did this happen\n")
-		return "", []string{}
+		if !ok {
+			log.Printf("expected prefix to be in prefix cache - how did this happen\n")
+			return "", []string{}
+		}
 	}
 
 	// If command doesn't start with a dot, or it's just a dot
