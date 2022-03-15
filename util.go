@@ -13,6 +13,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -29,7 +30,7 @@ func LogPanic() {
 }
 
 // RetryFunc will re-try fn by n number of times, in addition to one regular try
-func RetryFunc(fn retryFunction, n int) ([]byte, error) {
+func RetryFunc(fn retryFunction, n int, delayMs time.Duration) ([]byte, error) {
 	if n < 0 {
 		n = 0
 	}
@@ -40,6 +41,11 @@ func RetryFunc(fn retryFunction, n int) ([]byte, error) {
 			return b, err
 		}
 		n--
+
+		// Wait before re-trying, if we have re-tries left.
+		if n > 0 && delayMs > 0 {
+			time.Sleep(delayMs * time.Millisecond)
+		}
 	}
 
 	return fn()
