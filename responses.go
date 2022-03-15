@@ -83,7 +83,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 		return b, err
 	}
 
-	instancesStr, err := RetryFunc(fn, 1) // This will take a max of ~20 seconds to execute, with a 10s timeout
+	instancesStr, err := RetryFunc(fn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
 		return []string{"Error: " + err.Error()}
 	}
