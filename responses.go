@@ -154,7 +154,7 @@ func (r ResponseReflection) VintageStoryRebootResponse() []string {
 		server += "1"
 	}
 
-	_, err := http.Post("localhost:6016", "text/plain", bytes.NewBuffer([]byte("docker restart "+server)))
+	_, err := http.Post("http://localhost:6016", "text/plain", bytes.NewBuffer([]byte("docker restart "+server)))
 	if err != nil {
 		return []string{"Error: ```\n" + err.Error() + "\n```"}
 	}
