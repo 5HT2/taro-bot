@@ -147,3 +147,16 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 	return []string{"https://youtu.be/" + searchResults[0].ID}
 }
+
+func (r ResponseReflection) VintageStoryRebootResponse() []string {
+	server := "vintagestory"
+	if strings.Contains(r.e.Content, "test") {
+		server += "1"
+	}
+
+	_, err := http.Post("localhost:6016", "text/plain", bytes.NewBuffer([]byte("docker restart "+server)))
+	if err != nil {
+		return []string{"Error: ```\n" + err.Error() + "\n```"}
+	}
+	return []string{"Okay, sent restart command to `" + server + "`"}
+}
