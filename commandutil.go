@@ -48,7 +48,7 @@ func extractCommand(message discord.Message) (string, []string) {
 	prefix := defaultPrefix
 	ok := true
 
-	if len(message.GuildID.String()) == 0 {
+	if !message.GuildID.IsValid() {
 		prefix = ""
 	} else {
 		config.run(func(c *Config) {
