@@ -32,6 +32,11 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 		return
 	}
 
+	// If there is a user whitelist, and it doesn't contain the original author's ID, return
+	if len(response.LockUsers) > 0 && !Int64SliceContains(response.LockUsers, int64(e.Author.ID)) {
+		return
+	}
+
 	embed := discord.Embed{
 		Title:       response.Title,
 		Description: response.Description,

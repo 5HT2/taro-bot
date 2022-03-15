@@ -19,6 +19,7 @@ type Response struct {
 	Regexes      []string `json:"regexes"`
 	MatchMin     int      `json:"match_min,omitempty"`
 	LockChannels []int64  `json:"lock_channels,omitempty"`
+	LockUsers    []int64  `json:"lock_users,omitempty"`
 }
 
 type ResponseReflection struct {
