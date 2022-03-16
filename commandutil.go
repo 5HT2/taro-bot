@@ -62,6 +62,11 @@ func extractCommand(message discord.Message) (string, []string) {
 	} else {
 		config.run(func(c *Config) {
 			prefix, ok = c.PrefixCache[int64(message.GuildID)]
+
+			if !ok {
+				prefix = defaultPrefix
+				c.PrefixCache[int64(message.GuildID)] = defaultPrefix
+			}
 		})
 
 		// If the PrefixCache somehow doesn't have a prefix, set a default one and log it.
@@ -72,7 +77,6 @@ func extractCommand(message discord.Message) (string, []string) {
 
 			GuildContext(message.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 				g.Prefix = defaultPrefix
-				prefix = defaultPrefix
 				return g, "extractCommand: reset prefix"
 			})
 		}
