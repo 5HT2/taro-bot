@@ -34,14 +34,14 @@ func (ci CommandInfo) String() string {
 
 var (
 	commands = []CommandInfo{
-		{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels"},
+		{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
 		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
 		{FnName: "KirbyCommand", Name: "kirby"},
-		{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions"},
+		{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
 		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
-		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild"},
-		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel"},
+		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
+		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
 	}
 )
 
