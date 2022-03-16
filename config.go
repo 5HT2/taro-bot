@@ -45,6 +45,10 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
 		if !found {
 			defaultConfig := GuildConfig{ID: id, Prefix: defaultPrefix}
+			config.run(func(c *Config) {
+				c.PrefixCache[id] = defaultPrefix
+			})
+
 			res, _ := g(&defaultConfig)
 			c.GuildConfigs = append(c.GuildConfigs, *res)
 		}
