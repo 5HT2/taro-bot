@@ -16,6 +16,7 @@ type CommandInfo struct {
 	Name        string
 	Description string
 	Aliases     []string
+	GuildOnly   bool
 }
 
 func (ci CommandInfo) String() string {
