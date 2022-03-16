@@ -72,6 +72,7 @@ func extractCommand(message discord.Message) (string, []string) {
 
 			GuildContext(message.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 				g.Prefix = defaultPrefix
+				prefix = defaultPrefix
 				return g, "extractCommand: reset prefix"
 			})
 		}
