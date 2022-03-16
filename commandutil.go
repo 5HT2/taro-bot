@@ -55,9 +55,16 @@ func extractCommand(message discord.Message) (string, []string) {
 			prefix, ok = c.PrefixCache[int64(message.GuildID)]
 		})
 
+		// If the PrefixCache somehow doesn't have a prefix, set a default one and log it.
+		// This is most likely when the bot has joined a new guild without accessing GuildContext
 		if !ok {
-			log.Printf("expected prefix to be in prefix cache - how did this happen\n")
-			return "", []string{}
+			log.Printf("expected prefix to be in prefix cache: %s (%s)\n",
+				message.GuildID, CreateMessageLink(int64(message.GuildID), &message, false))
+
+			GuildContext(message.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+				g.Prefix = defaultPrefix
+				return g, "extractCommand: reset prefix"
+			})
 		}
 	}
 
