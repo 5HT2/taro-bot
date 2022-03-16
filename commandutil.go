@@ -64,6 +64,8 @@ func extractCommand(message discord.Message) (string, []string) {
 			prefix, ok = c.PrefixCache[int64(message.GuildID)]
 
 			if !ok {
+				log.Printf("here0")
+
 				prefix = defaultPrefix
 				c.PrefixCache[int64(message.GuildID)] = defaultPrefix
 			}
@@ -80,10 +82,12 @@ func extractCommand(message discord.Message) (string, []string) {
 				return g, "extractCommand: reset prefix"
 			})
 		}
+		log.Printf("here")
 	}
 
 	// If command doesn't start with a dot, or it's just a dot
 	if !strings.HasPrefix(content, prefix) || len(content) < (1+len(prefix)) {
+		log.Printf("here1")
 		return "", []string{}
 	}
 
