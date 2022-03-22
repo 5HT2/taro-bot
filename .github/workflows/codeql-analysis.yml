@@ -51,6 +51,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - run: |
+       make deps
        make
 
     - name: Perform CodeQL Analysis
