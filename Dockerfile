@@ -5,8 +5,8 @@ RUN mkdir /taro-bot \
 ADD . /taro-bot
 WORKDIR /taro-bot
 
-RUN apk add --no-cache bash
-RUN go build -o taro .
+RUN apk add --no-cache bash git \
+ && go build -o taro .
 
 ENV DEBUG "false"
 WORKDIR /taro-files
