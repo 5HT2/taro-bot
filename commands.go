@@ -102,11 +102,7 @@ func (c Command) StealEmojiCommand() error {
 
 	if emoji, err := discordClient.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
 		// error with uploading
-		return GenericError(
-			"StealEmojiCommand",
-			"uploading emoji",
-			"(might need to give the bot Manage Emoji permission) "+err.Error(),
-		)
+		return GenericError("StealEmojiCommand", "uploading emoji", err.Error())
 	} else {
 		// uploaded successfully, send a nice embed
 		_, err := discordClient.SendMessage(
