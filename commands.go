@@ -35,6 +35,7 @@ func (ci CommandInfo) String() string {
 var (
 	commands = []CommandInfo{
 		{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
+		{FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
 		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
 		{FnName: "KirbyCommand", Name: "kirby"},
@@ -44,6 +45,78 @@ var (
 		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
 	}
 )
+
+func (c Command) StealEmojiCommand() error {
+	// try to get emoji ID
+	emojiID, argErr := ParseInt64Arg(c.args, 1)
+	// try to get emoji URL
+	if argErr != nil {
+		emojiID, argErr = ParseEmojiUrlArg(c.args, 1)
+	}
+	// try to get sent emoji
+	if argErr != nil {
+		emojiID, argErr = ParseEmojiIdArg(c.args, 1)
+	}
+	// no emoji found
+	if argErr != nil {
+		return argErr
+	}
+
+	//
+	// we now have the emoji ID, get the name
+
+	emojiName, argErr := ParseStringArg(c.args, 2, false)
+	if argErr != nil {
+		return GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
+	}
+
+	//
+	// we now have the emoji ID and name, get the bytes
+
+	url := "https://cdn.discordapp.com/emojis/" + strconv.FormatInt(emojiID, 10)
+	bytes, res, err := RequestUrl(url+".gif", http.MethodGet)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		bytes, res, err = RequestUrl(url+".png", http.MethodGet)
+		if err != nil {
+			return err
+		}
+
+		if res.StatusCode != 200 {
+			return GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
+		}
+	}
+
+	// now we try to upload it
+
+	image := api.Image{ContentType: res.Header.Get("content-type"), Content: bytes}
+	createEmojiData := api.CreateEmojiData{
+		Name:  emojiName,
+		Image: image,
+		AuditLogReason: api.AuditLogReason(
+			"emoji created by " + GetUserMention(int64(c.e.Author.ID)),
+		),
+	}
+
+	if emoji, err := discordClient.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
+		// error with uploading
+		return GenericError(
+			"StealEmojiCommand",
+			"uploading emoji",
+			"(might need to give the bot Manage Emoji permission) "+err.Error(),
+		)
+	} else {
+		// uploaded successfully, send a nice embed
+		_, err := discordClient.SendMessage(
+			c.e.ChannelID,
+			emoji.String(),
+			discord.Embed{Title: "Emoji stolen ;)", Color: successColor},
+		)
+		return err
+	}
+}
 
 func (c Command) TopicCommand() error {
 	topic, argErr := ParseAllArgs(c.args)
