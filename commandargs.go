@@ -11,6 +11,7 @@ var (
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
 	urlRegex          = regexp.MustCompile(`https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)`)
+	emojiUrlRegex     = regexp.MustCompile(`http(s)?://cdn\.discordapp\.com/emojis/([0-9]+)`)
 	emojiRegex        = regexp.MustCompile(`([\x{2000}-\x{3300}]|[\x{D83C}\x{D000}-\x{D83C}\x{DFFF}]|[\x{D83D}\x{D000}-\x{D83D}\x{DFFF}]|[\x{D83E}\x{D000}-\x{D83E}\x{DFFF}])+`)
 	discordEmojiRegex = regexp.MustCompile("<(a|):([A-z0-9_]+):([0-9]+)>")
 	pingRegex         = regexp.MustCompile("<@!?[0-9]+>")
@@ -39,36 +40,6 @@ func ParseInt64Arg(a []string, pos int) (int64, *TaroError) {
 		return -1, GenericSyntaxError("ParseInt64Arg", s, "expected int64")
 	}
 	return i, nil
-}
-
-// ParseEmojiArg will return a discord.APIEmoji and the animated status, or nil, false and an error
-func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool, *TaroError) {
-	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
-	if argErr != nil {
-		if allowOmit {
-			return nil, false, nil
-		}
-		return nil, false, argErr
-	}
-
-	if emojiRegex.MatchString(s) {
-		emoji := discord.APIEmoji(s)
-		return &emoji, false, nil
-	}
-
-	emoji := discordEmojiRegex.FindStringSubmatch(s)
-	if len(emoji) < 3 {
-		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected full emoji")
-	}
-
-	id, err := strconv.Atoi(emoji[3])
-	if err != nil {
-		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected int")
-	}
-
-	apiEmoji := discord.NewCustomEmoji(discord.EmojiID(id), emoji[2])
-	animated := emoji[1] == "a"
-	return &apiEmoji, animated, nil
 }
 
 // ParseUserArg will return the ID of a mentioned user, or -1 and an error
@@ -102,6 +73,75 @@ func ParseUrlArg(a []string, pos int) (string, *TaroError) {
 		return s, nil
 	}
 	return "", GenericSyntaxError("ParseUrlArg", s, "expected http or https url")
+}
+
+// ParseEmojiArg will return a discord.APIEmoji and the animated status, or nil, false and an error
+func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
+	if argErr != nil {
+		if allowOmit {
+			return nil, false, nil
+		}
+		return nil, false, argErr
+	}
+
+	if emojiRegex.MatchString(s) {
+		emoji := discord.APIEmoji(s)
+		return &emoji, false, nil
+	}
+
+	emoji := discordEmojiRegex.FindStringSubmatch(s)
+	if len(emoji) < 4 {
+		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected full emoji")
+	}
+
+	id, err := strconv.Atoi(emoji[3])
+	if err != nil {
+		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected int")
+	}
+
+	apiEmoji := discord.NewCustomEmoji(discord.EmojiID(id), emoji[2])
+	animated := emoji[1] == "a"
+	return &apiEmoji, animated, nil
+}
+
+// ParseEmojiIdArg will return an emoji ID, or -1 and an error
+func ParseEmojiIdArg(a []string, pos int) (int64, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
+	if argErr != nil {
+		return -1, argErr
+	}
+
+	emoji := discordEmojiRegex.FindStringSubmatch(s)
+	if len(emoji) < 4 {
+		return -1, GenericSyntaxError("ParseEmojiIdArg", s, "expected full emoji")
+	}
+
+	id, err := strconv.ParseInt(emoji[3], 10, 64)
+	if err != nil {
+		return -1, GenericSyntaxError("ParseEmojiIdArg", s, "expected int")
+	}
+
+	return id, nil
+}
+
+// ParseEmojiUrlArg will return an emoji ID, or -1 and an error
+func ParseEmojiUrlArg(a []string, pos int) (int64, *TaroError) {
+	s, argErr := checkArgExists(a, pos, "ParseEmojiUrlArg")
+	if argErr != nil {
+		return -1, argErr
+	}
+
+	emoji := emojiUrlRegex.FindStringSubmatch(s)
+	if len(emoji) < 3 {
+		return -1, GenericSyntaxError("ParseEmojiUrlArg", s, "couldn't parse emoji url")
+	}
+
+	if id, err := strconv.ParseInt(emoji[2], 10, 64); err != nil {
+		return -1, GenericSyntaxError("ParseEmojiUrlArg", s, err.Error())
+	} else {
+		return id, nil
+	}
 }
 
 // ParseChannelSliceArg will return the IDs of the mentioned channels, or nil and an error
