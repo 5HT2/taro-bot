@@ -98,7 +98,7 @@ func (c Command) TestBackupCommand() error {
 		}
 	}
 
-	backupVS("vintagestory", "/home/ubuntu/fs/vintagestory/Saves/", "daily.vcdbs")
+	backupVS("vintagestory", "/root/.config/VintagestoryData/Saves/", "daily.vcdbs")
 	return nil
 }
 
