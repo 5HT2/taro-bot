@@ -16,12 +16,19 @@ func SetupPlugins() {
 	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &httpClient}
 	httpBashRequests.Setup(client)
 
-	vintageStorySetup()
+	config.run(func(c *Config) {
+		// TODO: This will have its own config value as a plugin
+		if c.OperatorID == 242462997530804225 {
+			vintageStorySetup()
+		}
+	})
+
 	scheduler.StartAsync()
 }
 
 func vintageStorySetup() {
-	vsChannel := 944988572333797426 // TODO: This will have it's own config value as a plugin
+	// TODO: This will have its own config value as a plugin
+	vsChannel := 944988572333797426
 	logVS := func(desc string, err error) {
 		color := defaultColor
 		embed := discord.Embed{
