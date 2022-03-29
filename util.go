@@ -79,8 +79,8 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 	return strings.Join(elems, sep)
 }
 
-// StringSliceContains will return if slice s contains e
-func StringSliceContains(s []string, e string) bool {
+// SliceContains will return if slice s contains e
+func SliceContains[K comparable](s []K, e K) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -89,21 +89,11 @@ func StringSliceContains(s []string, e string) bool {
 	return false
 }
 
-// Int64SliceContains will return true if slice s contains e
-func Int64SliceContains(s []int64, e int64) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-// Int64SliceRemove will remove i from s
-func Int64SliceRemove(s []int64, i int64) []int64 {
-	ns := make([]int64, 0)
+// SliceRemove will remove m from s
+func SliceRemove[K comparable](s []K, m K) []K {
+	ns := make([]K, 0)
 	for _, in := range s {
-		if in != i {
+		if in != m {
 			ns = append(ns, in)
 		}
 	}

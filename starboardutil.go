@@ -132,7 +132,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		// When adding a new star, ensure star user is not the same as author
 		// And also check if they've already been added
 		sUserID := int64(e.Member.User.ID)
-		if sMsg.Author != sUserID && !Int64SliceContains(sMsg.Stars, sUserID) {
+		if sMsg.Author != sUserID && !SliceContains(sMsg.Stars, sUserID) {
 			sMsg.Stars = append(sMsg.Stars, sUserID)
 		}
 		log.Printf("sUserID: %v\nsMsg:%v\n", sUserID, sMsg)
@@ -149,7 +149,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 				for _, userReaction := range userReactions {
 					sUserID = int64(userReaction.ID)
 
-					if sMsg.Author != sUserID && !Int64SliceContains(sMsg.Stars, sUserID) {
+					if sMsg.Author != sUserID && !SliceContains(sMsg.Stars, sUserID) {
 						sMsg.Stars = append(sMsg.Stars, sUserID)
 					}
 				}
