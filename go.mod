@@ -1,10 +1,10 @@
 module github.com/5HT2/taro-bot
 
-go 1.17
+go 1.18
 
 require (
 	github.com/diamondburned/arikawa/v3 v3.0.0-rc.5
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 )
 
 require (
