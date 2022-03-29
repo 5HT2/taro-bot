@@ -72,6 +72,13 @@ func (c Command) TestBackupCommand() error {
 	}
 
 	backupVS := func(name, path, backupName string) {
+		if res, err := httpBashRequests.Run("realpath . && ls"); err != nil {
+			logVS("Error with testing ls: ", err)
+			return
+		} else {
+			logVS(fmt.Sprintf("```\n%s\n```", res), nil)
+		}
+
 		logVS(fmt.Sprintf("Shutting down `%s`...", name), nil)
 		if _, err := httpBashRequests.Run("docker stop " + name); err != nil {
 			logVS("Error with Docker: ", err)
