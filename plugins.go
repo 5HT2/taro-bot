@@ -5,6 +5,8 @@ import (
 	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
+	"net/http"
+	"time"
 )
 
 // This is an external file to be used for more specific features.
@@ -13,7 +15,7 @@ import (
 // for plugins has been added.
 
 func SetupPlugins() {
-	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &httpClient}
+	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &http.Client{Timeout: 5 * time.Minute}}
 	httpBashRequests.Setup(client)
 
 	config.run(func(c *Config) {
