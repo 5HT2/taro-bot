@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
+	"github.com/go-co-op/gocron"
 	"log"
 	"net/http"
 	"os"
@@ -18,10 +19,12 @@ import (
 
 var (
 	discordClient session.Session
-	httpClient    = http.Client{Timeout: 5 * time.Second}
-	lastExitCode  = flag.Int64("exited", 0, "Called by Dockerfile")
-	debugLog      = flag.Bool("debug", false, "Debug messages and faster config saving")
-	debugLogFile  = "/tmp/taro-bot.log"
+	httpClient    = http.Client{Timeout: 10 * time.Second}
+	scheduler     = gocron.NewScheduler(getTimeZone())
+
+	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
+	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
+	debugLogFile = "/tmp/taro-bot.log"
 )
 
 func main() {
@@ -61,6 +64,7 @@ func main() {
 	}
 
 	go SetupConfigSaving()
+	go SetupPlugins()
 
 	// program has been called with -exited, upload the logs and don't run the bot
 	if lastExitCode != nil && *lastExitCode > 0 {
@@ -108,4 +112,14 @@ func checkExited() {
 	if _, err = discordClient.SendMessage(discord.ChannelID(config.OperatorChannel), stack); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func getTimeZone() *time.Location {
+	l, err := time.LoadLocation("Local")
+	if err != nil {
+		log.Printf("error loading timezone, defaulting to UTC: %v\n", err)
+		return time.UTC
+	}
+
+	return l
 }

@@ -8,6 +8,8 @@ taro-bot: clean
 
 deps:
 	go get -u github.com/diamondburned/arikawa/v3
+	go get -u github.com/5HT2C/http-bash-requests
+	go get -u github.com/go-co-op/gocron
 	go get -u golang.org/x/net
 	go mod tidy
 
