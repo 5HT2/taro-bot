@@ -148,7 +148,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 	return []string{"https://youtu.be/" + searchResults[0].ID}
 }
 
-// TODO: move to plugin
+// VintageStoryRebootResponse TODO: move to plugin
 func (r ResponseReflection) VintageStoryRebootResponse() []string {
 	server := "vintagestory"
 	if strings.Contains(r.e.Content, "test") {
