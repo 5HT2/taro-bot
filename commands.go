@@ -78,7 +78,7 @@ func (c Command) TestBackupCommand() error {
 			return
 		}
 
-		if res, err := httpBashRequests.Run(fmt.Sprintf("cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
+		if res, err := httpBashRequests.Run(fmt.Sprintf("sudo cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
 			logVS("Error with copying file: ", err)
 			return
 		} else {
