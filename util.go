@@ -5,7 +5,6 @@ import (
 	"errors"
 	"golang.org/x/net/html"
 	"image/color"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -123,13 +122,6 @@ func ExtractNode(content string, fn extractNodeCondition) (*html.Node, error) {
 		return n, nil
 	}
 	return nil, errors.New("missing matching tag in the node tree")
-}
-
-func RenderNode(n *html.Node) string {
-	var buf bytes.Buffer
-	w := io.Writer(&buf)
-	html.Render(w, n)
-	return buf.String()
 }
 
 func ExtractNodeText(n *html.Node, buf *bytes.Buffer) {
