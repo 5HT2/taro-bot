@@ -8,7 +8,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -99,7 +98,7 @@ func (c Command) TestBackupCommand() error {
 		}
 	}
 
-	backupVS("vintagestory", os.Getenv("HOME")+"/fs/vintagestory/Saves/", "daily.vcdbs")
+	backupVS("vintagestory", "/home/ubuntu/fs/vintagestory/Saves/", "daily.vcdbs")
 	return nil
 }
 
