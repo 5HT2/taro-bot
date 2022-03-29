@@ -72,20 +72,13 @@ func (c Command) TestBackupCommand() error {
 	}
 
 	backupVS := func(name, path, backupName string) {
-		if res, err := httpBashRequests.Run("realpath . && ls"); err != nil {
-			logVS("Error with testing ls: ", err)
-			return
-		} else {
-			logVS(fmt.Sprintf("```\n%s\n```", res), nil)
-		}
-
 		logVS(fmt.Sprintf("Shutting down `%s`...", name), nil)
 		if _, err := httpBashRequests.Run("docker stop " + name); err != nil {
 			logVS("Error with Docker: ", err)
 			return
 		}
 
-		if err := CopyFile(path+"default.vcdbs", path+backupName); err != nil {
+		if _, err := httpBashRequests.Run(fmt.Sprintf("cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
 			logVS("Error with copying file: ", err)
 			return
 		}
@@ -98,7 +91,7 @@ func (c Command) TestBackupCommand() error {
 		}
 	}
 
-	backupVS("vintagestory", "/root/.config/VintagestoryData/Saves/", "daily.vcdbs")
+	backupVS("vintagestory", "fs/vintagestory/Saves/default.vcdbs", "daily.vcdbs")
 	return nil
 }
 
