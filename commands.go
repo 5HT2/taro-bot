@@ -78,9 +78,11 @@ func (c Command) TestBackupCommand() error {
 			return
 		}
 
-		if _, err := httpBashRequests.Run(fmt.Sprintf("cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
+		if res, err := httpBashRequests.Run(fmt.Sprintf("cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
 			logVS("Error with copying file: ", err)
 			return
+		} else {
+			logVS(fmt.Sprintf("Copied files\n```\n%s\n```", res), nil)
 		}
 
 		if res, err := httpBashRequests.Run("docker start " + name); err != nil {
