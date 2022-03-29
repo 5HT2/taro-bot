@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,57 +43,8 @@ var (
 		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
 		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
-		{FnName: "TestBackupCommand", Name: "testbackup", GuildOnly: true},
 	}
 )
-
-func (c Command) TestBackupCommand() error {
-	// TODO: This will have its own config value as a plugin
-	vsChannel := 944988572333797426
-	logVS := func(desc string, err error) {
-		color := defaultColor
-		embed := discord.Embed{
-			Title:       "VintageStory",
-			Description: desc,
-			Color:       color,
-		}
-
-		if err != nil {
-			embed.Description += err.Error()
-			embed.Color = errorColor
-		}
-
-		_, err = discordClient.SendEmbeds(discord.ChannelID(vsChannel), embed)
-		if err != nil {
-			log.Printf("Error with logVS: %v\n", err)
-		}
-	}
-
-	backupVS := func(name, path, backupName string) {
-		logVS(fmt.Sprintf("Shutting down `%s`...", name), nil)
-		if _, err := httpBashRequests.Run("docker stop " + name); err != nil {
-			logVS("Error with Docker: ", err)
-			return
-		}
-
-		if res, err := httpBashRequests.Run(fmt.Sprintf("sudo cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
-			logVS("Error with copying file: ", err)
-			return
-		} else {
-			logVS(fmt.Sprintf("Copied files\n```\n%s\n```", res), nil)
-		}
-
-		if res, err := httpBashRequests.Run("docker start " + name); err != nil {
-			logVS("Error with Docker: ", err)
-			return
-		} else {
-			logVS(fmt.Sprintf("Started `%s`\n```\n%s\n```", name, res), nil)
-		}
-	}
-
-	backupVS("vintagestory", "fs/vintagestory/Saves/", "daily.vcdbs")
-	return nil
-}
 
 func (c Command) StealEmojiCommand() error {
 	// try to get emoji ID

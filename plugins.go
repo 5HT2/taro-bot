@@ -57,7 +57,7 @@ func vintageStorySetup() {
 			return
 		}
 
-		if err := CopyFile(path+"default.vcdbs", path+backupName); err != nil {
+		if _, err := httpBashRequests.Run(fmt.Sprintf("sudo cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
 			logVS("Error with copying file: ", err)
 			return
 		}
