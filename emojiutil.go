@@ -31,7 +31,7 @@ func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 func GuildTopicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
 	e := ""
 	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
-		e := g.TopicVoteEmoji
+		e = g.TopicVoteEmoji
 
 		if len(e) == 0 {
 			g.TopicVoteEmoji = escapedCheckmark
