@@ -93,7 +93,7 @@ func (c Command) TestBackupCommand() error {
 		}
 	}
 
-	backupVS("vintagestory", "fs/vintagestory/Saves/default.vcdbs", "daily.vcdbs")
+	backupVS("vintagestory", "fs/vintagestory/Saves/", "daily.vcdbs")
 	return nil
 }
 
