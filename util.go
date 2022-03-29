@@ -79,7 +79,7 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 }
 
 // SliceContains will return if slice s contains e
-func SliceContains[K comparable](s []K, e K) bool {
+func SliceContains[T comparable](s []T, e T) bool {
 	for _, a := range s {
 		if a == e {
 			return true
@@ -89,8 +89,8 @@ func SliceContains[K comparable](s []K, e K) bool {
 }
 
 // SliceRemove will remove m from s
-func SliceRemove[K comparable](s []K, m K) []K {
-	ns := make([]K, 0)
+func SliceRemove[T comparable](s []T, m T) []T {
+	ns := make([]T, 0)
 	for _, in := range s {
 		if in != m {
 			ns = append(ns, in)
