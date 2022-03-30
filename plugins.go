@@ -80,7 +80,7 @@ func vintageStorySetup() {
 		log.Printf("setup job: %v\n", job)
 	}
 
-	// Run a weekly backup at 04:00 on Sunday
+	// Run a weekly backup at 04:15 on Sunday
 	if job, err := scheduler.Cron("15 4 * * SUN").Do(func() {
 		backupVS("vintagestory", "fs/vintagestory/Saves/", "weekly.vcdbs")
 		backupVS("vintagestory1", "fs/vs1/Saves/", "weekly.vcdbs")
