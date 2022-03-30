@@ -16,7 +16,7 @@ import (
 
 func SetupPlugins() {
 	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &http.Client{Timeout: 5 * time.Minute}}
-	httpBashRequests.Setup(client)
+	httpBashRequests.Setup(&client)
 
 	config.run(func(c *Config) {
 		// TODO: This will have its own config value as a plugin
