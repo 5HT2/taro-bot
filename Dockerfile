@@ -8,6 +8,7 @@ WORKDIR /taro-bot
 RUN apk add --no-cache bash git \
  && go build -o taro .
 
+ENV TZ "Local"
 ENV DEBUG "false"
 WORKDIR /taro-files
-CMD DEBUG="$DEBUG" /taro-bot/scripts/run.sh
+CMD DEBUG="$DEBUG" TZ="$TZ" /taro-bot/scripts/run.sh

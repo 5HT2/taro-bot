@@ -14,5 +14,5 @@ docker rm taro || echo "Could not remove missing container taro"
 
 docker run --name taro \
   --mount type=bind,source="$TARO_PATH",target=/taro-files \
-  --network host -d \
+  --network host -d --env TZ="America/New_York" \
   l1ving/taro-bot
