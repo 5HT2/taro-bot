@@ -30,7 +30,7 @@ func SetupPlugins() {
 
 func vintageStorySetup() {
 	// TODO: This will have its own config value as a plugin
-	vsChannel := 944988572333797426
+	vsChannel := 959129039401025606
 	logVS := func(desc string, err error) {
 		color := defaultColor
 		embed := discord.Embed{
