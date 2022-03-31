@@ -115,11 +115,17 @@ func checkExited() {
 }
 
 func getTimeZone() *time.Location {
-	l, err := time.LoadLocation("Local")
+	tzEnv := os.Getenv("TZ")
+	if len(tzEnv) == 0 {
+		tzEnv = "Local"
+	}
+
+	l, err := time.LoadLocation(tzEnv)
 	if err != nil {
 		log.Printf("error loading timezone, defaulting to UTC: %v\n", err)
 		return time.UTC
 	}
 
+	log.Printf("using location %s for timezone\n", l)
 	return l
 }
