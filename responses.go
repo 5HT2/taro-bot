@@ -167,5 +167,5 @@ func (r ResponseReflection) VintageStoryRebootResponse() []string {
 		}
 	}
 
-	return []string{"Okay, sent restart command(s). Responses:\n" + strings.Join(responses, "\n")}
+	return []string{"Okay, sent restart command(s). Responses:\n\n" + strings.Join(responses, "")}
 }
