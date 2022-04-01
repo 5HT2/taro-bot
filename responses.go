@@ -151,7 +151,7 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 // VintageStoryRebootResponse TODO: move to plugin
 func (r ResponseReflection) VintageStoryRebootResponse() []string {
-	servers := []string{"vintagestory"}
+	servers := []string{"vintagestory0"}
 	if strings.Contains(r.e.Content, "both") {
 		servers = append(servers, "vintagestory1")
 	} else if strings.Contains(r.e.Content, "test") {
