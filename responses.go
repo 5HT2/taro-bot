@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"net/http"
@@ -150,14 +151,21 @@ func (r ResponseReflection) SpotifyToYoutubeResponse() []string {
 
 // VintageStoryRebootResponse TODO: move to plugin
 func (r ResponseReflection) VintageStoryRebootResponse() []string {
-	server := "vintagestory"
-	if strings.Contains(r.e.Content, "test") {
-		server += "1"
+	servers := []string{"vintagestory"}
+	if strings.Contains(r.e.Content, "both") {
+		servers = append(servers, "vintagestory1")
+	} else if strings.Contains(r.e.Content, "test") {
+		servers = []string{"vintagestory1"}
 	}
 
-	_, err := http.Post("http://localhost:6016", "text/plain", bytes.NewBuffer([]byte("docker restart "+server)))
-	if err != nil {
-		return []string{"Error: ```\n" + err.Error() + "\n```"}
+	responses := make([]string, 0)
+	for _, s := range servers {
+		if res, err := httpBashRequests.Run("docker restart " + s); err != nil {
+			responses = append(responses, "Response from `"+s+"`: `"+err.Error()+"`")
+		} else {
+			responses = append(responses, "Response from `"+s+"`: `"+string(res)+"`")
+		}
 	}
-	return []string{"Okay, sent restart command to `" + server + "`"}
+
+	return []string{"Okay, sent restart command(s). Responses:\n" + strings.Join(responses, "\n")}
 }
