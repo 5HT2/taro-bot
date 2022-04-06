@@ -8,6 +8,7 @@ Notable features:
 - Strict arg parsing and selection
 - Automatic error handling via friendly messages given to the user :)
 - Asynchronous event handling with concurrency-safe configs
+- Fully-fledged plugin support
 
 ## Usage
 
