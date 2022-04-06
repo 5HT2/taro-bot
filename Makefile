@@ -4,6 +4,13 @@ IMG    := ${NAME}:${TAG}
 LATEST := ${NAME}:latest
 
 taro-bot: clean
+	build
+	build-plugins
+
+run: taro-bot
+	./taro
+
+build:
 	go build -o taro .
 
 deps:
@@ -15,9 +22,6 @@ deps:
 
 clean:
 	rm -f taro
-
-run: taro-bot
-	./taro
 
 build-plugins:
 	for d in ./plugins/*/; do \
