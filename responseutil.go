@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
@@ -28,12 +29,12 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 	}
 
 	// If there is a channel whitelist, and it doesn't contain the original message's channel ID, return
-	if len(response.LockChannels) > 0 && !SliceContains(response.LockChannels, int64(e.ChannelID)) {
+	if len(response.LockChannels) > 0 && !util.SliceContains(response.LockChannels, int64(e.ChannelID)) {
 		return
 	}
 
 	// If there is a user whitelist, and it doesn't contain the original author's ID, return
-	if len(response.LockUsers) > 0 && !SliceContains(response.LockUsers, int64(e.Author.ID)) {
+	if len(response.LockUsers) > 0 && !util.SliceContains(response.LockUsers, int64(e.Author.ID)) {
 		return
 	}
 

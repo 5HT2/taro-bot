@@ -102,27 +102,6 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 	return strings.Join(elems, sep)
 }
 
-// SliceContains will return if slice s contains e
-func SliceContains[T comparable](s []T, e T) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-// SliceRemove will remove m from s
-func SliceRemove[T comparable](s []T, m T) []T {
-	ns := make([]T, 0)
-	for _, in := range s {
-		if in != m {
-			ns = append(ns, in)
-		}
-	}
-	return ns
-}
-
 type extractNodeCondition func(string) bool
 
 // ExtractNode will select the first node to match extractNodeCondition, for example

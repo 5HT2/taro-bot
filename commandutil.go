@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
@@ -96,9 +98,9 @@ func extractCommand(message discord.Message) (string, []string) {
 }
 
 // getCommandWithName will return the found CommandInfo with a matching name or alias
-func getCommandWithName(name string) *CommandInfo {
-	for _, cmd := range commands {
-		if cmd.Name == name || SliceContains(cmd.Aliases, name) {
+func getCommandWithName(name string) *util.CommandInfo {
+	for _, cmd := range bot.Commands {
+		if cmd.Name == name || util.SliceContains(cmd.Aliases, name) {
 			return &cmd
 		}
 	}

@@ -122,7 +122,7 @@ func (c Command) TopicCommand() error {
 
 	topicsEnabled := false
 	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
-		topicsEnabled = SliceContains(g.EnabledTopicChannels, int64(c.e.ChannelID))
+		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.e.ChannelID))
 		return g, "TopicCommand: check topicsEnabled"
 	})
 
@@ -237,7 +237,7 @@ func (c Command) ChannelCommand() error {
 				case "enable":
 					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						for _, channel := range channels {
-							if !SliceContains(g.EnabledTopicChannels, channel) {
+							if !util.SliceContains(g.EnabledTopicChannels, channel) {
 								g.EnabledTopicChannels = append(g.EnabledTopicChannels, channel)
 							}
 						}
@@ -248,8 +248,8 @@ func (c Command) ChannelCommand() error {
 				case "disable":
 					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 						for _, channel := range channels {
-							if SliceContains(g.EnabledTopicChannels, channel) {
-								g.EnabledTopicChannels = SliceRemove(g.EnabledTopicChannels, channel)
+							if util.SliceContains(g.EnabledTopicChannels, channel) {
+								g.EnabledTopicChannels = util.SliceRemove(g.EnabledTopicChannels, channel)
 							}
 						}
 						return g, "ChannelCommand: topic disable"

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/util"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ func UserHasPermission(permission string, c Command, id int64) bool {
 		return g, "UserHasPermission: " + c.fnName
 	})
 
-	return SliceContains(users, id)
+	return util.SliceContains(users, id)
 }
 
 // GivePermission will return nil if the permission was successfully given to the user with a matching id
@@ -42,7 +43,7 @@ func GivePermission(permission string, id int64, c Command) error {
 		users := getPermissionSlice(permission, g)
 		mention := GetUserMention(id)
 
-		if !SliceContains(users, id) {
+		if !util.SliceContains(users, id) {
 			users = append(users, id)
 		} else {
 			err = GenericError("GivePermission",
