@@ -14,7 +14,7 @@ import (
 // These are all planned to be migrated to plugins, once support
 // for plugins has been added.
 
-func SetupPlugins() {
+func RegisterPlugins() {
 	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &http.Client{Timeout: 5 * time.Minute}}
 	httpBashRequests.Setup(&client)
 

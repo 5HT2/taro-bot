@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"github.com/5HT2/taro-bot/plugins"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
@@ -37,6 +38,9 @@ func main() {
 		log.Fatalln("No bot_token given")
 	}
 
+	// Load plugins after config population but before anything else
+	plugins.Load()
+
 	c := session.NewWithIntents("Bot "+token,
 		gateway.IntentGuildMessages,
 		gateway.IntentGuildEmojis,
@@ -64,7 +68,8 @@ func main() {
 	}
 
 	go SetupConfigSaving()
-	go SetupPlugins()
+	go RegisterCommands()
+	go RegisterPlugins()
 
 	// program has been called with -exited, upload the logs and don't run the bot
 	if lastExitCode != nil && *lastExitCode > 0 {

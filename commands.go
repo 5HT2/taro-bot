@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"net/http"
@@ -11,40 +12,24 @@ import (
 	"time"
 )
 
-type CommandInfo struct {
-	FnName      string
-	Name        string
-	Description string
-	Aliases     []string
-	GuildOnly   bool
+func RegisterCommands() {
+	bot.CommandsMutex.Lock()
+	defer bot.CommandsMutex.Unlock()
+
+	bot.Commands = append(bot.Commands,
+		[]util.CommandInfo{
+			{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
+			{FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
+			{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
+			{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
+			{FnName: "KirbyCommand", Name: "kirby"},
+			{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
+			{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
+			{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
+			{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
+		}...,
+	)
 }
-
-func (ci CommandInfo) String() string {
-	aliases := ""
-	if len(ci.Aliases) > 0 {
-		aliases = "(" + strings.Join(ci.Aliases, ", ") + ")"
-	}
-	description := ci.Description
-	if len(description) == 0 {
-		description = "No Description"
-	}
-
-	return fmt.Sprintf("**%s** %s\n%s", ci.Name, aliases, description)
-}
-
-var (
-	commands = []CommandInfo{
-		{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
-		{FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
-		{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
-		{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
-		{FnName: "KirbyCommand", Name: "kirby"},
-		{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
-		{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
-		{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
-		{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
-	}
-)
 
 func (c Command) StealEmojiCommand() error {
 	// try to get emoji ID
@@ -462,8 +447,8 @@ func (c Command) PrefixCommand() error {
 
 func (c Command) HelpCommand() error {
 	fmtCmds := make([]string, 0)
-	for _, cmd := range commands {
-		fmtCmds = append(fmtCmds, cmd.String())
+	for _, cmd := range bot.Commands {
+		fmtCmds = append(fmtCmds, cmd.MarkdownString())
 	}
 
 	_, err := SendEmbed(c,

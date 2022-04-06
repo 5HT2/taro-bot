@@ -19,6 +19,13 @@ clean:
 run: taro-bot
 	./taro
 
+build-plugins:
+	for d in ./plugins/*/; do \
+  echo "building $$d"; \
+  go build -o "bin/" -buildmode=plugin "$$d"; \
+done; \
+
+
 docker-build:
 	@docker build -t ${IMG} .
 	@docker tag ${IMG} ${LATEST}
