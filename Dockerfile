@@ -6,6 +6,10 @@ ADD . /taro-bot
 WORKDIR /taro-bot
 
 RUN apk add --no-cache bash git \
+ && for d in ./plugins/*/; do \
+      echo "building $d"; \
+      go build -o "bin/" -buildmode=plugin "$d"; \
+    done; \
  && go build -o taro .
 
 ENV TZ "Local"
