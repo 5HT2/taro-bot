@@ -490,13 +490,13 @@ func (c Command) FrogCommand() error {
 		return err
 	}
 
-	color, err := ParseHexColorFast("#" + frogPicture.MedianColor)
+	color, err := util.ParseHexColorFast("#" + frogPicture.MedianColor)
 	if err != nil {
 		return err
 	}
 
 	embed := discord.Embed{
-		Color: discord.Color(ConvertColorToInt32(color)),
+		Color: discord.Color(util.ConvertColorToInt32(color)),
 		Image: &discord.EmbedImage{URL: frogPicture.ImageUrl},
 	}
 
