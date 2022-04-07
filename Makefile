@@ -3,9 +3,7 @@ TAG    := $(shell git log -1 --pretty=%h)
 IMG    := ${NAME}:${TAG}
 LATEST := ${NAME}:latest
 
-taro-bot: clean
-	build
-	build-plugins
+taro-bot: clean build build-plugins
 
 run: taro-bot
 	./taro
