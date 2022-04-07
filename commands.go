@@ -213,7 +213,7 @@ func (c Command) ChannelCommand() error {
 			if argChannels, err := ParseChannelSliceArg(c.args, 3, -1); err == nil && len(argChannels) != 0 {
 				channels = argChannels
 			}
-			channelsStr := JoinInt64Slice(channels, ", ", "<#", ">")
+			channelsStr := util.JoinInt64Slice(channels, ", ", "<#", ">")
 
 			if arg2, _ := ParseStringArg(c.args, 2, true); err != nil {
 				return err
@@ -291,7 +291,7 @@ func (c Command) ChannelCommand() error {
 					formattedChannels := ""
 
 					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
-						formattedChannels = JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
+						formattedChannels = util.JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
 						noTopicChan = len(g.EnabledTopicChannels) == 0
 						return g, "ChannelCommand: get enabled topic channels"
 					})
