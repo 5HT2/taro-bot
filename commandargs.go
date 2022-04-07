@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"regexp"
 	"strconv"
@@ -18,16 +19,16 @@ var (
 )
 
 // ParseAllArgs will return the combined existing args
-func ParseAllArgs(a []string) (string, *TaroError) {
+func ParseAllArgs(a []string) (string, *util.TaroError) {
 	s := strings.Join(a, " ")
 	if len(a) == 0 {
-		return "", GenericSyntaxError("ParseAllArgs", "nothing", "expected arguments!")
+		return "", util.GenericSyntaxError("ParseAllArgs", "nothing", "expected arguments!")
 	}
 	return s, nil
 }
 
 // ParseInt64Arg will return an int64 from s, or -1 and an error
-func ParseInt64Arg(a []string, pos int) (int64, *TaroError) {
+func ParseInt64Arg(a []string, pos int) (int64, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseInt64Arg")
 	if argErr != nil {
 		return -1, argErr
@@ -35,13 +36,13 @@ func ParseInt64Arg(a []string, pos int) (int64, *TaroError) {
 
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return -1, GenericSyntaxError("ParseInt64Arg", s, "expected int64")
+		return -1, util.GenericSyntaxError("ParseInt64Arg", s, "expected int64")
 	}
 	return i, nil
 }
 
 // ParseUserArg will return the ID of a mentioned user, or -1 and an error
-func ParseUserArg(a []string, pos int) (int64, *TaroError) {
+func ParseUserArg(a []string, pos int) (int64, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseUserArg")
 	if argErr != nil {
 		return -1, argErr
@@ -52,15 +53,15 @@ func ParseUserArg(a []string, pos int) (int64, *TaroError) {
 		id := mentionFormats.ReplaceAllString(s, "")
 		i, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			return -1, GenericSyntaxError("ParseUserArg", s, err.Error())
+			return -1, util.GenericSyntaxError("ParseUserArg", s, err.Error())
 		}
 		return i, nil
 	}
-	return -1, GenericSyntaxError("ParseUserArg", s, "expected user mention")
+	return -1, util.GenericSyntaxError("ParseUserArg", s, "expected user mention")
 }
 
 // ParseUrlArg will return a URL, or "" and an error
-func ParseUrlArg(a []string, pos int) (string, *TaroError) {
+func ParseUrlArg(a []string, pos int) (string, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseUrlArg")
 	if argErr != nil {
 		return "", argErr
@@ -70,11 +71,11 @@ func ParseUrlArg(a []string, pos int) (string, *TaroError) {
 	if ok {
 		return s, nil
 	}
-	return "", GenericSyntaxError("ParseUrlArg", s, "expected http or https url")
+	return "", util.GenericSyntaxError("ParseUrlArg", s, "expected http or https url")
 }
 
 // ParseEmojiArg will return a discord.APIEmoji and the animated status, or nil, false and an error
-func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool, *TaroError) {
+func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
 	if argErr != nil {
 		if allowOmit {
@@ -90,12 +91,12 @@ func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool
 
 	emoji := discordEmojiRegex.FindStringSubmatch(s)
 	if len(emoji) < 4 {
-		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected full emoji")
+		return nil, false, util.GenericSyntaxError("ParseEmojiArg", s, "expected full emoji")
 	}
 
 	id, err := strconv.Atoi(emoji[3])
 	if err != nil {
-		return nil, false, GenericSyntaxError("ParseEmojiArg", s, "expected int")
+		return nil, false, util.GenericSyntaxError("ParseEmojiArg", s, "expected int")
 	}
 
 	apiEmoji := discord.NewCustomEmoji(discord.EmojiID(id), emoji[2])
@@ -104,7 +105,7 @@ func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool
 }
 
 // ParseEmojiIdArg will return an emoji ID, or -1 and an error
-func ParseEmojiIdArg(a []string, pos int) (int64, *TaroError) {
+func ParseEmojiIdArg(a []string, pos int) (int64, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseEmojiArg")
 	if argErr != nil {
 		return -1, argErr
@@ -112,19 +113,19 @@ func ParseEmojiIdArg(a []string, pos int) (int64, *TaroError) {
 
 	emoji := discordEmojiRegex.FindStringSubmatch(s)
 	if len(emoji) < 4 {
-		return -1, GenericSyntaxError("ParseEmojiIdArg", s, "expected full emoji")
+		return -1, util.GenericSyntaxError("ParseEmojiIdArg", s, "expected full emoji")
 	}
 
 	id, err := strconv.ParseInt(emoji[3], 10, 64)
 	if err != nil {
-		return -1, GenericSyntaxError("ParseEmojiIdArg", s, "expected int")
+		return -1, util.GenericSyntaxError("ParseEmojiIdArg", s, "expected int")
 	}
 
 	return id, nil
 }
 
 // ParseEmojiUrlArg will return an emoji ID, or -1 and an error
-func ParseEmojiUrlArg(a []string, pos int) (int64, *TaroError) {
+func ParseEmojiUrlArg(a []string, pos int) (int64, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseEmojiUrlArg")
 	if argErr != nil {
 		return -1, argErr
@@ -132,18 +133,18 @@ func ParseEmojiUrlArg(a []string, pos int) (int64, *TaroError) {
 
 	emoji := emojiUrlRegex.FindStringSubmatch(s)
 	if len(emoji) < 3 {
-		return -1, GenericSyntaxError("ParseEmojiUrlArg", s, "couldn't parse emoji url")
+		return -1, util.GenericSyntaxError("ParseEmojiUrlArg", s, "couldn't parse emoji url")
 	}
 
 	if id, err := strconv.ParseInt(emoji[2], 10, 64); err != nil {
-		return -1, GenericSyntaxError("ParseEmojiUrlArg", s, err.Error())
+		return -1, util.GenericSyntaxError("ParseEmojiUrlArg", s, err.Error())
 	} else {
 		return id, nil
 	}
 }
 
 // ParseChannelSliceArg will return the IDs of the mentioned channels, or nil and an error
-func ParseChannelSliceArg(a []string, pos1 int, pos2 int) ([]int64, *TaroError) {
+func ParseChannelSliceArg(a []string, pos1 int, pos2 int) ([]int64, *util.TaroError) {
 	if pos2 == -1 {
 		pos2 = len(a)
 	}
@@ -166,7 +167,7 @@ func ParseChannelSliceArg(a []string, pos1 int, pos2 int) ([]int64, *TaroError) 
 }
 
 // ParseChannelArg will return the ID of a mentioned channel, or -1 and an error
-func ParseChannelArg(a []string, pos int) (int64, *TaroError) {
+func ParseChannelArg(a []string, pos int) (int64, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseChannelArg")
 	if argErr != nil {
 		return -1, argErr
@@ -176,7 +177,7 @@ func ParseChannelArg(a []string, pos int) (int64, *TaroError) {
 }
 
 // ParseStringArg will return the selected string, or "" with an error
-func ParseStringArg(a []string, pos int, toLower bool) (string, *TaroError) {
+func ParseStringArg(a []string, pos int, toLower bool) (string, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseStringArg")
 	if argErr != nil {
 		return "", argErr
@@ -188,7 +189,7 @@ func ParseStringArg(a []string, pos int, toLower bool) (string, *TaroError) {
 }
 
 // ParseBoolArg will return a bool (True / true / 1), or false with an error
-func ParseBoolArg(a []string, pos int) (bool, *TaroError) {
+func ParseBoolArg(a []string, pos int) (bool, *util.TaroError) {
 	s, argErr := checkArgExists(a, pos, "ParseStringArg")
 	if argErr != nil {
 		return false, argErr
@@ -200,26 +201,26 @@ func ParseBoolArg(a []string, pos int) (bool, *TaroError) {
 	case "false", "0":
 		return false, nil
 	default:
-		return false, GenericSyntaxError("ParseBoolArg", s, "expected boolean")
+		return false, util.GenericSyntaxError("ParseBoolArg", s, "expected boolean")
 	}
 }
 
 // validateChannelArg will return a valid channel mention, or nil and an error if it is invalid
-func validateChannelArg(s string, fn string) (int64, *TaroError) {
+func validateChannelArg(s string, fn string) (int64, *util.TaroError) {
 	ok := channelRegex.MatchString(s)
 	if ok {
 		id := mentionFormats.ReplaceAllString(s, "")
 		i, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
-			return -1, GenericSyntaxError(fn, s, err.Error())
+			return -1, util.GenericSyntaxError(fn, s, err.Error())
 		}
 		return i, nil
 	}
-	return -1, GenericSyntaxError(fn, s, "expected channel mention")
+	return -1, util.GenericSyntaxError(fn, s, "expected channel mention")
 }
 
 // getArgRange will return the elements in a from pos1 to pos2, or nil and an error if the range is invalid
-func getArgRange(a []string, pos1 int, pos2 int, fn string) (s []string, err *TaroError) {
+func getArgRange(a []string, pos1 int, pos2 int, fn string) (s []string, err *util.TaroError) {
 	elems := make([]string, 0)
 
 	for pos := pos1; pos <= pos2; pos++ {
@@ -234,7 +235,7 @@ func getArgRange(a []string, pos1 int, pos2 int, fn string) (s []string, err *Ta
 }
 
 // checkArgExists will return a[pos - 1] if said index exists, otherwise it will return an error
-func checkArgExists(a []string, pos int, fn string) (s string, err *TaroError) {
+func checkArgExists(a []string, pos int, fn string) (s string, err *util.TaroError) {
 	pos -= 1 // we want to increment this so ParseGenericArg(c.args, 1) will return the first arg
 	// prevent panic if dev made an error
 	if pos < 0 {
@@ -247,5 +248,5 @@ func checkArgExists(a []string, pos int, fn string) (s string, err *TaroError) {
 
 	// the position in the command the user is giving
 	pos += 1
-	return "", GenericError(fn, "getting arg "+strconv.Itoa(pos), "arg is missing")
+	return "", util.GenericError(fn, "getting arg "+strconv.Itoa(pos), "arg is missing")
 }

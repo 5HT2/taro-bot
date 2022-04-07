@@ -52,7 +52,7 @@ func (c Command) StealEmojiCommand() error {
 
 	emojiName, argErr := ParseStringArg(c.args, 2, false)
 	if argErr != nil {
-		return GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
+		return util.GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
 	}
 
 	//
@@ -70,7 +70,7 @@ func (c Command) StealEmojiCommand() error {
 		}
 
 		if res.StatusCode != 200 {
-			return GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
+			return util.GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
 		}
 	}
 
@@ -87,7 +87,7 @@ func (c Command) StealEmojiCommand() error {
 
 	if emoji, err := bot.Client.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
 		// error with uploading
-		return GenericError("StealEmojiCommand", "uploading emoji", err.Error())
+		return util.GenericError("StealEmojiCommand", "uploading emoji", err.Error())
 	} else {
 		// uploaded successfully, send a nice embed
 		_, err := bot.Client.SendMessage(
@@ -147,10 +147,10 @@ func (c Command) ChannelCommand() error {
 		if err == nil {
 			GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 				if g.ArchiveRole == 0 {
-					err = GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
+					err = util.GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
 				}
 				if g.ArchiveCategory == 0 {
-					err = GenericError(c.fnName, "getting archive category", "`archive_category` not set in guild config")
+					err = util.GenericError(c.fnName, "getting archive category", "`archive_category` not set in guild config")
 				}
 				return g, "ChannelCommand: check archive permission"
 			})
@@ -418,7 +418,7 @@ func (c Command) PrefixCommand() error {
 	// Filter spaces
 	arg = strings.ReplaceAll(arg, " ", "")
 	if len(arg) == 0 {
-		return GenericError(c.fnName, "getting prefix", "prefix is empty")
+		return util.GenericError(c.fnName, "getting prefix", "prefix is empty")
 	}
 
 	// Prefix is okay, set it in the cache

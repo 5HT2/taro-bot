@@ -1,4 +1,4 @@
-package main
+package util
 
 type TaroError struct {
 	Func   string

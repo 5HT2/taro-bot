@@ -13,13 +13,13 @@ type PermissionGroups struct {
 }
 
 // HasPermission will return if the author of a command has said permission
-func HasPermission(permission string, c Command) *TaroError {
+func HasPermission(permission string, c Command) *util.TaroError {
 	id := int64(c.e.Author.ID)
 
 	if UserHasPermission(permission, c, id) {
 		return nil
 	} else {
-		return GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
+		return util.GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
 	}
 }
 
@@ -46,7 +46,7 @@ func GivePermission(permission string, id int64, c Command) error {
 		if !util.SliceContains(users, id) {
 			users = append(users, id)
 		} else {
-			err = GenericError("GivePermission",
+			err = util.GenericError("GivePermission",
 				"giving permission to "+mention,
 				"user already has permission \""+permission+"\"")
 		}
@@ -57,7 +57,7 @@ func GivePermission(permission string, id int64, c Command) error {
 		case "permissions":
 			g.Permissions.ManagePermissions = users
 		default:
-			err = GenericError("GivePermission",
+			err = util.GenericError("GivePermission",
 				"giving permission to "+mention,
 				"couldn't find permission type \""+permission+"\"")
 		}
