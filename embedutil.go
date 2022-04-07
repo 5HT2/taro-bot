@@ -1,20 +1,14 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"strconv"
 )
 
-var (
-	successColor   discord.Color = 0x3cde5a
-	errorColor     discord.Color = 0xde413c
-	defaultColor   discord.Color = 0x493cde
-	starboardColor discord.Color = 0xffac33
-)
-
 func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
-	msg, err := discordClient.SendEmbeds(
+	msg, err := bot.Client.SendEmbeds(
 		c,
 		embed,
 	)
@@ -25,7 +19,7 @@ func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message
 }
 
 func SendCustomMessage(c discord.ChannelID, content string) (*discord.Message, error) {
-	msg, err := discordClient.SendMessage(
+	msg, err := bot.Client.SendMessage(
 		c,
 		content,
 	)
@@ -36,15 +30,15 @@ func SendCustomMessage(c discord.ChannelID, content string) (*discord.Message, e
 }
 
 func SendExternalErrorEmbed(c discord.ChannelID, cmdName string, err error) (*discord.Message, error) {
-	return SendCustomEmbed(c, makeEmbed("Error running `"+cmdName+"`", err.Error(), errorColor))
+	return SendCustomEmbed(c, makeEmbed("Error running `"+cmdName+"`", err.Error(), bot.ErrorColor))
 }
 
 func SendErrorEmbed(c Command, err error) {
-	_, _ = SendEmbed(c, "Error running `"+c.name+"`", err.Error(), errorColor)
+	_, _ = SendEmbed(c, "Error running `"+c.name+"`", err.Error(), bot.ErrorColor)
 }
 
 func SendEmbed(c Command, title string, description string, color discord.Color) (*discord.Message, error) {
-	msg, err := discordClient.SendEmbeds(
+	msg, err := bot.Client.SendEmbeds(
 		c.e.ChannelID,
 		makeEmbed(title, description, color),
 	)
@@ -55,7 +49,7 @@ func SendEmbed(c Command, title string, description string, color discord.Color)
 }
 
 func SendMessage(c Command, content string) (*discord.Message, error) {
-	msg, err := discordClient.SendMessage(
+	msg, err := bot.Client.SendMessage(
 		c.e.ChannelID,
 		content,
 	)

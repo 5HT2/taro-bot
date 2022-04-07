@@ -25,11 +25,6 @@ func FileExtMatches(s []string, file string) bool {
 	return found
 }
 
-// GetUserMention will return a formatted user mention from an id
-func GetUserMention(id int64) string {
-	return "<@!" + strconv.FormatInt(id, 10) + ">"
-}
-
 // JoinInt64Slice will join i with sep
 func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string {
 	elems := make([]string, 0)

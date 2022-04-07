@@ -43,7 +43,7 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	embed := discord.Embed{
 		Title:       response.Title,
 		Description: response.Description,
-		Color:       defaultColor,
+		Color:       bot.DefaultColor,
 	}
 	msgContent := response.Description
 
@@ -81,7 +81,7 @@ func findResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) bool
 	for _, regex := range response.Regexes {
 		// Allow using a variable in the regex to represent the current bot user
 		// TODO: Documentation for these
-		regex = strings.ReplaceAll(regex, "DISCORD_BOT_ID", discordBotUser.ID.String())
+		regex = strings.ReplaceAll(regex, "DISCORD_BOT_ID", bot.User.ID.String())
 
 		found, err := regexp.Match(regex, message)
 		if err != nil {

@@ -4,25 +4,20 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/plugins"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/session"
-	"github.com/go-co-op/gocron"
 	"log"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var (
-	discordClient  session.Session
-	discordBotUser *discord.User
-
-	scheduler = gocron.NewScheduler(getTimeZone())
-
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
@@ -32,14 +27,12 @@ func main() {
 	flag.Parse()
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
+	// Load config before anything else, as it will be needed
 	LoadConfig()
 	var token = config.BotToken
 	if token == "" {
 		log.Fatalln("No bot_token given")
 	}
-
-	// Load plugins after config population but before anything else
-	plugins.Load()
 
 	c := session.NewWithIntents("Bot "+token,
 		gateway.IntentGuildMessages,
@@ -47,7 +40,7 @@ func main() {
 		gateway.IntentGuildMessageReactions,
 		gateway.IntentDirectMessages,
 	)
-	discordClient = *c
+	bot.Client = *c
 
 	if c == nil {
 		log.Fatalln("Session failed: is nil")
@@ -66,12 +59,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to get bot user:", err)
 	}
-	discordBotUser = u
-
-	go SetupConfigSaving()
-	go RegisterCommands()
-	go RegisterResponses()
-	go RegisterPlugins()
+	bot.User = u
 
 	// program has been called with -exited, upload the logs and don't run the bot
 	if lastExitCode != nil && *lastExitCode > 0 {
@@ -79,6 +67,15 @@ func main() {
 		os.Exit(int(*lastExitCode))
 		return
 	}
+
+	// Call plugins after logging in with the bot, but before doing anything else at all
+	plugins.Load()
+
+	go SetupConfigSaving()
+	go RegisterCommands()
+	go RegisterResponses()
+	util.RegisterHttpBashRequests()
+	bot.Scheduler.StartAsync()
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
@@ -116,23 +113,7 @@ func checkExited() {
 	}
 	stack += "\n```"
 
-	if _, err = discordClient.SendMessage(discord.ChannelID(config.OperatorChannel), stack); err != nil {
+	if _, err = bot.Client.SendMessage(discord.ChannelID(config.OperatorChannel), stack); err != nil {
 		log.Fatalln(err)
 	}
-}
-
-func getTimeZone() *time.Location {
-	tzEnv := os.Getenv("TZ")
-	if len(tzEnv) == 0 {
-		tzEnv = "Local"
-	}
-
-	l, err := time.LoadLocation(tzEnv)
-	if err != nil {
-		log.Printf("error loading timezone, defaulting to UTC: %v\n", err)
-		return time.UTC
-	}
-
-	log.Printf("using location %s for timezone\n", l)
-	return l
 }

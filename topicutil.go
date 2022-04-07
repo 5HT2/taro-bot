@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -39,7 +40,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 			return g, "TopicReactionHandler: check TopicVoteThreshold"
 		})
 
-		message, err := discordClient.Message(e.ChannelID, e.MessageID)
+		message, err := bot.Client.Message(e.ChannelID, e.MessageID)
 		if err != nil {
 			return
 		}
@@ -64,7 +65,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 				if meetsThreshold {
 					vote := removeActiveVote(e)
-					channel, err := discordClient.Channel(e.ChannelID)
+					channel, err := bot.Client.Channel(e.ChannelID)
 					if err != nil {
 						return
 					}
@@ -79,11 +80,11 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 						Description: "The topic is now **" + vote.Topic + "**, suggested by <@" +
 							strconv.FormatInt(vote.Author, 10) + ">!",
 						Footer: &discord.EmbedFooter{Text: oldTopic},
-						Color:  successColor,
+						Color:  bot.SuccessColor,
 					}
 
 					data := api.ModifyChannelData{Topic: option.NewNullableString(vote.Topic)}
-					if err = discordClient.ModifyChannel(e.ChannelID, data); err != nil {
+					if err = bot.Client.ModifyChannel(e.ChannelID, data); err != nil {
 						_, _ = SendExternalErrorEmbed(e.ChannelID, "TopicReactionHandler", err)
 					} else {
 						_, _ = SendCustomEmbed(e.ChannelID, embed)

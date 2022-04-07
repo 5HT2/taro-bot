@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"golang.org/x/net/html"
+	"strconv"
 	"strings"
 )
 
@@ -39,4 +40,9 @@ func ExtractNodeText(n *html.Node, buf *bytes.Buffer) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		ExtractNodeText(c, buf)
 	}
+}
+
+// GetUserMention will return a formatted user mention from an id
+func GetUserMention(id int64) string {
+	return "<@!" + strconv.FormatInt(id, 10) + ">"
 }

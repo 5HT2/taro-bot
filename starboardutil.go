@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -55,14 +56,14 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			return g, "StarboardReactionHandler: check reaction emoji"
 		}
 
-		msg, err := discordClient.Message(e.ChannelID, e.MessageID)
+		msg, err := bot.Client.Message(e.ChannelID, e.MessageID)
 		if err != nil {
 			if *debugLog {
 				log.Printf("Error retrieving starred message: %v\n", err)
 			}
 			return g, "StarboardReactionHandler: get reaction message"
 		}
-		channel, err := discordClient.Channel(e.ChannelID)
+		channel, err := bot.Client.Channel(e.ChannelID)
 		if err != nil {
 			if *debugLog {
 				log.Printf("Error retrieving starred message channel: %v\n", err)
@@ -124,7 +125,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 
 		// Get post channel and ensure it exists
-		postChannel, err := discordClient.Channel(discord.ChannelID(cID))
+		postChannel, err := bot.Client.Channel(discord.ChannelID(cID))
 		if err != nil {
 			log.Printf("Couldn't get post channel\n")
 			return g, "StarboardReactionHandler: get post channel"
@@ -141,7 +142,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		// Update our reactions in case any are missing from the API
 		for _, reaction := range msg.Reactions {
 			if reaction.Emoji.APIString().PathString() == escapedStar {
-				userReactions, err := discordClient.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
+				userReactions, err := bot.Client.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
 				if err != nil {
 					log.Printf("Failed to get userReactions: %s\n", err)
 					return g, "StarboardReactionHandler: update sMsg.Stars"
@@ -169,7 +170,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(sMsg.CID, 10) + ">"
 
 		// Attempt to get existing message, and make a new one if it isn't there
-		pMsg, err := discordClient.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
+		pMsg, err := bot.Client.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
 		if err != nil {
 			log.Printf("Couldn't get pMsg %v\n", err)
 
@@ -196,7 +197,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 				image = &discord.EmbedImage{URL: msg.Content}
 			}
 
-			member, err := discordClient.Member(e.GuildID, discord.UserID(sMsg.Author))
+			member, err := bot.Client.Member(e.GuildID, discord.UserID(sMsg.Author))
 			if err != nil {
 				log.Printf("Couldn't get member %v\n", err)
 				return g, "StarboardReactionHandler: get sMsg.Author"
@@ -210,13 +211,13 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 				Fields:      []discord.EmbedField{field},
 				Footer:      &footer,
 				Timestamp:   msg.Timestamp,
-				Color:       starboardColor,
+				Color:       bot.StarboardColor,
 				Image:       image,
 			}
 
 			log.Printf("Embed image: %v\n", embed.Image)
 
-			msg, err = discordClient.SendMessage(postChannel.ID, content, embed)
+			msg, err = bot.Client.SendMessage(postChannel.ID, content, embed)
 			if err != nil {
 				log.Printf("Error sending starboard post: %v\n", err)
 			} else {
@@ -224,7 +225,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 			}
 		} else {
 			// Edit the post if it exists
-			_, err = discordClient.EditMessage(postChannel.ID, discord.MessageID(sMsg.PostID), content, pMsg.Embeds...)
+			_, err = bot.Client.EditMessage(postChannel.ID, discord.MessageID(sMsg.PostID), content, pMsg.Embeds...)
 			if err != nil {
 				log.Printf("Error updating starboard post: %v\n", err)
 			}

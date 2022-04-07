@@ -19,7 +19,7 @@ func HasPermission(permission string, c Command) *TaroError {
 	if UserHasPermission(permission, c, id) {
 		return nil
 	} else {
-		return GenericError(c.fnName, "running command", GetUserMention(id)+" is missing the \""+permission+"\" permission")
+		return GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
 	}
 }
 
@@ -41,7 +41,7 @@ func GivePermission(permission string, id int64, c Command) error {
 	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
 
 		users := getPermissionSlice(permission, g)
-		mention := GetUserMention(id)
+		mention := util.GetUserMention(id)
 
 		if !util.SliceContains(users, id) {
 			users = append(users, id)

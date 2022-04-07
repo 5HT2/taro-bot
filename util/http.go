@@ -2,8 +2,10 @@ package util
 
 import (
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 // RequestUrl will return the bytes of the body of url
@@ -40,4 +42,9 @@ func RequestUrlRetry(urls []string, method string, code int) (bytes []byte) {
 	}
 
 	return nil
+}
+
+func RegisterHttpBashRequests() {
+	client := httpBashRequests.Client{Addr: "http://localhost:6016", HttpClient: &http.Client{Timeout: 5 * time.Minute}}
+	httpBashRequests.Setup(&client)
 }

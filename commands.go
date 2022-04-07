@@ -81,19 +81,19 @@ func (c Command) StealEmojiCommand() error {
 		Name:  emojiName,
 		Image: image,
 		AuditLogReason: api.AuditLogReason(
-			"emoji created by " + GetUserMention(int64(c.e.Author.ID)),
+			"emoji created by " + util.GetUserMention(int64(c.e.Author.ID)),
 		),
 	}
 
-	if emoji, err := discordClient.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
+	if emoji, err := bot.Client.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
 		// error with uploading
 		return GenericError("StealEmojiCommand", "uploading emoji", err.Error())
 	} else {
 		// uploaded successfully, send a nice embed
-		_, err := discordClient.SendMessage(
+		_, err := bot.Client.SendMessage(
 			c.e.ChannelID,
 			emoji.String(),
-			discord.Embed{Title: "Emoji stolen ;)", Color: successColor},
+			discord.Embed{Title: "Emoji stolen ;)", Color: bot.SuccessColor},
 		)
 		return err
 	}
@@ -112,11 +112,11 @@ func (c Command) TopicCommand() error {
 	})
 
 	if !topicsEnabled {
-		_, err := SendEmbed(c, "Topics are disabled in this channel!", "", errorColor)
+		_, err := SendEmbed(c, "Topics are disabled in this channel!", "", bot.ErrorColor)
 		return err
 	}
 
-	msg, err := SendEmbed(c, "New topic suggested!", c.e.Author.Mention()+" suggests: "+topic, defaultColor)
+	msg, err := SendEmbed(c, "New topic suggested!", c.e.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c Command) TopicCommand() error {
 		return g, "TopicCommand: append ActiveTopicVotes"
 	})
 
-	if err := discordClient.React(msg.ChannelID, msg.ID, emoji); err != nil {
+	if err := bot.Client.React(msg.ChannelID, msg.ID, emoji); err != nil {
 		return err
 	}
 
@@ -159,7 +159,7 @@ func (c Command) ChannelCommand() error {
 				return err
 			}
 
-			channel, err := discordClient.Channel(c.e.ChannelID)
+			channel, err := bot.Client.Channel(c.e.ChannelID)
 			if err != nil {
 				return err
 			}
@@ -195,11 +195,11 @@ func (c Command) ChannelCommand() error {
 				return g, "ChannelCommand: create overwrites data"
 			})
 
-			err = discordClient.ModifyChannel(c.e.ChannelID, data)
+			err = bot.Client.ModifyChannel(c.e.ChannelID, data)
 			if err != nil {
 				return err
 			} else {
-				_, err = SendEmbed(c, "Channels", "Successfully archived channel", successColor)
+				_, err = SendEmbed(c, "Channels", "Successfully archived channel", bot.SuccessColor)
 				return err
 			}
 		} else {
@@ -228,7 +228,7 @@ func (c Command) ChannelCommand() error {
 						}
 						return g, "ChannelCommand: topic enable"
 					})
-					_, err := SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", successColor)
+					_, err := SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
 					return err
 				case "disable":
 					GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
@@ -239,7 +239,7 @@ func (c Command) ChannelCommand() error {
 						}
 						return g, "ChannelCommand: topic disable"
 					})
-					_, err := SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", errorColor)
+					_, err := SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
 					return err
 				case "emoji":
 					arg3, animated, err3 := ParseEmojiArg(c.args, 3, true)
@@ -251,7 +251,7 @@ func (c Command) ChannelCommand() error {
 						if emoji, err := GuildTopicVoteEmoji(c.e.GuildID); err != nil {
 							return err
 						} else {
-							_, err = SendEmbed(c, "Current Topic Vote Emoji:", emoji, defaultColor)
+							_, err = SendEmbed(c, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
 							return err
 						}
 					} else {
@@ -266,7 +266,7 @@ func (c Command) ChannelCommand() error {
 							return g, "ChannelCommand: update TopicVoteEmoji"
 						})
 
-						_, err = SendEmbed(c, "Set Topic Vote Emoji To:", emoji, successColor)
+						_, err = SendEmbed(c, "Set Topic Vote Emoji To:", emoji, bot.SuccessColor)
 						return err
 					}
 				case "threshold":
@@ -284,7 +284,7 @@ func (c Command) ChannelCommand() error {
 						return g, "ChannelCommand: update topic vote threshold"
 					})
 
-					_, err := SendEmbed(c, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), successColor)
+					_, err := SendEmbed(c, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), bot.SuccessColor)
 					return err
 				default:
 					noTopicChan := false
@@ -297,11 +297,11 @@ func (c Command) ChannelCommand() error {
 					})
 
 					if noTopicChan {
-						_, err := SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", defaultColor)
+						_, err := SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", bot.DefaultColor)
 						return err
 					}
 
-					_, err := SendEmbed(c, "Channel Topic", "Allowed Topic Channels:\n\n"+formattedChannels, defaultColor)
+					_, err := SendEmbed(c, "Channel Topic", "Allowed Topic Channels:\n\n"+formattedChannels, bot.DefaultColor)
 					return err
 				}
 			}
@@ -322,21 +322,21 @@ func (c Command) ChannelCommand() error {
 					case "regular":
 						if errParse != nil {
 							g.Starboard.Channel = 0
-							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", errorColor)
+							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", bot.ErrorColor)
 							return g, "ChannelCommand: enable regular starboard"
 						} else {
 							g.Starboard.Channel = arg3
-							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", successColor)
+							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", bot.SuccessColor)
 							return g, "ChannelCommand: disable regular starboard"
 						}
 					case "nsfw":
 						if errParse != nil {
 							g.Starboard.NsfwChannel = 0
-							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", errorColor)
+							_, err = SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", bot.ErrorColor)
 							return g, "ChannelCommand: enable nsfw starboard"
 						} else {
 							g.Starboard.NsfwChannel = arg3
-							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", successColor)
+							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", bot.SuccessColor)
 							return g, "ChannelCommand: disable nsfw starboard"
 						}
 					default:
@@ -352,7 +352,7 @@ func (c Command) ChannelCommand() error {
 						embed := discord.Embed{
 							Title:       "Starboard Channels",
 							Description: regularC + "\n" + nsfwC,
-							Color:       defaultColor,
+							Color:       bot.DefaultColor,
 						}
 						_, err = SendCustomEmbed(c.e.ChannelID, embed)
 						return g, "ChannelCommand: format starboard channels"
@@ -367,7 +367,7 @@ func (c Command) ChannelCommand() error {
 		_, err := SendEmbed(c,
 			"Channel",
 			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`\n- `starboard set regular|nsfw [channel]`",
-			defaultColor)
+			bot.DefaultColor)
 		return err
 	}
 }
@@ -393,8 +393,8 @@ func (c Command) PermissionCommand() error {
 			} else {
 				_, err = SendEmbed(c,
 					"Permissions",
-					"Successfully gave "+GetUserMention(id)+" permission to use \""+permission+"\"",
-					successColor)
+					"Successfully gave "+util.GetUserMention(id)+" permission to use \""+permission+"\"",
+					bot.SuccessColor)
 				return err
 			}
 		} else {
@@ -404,7 +404,7 @@ func (c Command) PermissionCommand() error {
 		_, err := SendEmbed(c,
 			"Permissions",
 			"Available arguments are:\n- `give` <permission> <user>",
-			defaultColor)
+			bot.DefaultColor)
 		return err
 	}
 }
@@ -439,7 +439,7 @@ func (c Command) PrefixCommand() error {
 	embed := discord.Embed{
 		Description: "Set prefix to `" + arg + "`.",
 		Footer:      &discord.EmbedFooter{Text: "At any time you can ping the bot with the word \"prefix\" to get the current prefix"},
-		Color:       successColor,
+		Color:       bot.SuccessColor,
 	}
 	_, err := SendCustomEmbed(c.e.ChannelID, embed)
 	return err
@@ -454,7 +454,7 @@ func (c Command) HelpCommand() error {
 	_, err := SendEmbed(c,
 		"Taro Help",
 		strings.Join(fmtCmds, "\n\n"),
-		defaultColor)
+		bot.DefaultColor)
 	return err
 }
 
@@ -462,14 +462,14 @@ func (c Command) PingCommand() error {
 	if msg, err := SendEmbed(c,
 		"Ping!",
 		"Waiting for API response...",
-		defaultColor); err != nil {
+		bot.DefaultColor); err != nil {
 		return err
 	} else {
 		curTime := time.Now().UnixMilli()
 		msgTime := msg.Timestamp.Time().UnixMilli()
 
-		embed := makeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", successColor)
-		_, err = discordClient.EditMessage(msg.ChannelID, msg.ID, "", embed)
+		embed := makeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", bot.SuccessColor)
+		_, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, "", embed)
 		return err
 	}
 }
