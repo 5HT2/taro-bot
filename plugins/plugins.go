@@ -5,6 +5,7 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -34,7 +35,12 @@ func (p *Plugin) Register() {
 	bot.Responses = append(bot.Responses, p.Responses...)
 }
 
-func Load(dir string) {
+func Load() {
+	dir := "bin/"
+	if len(os.Getenv("PLUGIN_DIR")) > 0 {
+		dir = os.Getenv("PLUGIN_DIR")
+	}
+
 	d, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Printf("plugin loading failed: couldn't load dir: %s\n", err)
