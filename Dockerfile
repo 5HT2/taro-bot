@@ -11,4 +11,4 @@ RUN for d in ./plugins/*/; do echo "building $d"; go build -o "bin/" -buildmode=
 ENV TZ "Local"
 ENV DEBUG "false"
 WORKDIR /taro-files
-CMD DEBUG="$DEBUG" TZ="$TZ" PLUGIN_DIR="/taro-files/bin" /taro-bot/scripts/run.sh
+CMD DEBUG="$DEBUG" TZ="$TZ" PLUGIN_DIR="/taro-bot/bin" /taro-bot/scripts/run.sh
