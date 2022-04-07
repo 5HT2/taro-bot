@@ -26,22 +26,21 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Version:     "1.0.0",
 		Commands:    []bot.CommandInfo{},
 		Responses: []bot.ResponseInfo{{
-			Fn:          SpotifyToYoutubeResponse,
-			Embed:       false,
-			Description: "%s",
-			Regexes:     []string{spotifyRegex.String()},
-			MatchMin:    1,
+			Fn:       SpotifyToYoutubeResponse,
+			Embed:    false,
+			Regexes:  []string{spotifyRegex.String()},
+			MatchMin: 1,
 		}},
 	}
 }
 
-func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
+func SpotifyToYoutubeResponse(r bot.ResponseReflection) string {
 	// Get the Spotify link from the message
 	//
 
 	spotifyUrl := spotifyRegex.FindStringSubmatch(r.E.Content)
 	if len(spotifyUrl) == 0 {
-		return []string{"Error: Couldn't find Spotify link in message"}
+		return "Error: Couldn't find Spotify link in message"
 	}
 
 	// Get Artist and Song Title from Spotify
@@ -49,15 +48,15 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 
 	content, resp, err := util.RequestUrl(spotifyUrl[0], http.MethodGet)
 	if err != nil {
-		return []string{"Error: " + err.Error()}
+		return "Error: " + err.Error()
 	}
 	if resp.StatusCode != http.StatusOK {
-		return []string{"Error: Spotify returned a `" + strconv.Itoa(resp.StatusCode) + "` status code, expected `200`"}
+		return "Error: Spotify returned a `" + strconv.Itoa(resp.StatusCode) + "` status code, expected `200`"
 	}
 
 	node, err := util.ExtractNode(string(content), func(str string) bool { return str == "title" })
 	if err != nil {
-		return []string{"Error: " + err.Error()}
+		return "Error: " + err.Error()
 	}
 
 	text := &bytes.Buffer{}
@@ -66,13 +65,13 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 
 	res := spotifyTitleRegex.FindStringSubmatch(text.String())
 	if len(res) == 0 {
-		return []string{"Error: Couldn't parse Spotify song title"}
+		return "Error: Couldn't parse Spotify song title"
 	}
 
 	log.Printf("SpotifyToYoutube: res: [%s]\n", strings.Join(res, ", "))
 
 	if len(res) != 4 {
-		return []string{"Error: `res` is not 4: `[" + strings.Join(res, ", ") + "]`"}
+		return "Error: `res` is not 4: `[" + strings.Join(res, ", ") + "]`"
 	}
 
 	// Get available instances from invidious
@@ -85,7 +84,7 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 
 	instancesStr, err := util.RetryFunc(fn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
-		return []string{"Error: " + err.Error()}
+		return "Error: " + err.Error()
 	}
 
 	type InvidiousInstance struct {
@@ -114,7 +113,7 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 		}
 	}
 	if len(searchUrls) == 0 {
-		return []string{"Error: Couldn't find any Invidious instance to search with"}
+		return "Error: Couldn't find any Invidious instance to search with"
 	}
 	log.Printf("SpotifyToYoutube: searchUrls %s\n", searchUrls)
 
@@ -123,7 +122,7 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 
 	content = util.RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
 	if content == nil {
-		return []string{"Error: no non-nil response from `searchUrls`"}
+		return "Error: no non-nil response from `searchUrls`"
 	}
 
 	// Parse returned YouTube result
@@ -136,13 +135,13 @@ func SpotifyToYoutubeResponse(r bot.ResponseReflection) []string {
 	var searchResults []YoutubeSearchResult
 	err = json.Unmarshal(content, &searchResults)
 	if err != nil {
-		return []string{"Error: " + err.Error()}
+		return "Error: " + err.Error()
 	}
 
 	if len(searchResults) == 0 {
-		return []string{"Error: No search results found"}
+		return "Error: No search results found"
 	}
 	log.Printf("SpotifyToYoutube: searchResults[0] %s\n", searchResults[0])
 
-	return []string{"https://youtu.be/" + searchResults[0].ID}
+	return "https://youtu.be/" + searchResults[0].ID
 }

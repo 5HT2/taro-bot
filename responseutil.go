@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -41,25 +40,16 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	}
 
 	embed := discord.Embed{
-		Title:       response.Title,
-		Description: response.Description,
-		Color:       bot.DefaultColor,
+		Title: response.Title,
+		Color: bot.DefaultColor,
 	}
-	msgContent := response.Description
+	msgContent := ""
 
 	if response.Fn != nil {
 		result := response.Fn(bot.ResponseReflection{E: e})
-		if len(result) > 0 {
-			slice := make([]interface{}, 0)
-			for _, str := range result {
-				slice = append(slice, str)
-			}
-			if response.Embed {
-				embed.Description = fmt.Sprintf(embed.Description, slice...)
-			} else {
-				msgContent = fmt.Sprintf(embed.Description, slice...)
-			}
-		}
+
+		embed.Description = result
+		msgContent = result
 	}
 
 	if response.Embed {

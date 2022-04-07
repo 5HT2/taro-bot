@@ -25,19 +25,18 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Version:     "1.0.0",
 		Commands:    []bot.CommandInfo{},
 		Responses: []bot.ResponseInfo{{
-			Fn:          VintageStoryRebootResponse,
-			Embed:       true,
-			Title:       "VintageStory",
-			Description: "%s",
-			Regexes:     []string{"<@!?DISCORD_BOT_ID>", "vs", "restart"},
-			MatchMin:    3,
+			Fn:       VintageStoryRebootResponse,
+			Embed:    true,
+			Title:    "VintageStory",
+			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "vs", "restart"},
+			MatchMin: 3,
 		}},
 	}
 }
 
-func VintageStoryRebootResponse(r bot.ResponseReflection) []string {
+func VintageStoryRebootResponse(r bot.ResponseReflection) string {
 	if bot.User.ID != botID {
-		return []string{"Not setup for this server!"}
+		return "Not setup for this server!"
 	}
 
 	servers := []string{"vintagestory0"}
@@ -56,7 +55,7 @@ func VintageStoryRebootResponse(r bot.ResponseReflection) []string {
 		}
 	}
 
-	return []string{"Okay, sent restart command(s). Responses:\n\n" + strings.Join(responses, "")}
+	return "Okay, sent restart command(s). Responses:\n\n" + strings.Join(responses, "")
 }
 
 func vintageStorySetup() {
