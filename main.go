@@ -18,6 +18,7 @@ import (
 )
 
 var (
+	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
@@ -69,7 +70,7 @@ func main() {
 	}
 
 	// Call plugins after logging in with the bot, but before doing anything else at all
-	plugins.Load()
+	plugins.Load(*pluginDir)
 
 	go SetupConfigSaving()
 	go RegisterCommands()

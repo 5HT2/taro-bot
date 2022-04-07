@@ -34,10 +34,10 @@ func (p *Plugin) Register() {
 	bot.Responses = append(bot.Responses, p.Responses...)
 }
 
-func Load() {
-	d, err := ioutil.ReadDir("bin")
+func Load(dir string) {
+	d, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Printf("plugin loading failed: couldn't load bin dir: %s\n", err)
+		log.Printf("plugin loading failed: couldn't load dir: %s\n", err)
 		return
 	}
 
@@ -45,7 +45,7 @@ func Load() {
 
 	for _, entry := range d {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") {
-			pluginPath := filepath.Join("bin", entry.Name())
+			pluginPath := filepath.Join(dir, entry.Name())
 			log.Printf("plugin found: %s\n", entry.Name())
 
 			p, err := plugin.Open(pluginPath)
