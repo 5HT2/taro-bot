@@ -22,35 +22,11 @@ You can also do `./update.sh` to run or update the Docker image, provided you ha
 
 #### Config
 
-This is the simplest example of the `config/config.json` file, you only need `bot_token` as `global_responses` is completely optional.
-
-Per-guild responses will be configurable with a command in the future, while `global_responses` will have to be changed by the bot owner in the config.
+This is the simplest example of the `config/config.json` file, you only need `bot_token` to be set.
 
 ```json
 {
-    "bot_token": "bot token goes here",
-    "global_responses": [
-        {
-            "title": "",
-            "description": "The current prefix is `%s`",
-            "reflect_func": "PrefixResponse",
-            "regexes": [
-                "<@!?your bot ID goes here>",
-                "prefix"
-            ],
-            "match_min": 2
-        },
-        {
-            "embed": false,
-            "title": "",
-            "description": "%s",
-            "reflect_func": "SpotifyToYoutubeResponse",
-            "regexes": [
-                "https?:\\/\\/open\\.spotify\\.com\\/track\\/[a-zA-Z0-9][^\\s]{2,}"
-            ],
-            "match_min": 1
-        }
-    ]
+    "bot_token": "bot token goes here"
 }
 ```
 
