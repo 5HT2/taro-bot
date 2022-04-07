@@ -34,7 +34,7 @@ var (
 )
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
-	defer LogPanic()
+	defer util.LogPanic()
 
 	start := time.Now().UnixMilli()
 

@@ -18,7 +18,7 @@ type Command struct {
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
-	defer LogPanic()
+	defer util.LogPanic()
 
 	// Don't respond to bot messages.
 	if e.Author.Bot {
@@ -98,7 +98,7 @@ func extractCommand(message discord.Message) (string, []string) {
 }
 
 // getCommandWithName will return the found CommandInfo with a matching name or alias
-func getCommandWithName(name string) *util.CommandInfo {
+func getCommandWithName(name string) *bot.CommandInfo {
 	for _, cmd := range bot.Commands {
 		if cmd.Name == name || util.SliceContains(cmd.Aliases, name) {
 			return &cmd

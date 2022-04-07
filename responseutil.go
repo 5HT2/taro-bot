@@ -2,27 +2,29 @@ package main
 
 import (
 	"fmt"
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"regexp"
+	"strings"
 )
 
 // ResponseHandler will find a global response from the config and send it, if found
 func ResponseHandler(e *gateway.MessageCreateEvent) {
-	defer LogPanic()
+	defer util.LogPanic()
 
 	// TODO: Per-guild responses and configuration
 	// TODO: compiling and caching support could be added here to improve speed
-	for _, response := range config.GlobalResponses {
+	for _, response := range bot.Responses {
 		if findResponse(e, response) {
 			sendResponse(e, response)
 		}
 	}
 }
 
-func sendResponse(e *gateway.MessageCreateEvent, response Response) {
+func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	// Don't respond to bot messages.
 	if e.Author.Bot {
 		return
@@ -45,8 +47,8 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 	}
 	msgContent := response.Description
 
-	if len(response.ReflectFunc) > 0 {
-		result := CallStringFunc(ResponseReflection{e}, response.ReflectFunc)
+	if response.Fn != nil {
+		result := response.Fn(bot.ResponseReflection{E: e})
 		if len(result) > 0 {
 			slice := make([]interface{}, 0)
 			for _, str := range result {
@@ -73,10 +75,14 @@ func sendResponse(e *gateway.MessageCreateEvent, response Response) {
 	}
 }
 
-func findResponse(e *gateway.MessageCreateEvent, response Response) bool {
+func findResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) bool {
 	matched := 0
 	message := []byte(e.Message.Content)
 	for _, regex := range response.Regexes {
+		// Allow using a variable in the regex to represent the current bot user
+		// TODO: Documentation for these
+		regex = strings.ReplaceAll(regex, "DISCORD_BOT_ID", discordBotUser.ID.String())
+
 		found, err := regexp.Match(regex, message)
 		if err != nil {
 			log.Printf("Error matching \"%s\": %v\n", regex, err)

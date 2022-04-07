@@ -13,11 +13,11 @@ import (
 )
 
 func RegisterCommands() {
-	bot.CommandsMutex.Lock()
-	defer bot.CommandsMutex.Unlock()
+	bot.Mutex.Lock()
+	defer bot.Mutex.Unlock()
 
 	bot.Commands = append(bot.Commands,
-		[]util.CommandInfo{
+		[]bot.CommandInfo{
 			{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
 			{FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
 			{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
@@ -59,12 +59,12 @@ func (c Command) StealEmojiCommand() error {
 	// we now have the emoji ID and name, get the bytes
 
 	url := "https://cdn.discordapp.com/emojis/" + strconv.FormatInt(emojiID, 10)
-	bytes, res, err := RequestUrl(url+".gif", http.MethodGet)
+	bytes, res, err := util.RequestUrl(url+".gif", http.MethodGet)
 	if err != nil {
 		return err
 	}
 	if res.StatusCode != 200 {
-		bytes, res, err = RequestUrl(url+".png", http.MethodGet)
+		bytes, res, err = util.RequestUrl(url+".png", http.MethodGet)
 		if err != nil {
 			return err
 		}
@@ -475,7 +475,7 @@ func (c Command) PingCommand() error {
 }
 
 func (c Command) FrogCommand() error {
-	frogData, _, err := RequestUrl("https://frog.pics/api/random", http.MethodGet)
+	frogData, _, err := util.RequestUrl("https://frog.pics/api/random", http.MethodGet)
 	if err != nil {
 		return err
 	}

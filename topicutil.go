@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -15,7 +16,7 @@ type ActiveTopicVote struct {
 }
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
-	defer LogPanic()
+	defer util.LogPanic()
 
 	reactionMatchesActiveVote := false
 	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {

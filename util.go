@@ -1,56 +1,17 @@
 package main
 
 import (
-	"bytes"
-	"errors"
-	"golang.org/x/net/html"
 	"image/color"
 	"io"
-	"io/ioutil"
-	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var (
 	imageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
 )
-
-type retryFunction func() ([]byte, error)
-
-func LogPanic() {
-	if x := recover(); x != nil {
-		// recovering from a panic; x contains whatever was passed to panic()
-		log.Printf("panic: %s\n", debug.Stack())
-	}
-}
-
-// RetryFunc will re-try fn by n number of times, in addition to one regular try
-func RetryFunc(fn retryFunction, n int, delayMs time.Duration) ([]byte, error) {
-	if n < 0 {
-		n = 0
-	}
-
-	for n > 0 {
-		b, err := fn()
-		if err == nil {
-			return b, err
-		}
-		n--
-
-		// Wait before re-trying, if we have re-tries left.
-		if n > 0 && delayMs > 0 {
-			time.Sleep(delayMs * time.Millisecond)
-		}
-	}
-
-	return fn()
-}
 
 // CopyFile the src file to dst. Any existing file will be overwritten and will not
 // copy file attributes.
@@ -100,76 +61,6 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 		elems = append(elems, prefix+strconv.FormatInt(e, 10)+suffix)
 	}
 	return strings.Join(elems, sep)
-}
-
-type extractNodeCondition func(string) bool
-
-// ExtractNode will select the first node to match extractNodeCondition, for example
-// res, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
-func ExtractNode(content string, fn extractNodeCondition) (*html.Node, error) {
-	doc, _ := html.Parse(strings.NewReader(string(content)))
-	var n *html.Node
-	var crawler func(*html.Node)
-
-	crawler = func(node *html.Node) {
-		if node.Type == html.ElementNode && fn(node.Data) {
-			n = node
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			crawler(child)
-		}
-	}
-	crawler(doc)
-	if n != nil {
-		return n, nil
-	}
-	return nil, errors.New("missing matching tag in the node tree")
-}
-
-func ExtractNodeText(n *html.Node, buf *bytes.Buffer) {
-	if n.Type == html.TextNode {
-		buf.WriteString(n.Data)
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		ExtractNodeText(c, buf)
-	}
-}
-
-// RequestUrl will return the bytes of the body of url
-func RequestUrl(url string, method string) ([]byte, *http.Response, error) {
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return body, res, nil
-}
-
-// RequestUrlRetry will return the bytes of the body of the first successful url
-func RequestUrlRetry(urls []string, method string, code int) (bytes []byte) {
-	for _, url := range urls {
-		content, res, err := RequestUrl(url, method)
-		if err == nil && res.StatusCode == code {
-			return content
-		}
-	}
-
-	return nil
 }
 
 // ConvertColorToInt32 will convert 3 uint8s into one int32

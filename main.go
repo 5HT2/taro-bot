@@ -10,7 +10,6 @@ import (
 	"github.com/diamondburned/arikawa/v3/session"
 	"github.com/go-co-op/gocron"
 	"log"
-	"net/http"
 	"os"
 	"runtime"
 	"strconv"
@@ -19,9 +18,10 @@ import (
 )
 
 var (
-	discordClient session.Session
-	httpClient    = http.Client{Timeout: 5 * time.Second}
-	scheduler     = gocron.NewScheduler(getTimeZone())
+	discordClient  session.Session
+	discordBotUser *discord.User
+
+	scheduler = gocron.NewScheduler(getTimeZone())
 
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
@@ -66,9 +66,11 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed to get bot user:", err)
 	}
+	discordBotUser = u
 
 	go SetupConfigSaving()
 	go RegisterCommands()
+	go RegisterResponses()
 	go RegisterPlugins()
 
 	// program has been called with -exited, upload the logs and don't run the bot

@@ -3,7 +3,6 @@ package plugins
 import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
-	"github.com/5HT2/taro-bot/util"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -17,24 +16,28 @@ type PluginInit struct {
 type Plugin struct {
 	Name        string             // Name of the plugin to display to users
 	Description string             // Description of what the plugin does
-	Version     int64              // Version in semver, i.e., 1.1.0 becomes 110
-	Commands    []util.CommandInfo // Commands to register, could be none
+	Version     string             // Version in semver, e.g.., 1.1.0
+	Commands    []bot.CommandInfo  // Commands to register, could be none
+	Responses   []bot.ResponseInfo // Responses to register, could be none
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s]", p.Name, p.Description, p.Version, p.Commands)
+	return fmt.Sprintf("[%s, %s, %v, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses)
 }
 
 func (p *Plugin) Register() {
-	// TODO: Maybe check if FnName collides? Shouldn't be a huge deal honestly
-	log.Printf("registering plugin: %s\n", p)
+	bot.Mutex.Lock()
+	defer bot.Mutex.Unlock()
+
+	// TODO: Maybe check if ReflectFunc collides? Shouldn't be a huge deal honestly
 	bot.Commands = append(bot.Commands, p.Commands...)
+	bot.Responses = append(bot.Responses, p.Responses...)
 }
 
 func Load() {
 	d, err := ioutil.ReadDir("bin")
 	if err != nil {
-		log.Printf("couldn't load bin dir for plugins: %s\n", err)
+		log.Printf("plugin loading failed: couldn't load bin dir: %s\n", err)
 		return
 	}
 
@@ -43,26 +46,26 @@ func Load() {
 	for _, entry := range d {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") {
 			pluginPath := filepath.Join("bin", entry.Name())
-			log.Printf("found plugin: %s\n", entry.Name())
+			log.Printf("plugin found: %s\n", entry.Name())
 
 			p, err := plugin.Open(pluginPath)
 			if err != nil {
-				log.Printf("couldn't open plugin: %s (%s)\n", entry.Name(), err)
+				log.Printf("plugin load failed: couldn't open plugin: %s (%s)\n", entry.Name(), err)
 				continue
 			}
 
 			fn, err := p.Lookup("InitPlugin")
 			if err != nil {
-				log.Printf("couldn't lookup plugin symbols: %s (%s)\n", entry.Name(), err)
+				log.Printf("plugin load failed: couldn't lookup symbols: %s (%s)\n", entry.Name(), err)
 				continue
 			}
 
 			initFn := fn.(func(manager *PluginInit) *Plugin)
 			if p := initFn(pluginInit); p != nil {
 				p.Register()
-				log.Printf("loaded plugin: %s\n", entry.Name())
+				log.Printf("plugin registered: %s\n", p)
 			} else {
-				log.Printf("couldn't load plugin: %s (nil)\n", entry.Name())
+				log.Printf("plugin load failed: %s (nil)\n", entry.Name())
 			}
 		}
 	}
