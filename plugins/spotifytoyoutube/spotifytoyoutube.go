@@ -34,7 +34,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	}
 }
 
-func SpotifyToYoutubeResponse(r bot.ResponseReflection) string {
+func SpotifyToYoutubeResponse(r bot.Response) string {
 	// Get the Spotify link from the message
 	//
 

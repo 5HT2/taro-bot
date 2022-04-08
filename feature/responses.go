@@ -19,7 +19,7 @@ func RegisterResponses() {
 	)
 }
 
-func PrefixResponse(r bot.ResponseReflection) string {
+func PrefixResponse(r bot.Response) string {
 	prefix := bot.DefaultPrefix
 	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		prefix = g.Prefix

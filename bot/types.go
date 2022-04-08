@@ -11,7 +11,8 @@ import (
 )
 
 //
-// CommandInfo is the info a command provides to register itself. FnName is the function called by reflection.
+// CommandInfo is the info a command provides to register itself.
+// Fn is the function that is executed to complete the Command.
 // The Name and Aliases are used to call the command via Discord.
 type CommandInfo struct {
 	Fn          func(Command) error
@@ -22,6 +23,7 @@ type CommandInfo struct {
 	GuildOnly   bool
 }
 
+// Command is passed to CommandInfo.Fn's arguments when a Command is executed.
 type Command struct {
 	E      *gateway.MessageCreateEvent
 	FnName string
@@ -51,7 +53,7 @@ func (i CommandInfo) MarkdownString() string {
 // Fn is the function that is executed to complete the Response.
 // The Regexes are used to call the response via Discord.
 type ResponseInfo struct {
-	Fn           func(ResponseReflection) string
+	Fn           func(Response) string
 	Embed        bool
 	Title        string
 	Regexes      []string
@@ -64,7 +66,8 @@ func (i ResponseInfo) String() string {
 	return fmt.Sprintf("[%p, %v, %s]", i.Fn, i.MatchMin, i.Regexes)
 }
 
-type ResponseReflection struct {
+// Response is passed to Response.Fn's arguments when a Response is executed.
+type Response struct {
 	E *gateway.MessageCreateEvent
 }
 
@@ -84,6 +87,8 @@ type ActiveTopicVote struct {
 	Topic   string `json:"topic"`
 }
 
+//
+// StarboardConfig is used by commands.go and starboard.go
 type StarboardConfig struct {
 	Channel     int64              `json:"channel,omitempty"`      // channel post ID
 	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
@@ -91,6 +96,7 @@ type StarboardConfig struct {
 	Threshold   int64              `json:"threshold,omitempty"`
 }
 
+// StarboardMessage is used by starboard.go
 type StarboardMessage struct {
 	Author int64   `json:"author"`     // the original author ID
 	CID    int64   `json:"channel_id"` // the original channel ID

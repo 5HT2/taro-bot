@@ -47,7 +47,7 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	msgContent := ""
 
 	if response.Fn != nil {
-		result := response.Fn(bot.ResponseReflection{E: e})
+		result := response.Fn(bot.Response{E: e})
 
 		embed.Description = result
 		msgContent = result

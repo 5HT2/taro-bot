@@ -34,7 +34,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	}
 }
 
-func VintageStoryRebootResponse(r bot.ResponseReflection) string {
+func VintageStoryRebootResponse(r bot.Response) string {
 	if bot.User.ID != botID {
 		return "Not setup for this server!"
 	}
