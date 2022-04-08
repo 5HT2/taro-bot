@@ -29,7 +29,6 @@ func (p *Plugin) Register() {
 	bot.Mutex.Lock()
 	defer bot.Mutex.Unlock()
 
-	// TODO: Maybe check if ReflectFunc collides? Shouldn't be a huge deal honestly
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
 }

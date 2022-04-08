@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	botID = discord.UserID(893216230410952785)
+	botID     = discord.UserID(893216230410952785)
+	vsChannel = 959129039401025606
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -36,7 +37,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 
 func VintageStoryRebootResponse(r bot.Response) string {
 	if bot.User.ID != botID {
-		return "Not setup for this server!"
+		return "Not setup for this bot instance!"
 	}
 
 	servers := []string{"vintagestory0"}
@@ -59,8 +60,6 @@ func VintageStoryRebootResponse(r bot.Response) string {
 }
 
 func vintageStorySetup() {
-	// TODO: This will have its own config value as a plugin
-	vsChannel := 959129039401025606
 	logVS := func(desc string, err error) {
 		color := bot.DefaultColor
 		embed := discord.Embed{

@@ -23,18 +23,15 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 				break
 			}
 		}
+
+		// While we're here, make sure the vote threshold isn't the default
+		if g.TopicVoteThreshold == 0 {
+			g.TopicVoteThreshold = 3
+		}
 		return g, "TopicReactionHandler: check reaction emoji"
 	})
 
 	if reactionMatchesActiveVote {
-		// TODO: Honestly, why are we doing this?
-		bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-			if g.TopicVoteThreshold == 0 {
-				g.TopicVoteThreshold = 3
-			}
-			return g, "TopicReactionHandler: check TopicVoteThreshold"
-		})
-
 		message, err := bot.Client.Message(e.ChannelID, e.MessageID)
 		if err != nil {
 			return
