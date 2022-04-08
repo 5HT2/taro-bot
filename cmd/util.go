@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"github.com/5HT2/taro-bot/bot"
@@ -32,7 +32,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 
 	cmdInfo := getCommandWithName(cmdName)
 	if cmdInfo != nil {
-		command := Command{e, cmdName, cmdInfo.FnName, cmdArgs}
+		command := Command{e: e, name: cmdName, fnName: cmdInfo.FnName, args: cmdArgs}
 
 		if cmdInfo.GuildOnly && !e.GuildID.IsValid() {
 			_, err := SendEmbed(command, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
@@ -42,7 +42,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 			return
 		}
 
-		result := InvokeFunc(command, cmdInfo.FnName)
+		result := util.InvokeFunc(command, cmdInfo.FnName)
 		if len(result) > 0 {
 			err, _ := result[0].Interface().(error)
 			if err != nil {
@@ -56,13 +56,13 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 // extractCommand will extract a command name and args from a message with a prefix
 func extractCommand(message discord.Message) (string, []string) {
 	content := message.Content
-	prefix := defaultPrefix
+	prefix := bot.DefaultPrefix
 	ok := true
 
 	if !message.GuildID.IsValid() {
 		prefix = ""
 	} else {
-		config.run(func(c *Config) {
+		bot.C.Run(func(c *bot.Config) {
 			prefix, ok = c.PrefixCache[int64(message.GuildID)]
 		})
 
@@ -72,12 +72,12 @@ func extractCommand(message discord.Message) (string, []string) {
 			log.Printf("expected prefix to be in prefix cache: %s (%s)\n",
 				message.GuildID, CreateMessageLink(int64(message.GuildID), &message, false))
 
-			GuildContext(message.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
-				g.Prefix = defaultPrefix
+			bot.GuildContext(message.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+				g.Prefix = bot.DefaultPrefix
 				return g, "extractCommand: reset prefix"
 			})
 
-			prefix = defaultPrefix
+			prefix = bot.DefaultPrefix
 		}
 	}
 

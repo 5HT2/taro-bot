@@ -1,4 +1,4 @@
-package main
+package bot
 
 import (
 	"encoding/json"
@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	config        Config
+	C             Config
 	fileMode      = os.FileMode(0700)
-	defaultPrefix = "."
+	DefaultPrefix = "."
 )
 
 type configOperation func(*Config)
@@ -26,7 +26,7 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 	start := time.Now().UnixMilli()
 	found := false
 
-	config.run(func(c *Config) {
+	C.Run(func(c *Config) {
 		// Try to find an existing config, and if so, replace it with the result of executed guildOperation
 		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
 		for n, guild := range c.GuildConfigs {
@@ -44,8 +44,8 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 
 		// If we didn't find an existing config, run guildOperation with the defaultConfig, and append it to the list
 		if !found {
-			defaultConfig := GuildConfig{ID: id, Prefix: defaultPrefix}
-			c.PrefixCache[id] = defaultPrefix
+			defaultConfig := GuildConfig{ID: id, Prefix: DefaultPrefix}
+			c.PrefixCache[id] = DefaultPrefix
 
 			res, _ := g(&defaultConfig)
 			c.GuildConfigs = append(c.GuildConfigs, *res)
@@ -53,9 +53,9 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 	})
 }
 
-// Config.run will modify a Config non-concurrently.
+// Run will modify a Config non-concurrently.
 // Avoid using inside a network or hang-able context whenever possible.
-func (c *Config) run(co configOperation) {
+func (c *Config) Run(co configOperation) {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
 	co(c)
@@ -103,12 +103,12 @@ func LoadConfig() {
 		log.Fatalf("Error loading config: %v\n", err)
 	}
 
-	if err := json.Unmarshal(bytes, &config); err != nil {
+	if err := json.Unmarshal(bytes, &C); err != nil {
 		log.Fatalf("Error unmarshalling config: %v\n", err)
 	}
 
 	// Load prefix cache
-	config.run(func(c *Config) {
+	C.Run(func(c *Config) {
 		c.PrefixCache = make(map[int64]string, 0)
 
 		for _, g := range c.GuildConfigs {
@@ -121,7 +121,7 @@ func SaveConfig() {
 	var bytes []byte
 	var err error = nil
 
-	config.run(func(c *Config) {
+	C.Run(func(c *Config) {
 		bytes, err = json.MarshalIndent(c, "", "    ")
 	})
 

@@ -1,7 +1,8 @@
-package main
+package feature
 
 import (
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -10,17 +11,11 @@ import (
 	"strconv"
 )
 
-type ActiveTopicVote struct {
-	Message int64  `json:"message"`
-	Author  int64  `json:"author"`
-	Topic   string `json:"topic"`
-}
-
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 	defer util.LogPanic()
 
 	reactionMatchesActiveVote := false
-	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		// Find an activeTopicVote that matches `e`'s reaction
 		for _, vote := range g.ActiveTopicVotes {
 			if int64(e.MessageID) == vote.Message {
@@ -33,7 +28,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	if reactionMatchesActiveVote {
 		// TODO: Honestly, why are we doing this?
-		GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+		bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 			if g.TopicVoteThreshold == 0 {
 				g.TopicVoteThreshold = 3
 			}
@@ -45,7 +40,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 			return
 		}
 
-		emoji, err := GuildTopicVoteApiEmoji(e.GuildID)
+		emoji, err := util.GuildTopicVoteApiEmoji(e.GuildID)
 		if err != nil {
 			return
 		}
@@ -58,7 +53,7 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 				}
 
 				meetsThreshold := false
-				GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+				bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 					meetsThreshold = int64(reaction.Count-offset) >= g.TopicVoteThreshold
 					return g, "TopicReactionHandler: check meetsThreshold"
 				})
@@ -85,9 +80,9 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 					data := api.ModifyChannelData{Topic: option.NewNullableString(vote.Topic)}
 					if err = bot.Client.ModifyChannel(e.ChannelID, data); err != nil {
-						_, _ = SendExternalErrorEmbed(e.ChannelID, "TopicReactionHandler", err)
+						_, _ = cmd.SendExternalErrorEmbed(e.ChannelID, "TopicReactionHandler", err)
 					} else {
-						_, _ = SendCustomEmbed(e.ChannelID, embed)
+						_, _ = cmd.SendCustomEmbed(e.ChannelID, embed)
 					}
 				}
 				break
@@ -96,12 +91,12 @@ func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 	}
 }
 
-func removeActiveVote(e *gateway.MessageReactionAddEvent) ActiveTopicVote {
-	oldVotes := make([]ActiveTopicVote, 0)
-	var removedVote ActiveTopicVote
+func removeActiveVote(e *gateway.MessageReactionAddEvent) bot.ActiveTopicVote {
+	oldVotes := make([]bot.ActiveTopicVote, 0)
+	var removedVote bot.ActiveTopicVote
 	message := int64(e.MessageID)
 
-	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		for _, vote := range g.ActiveTopicVotes {
 			if message != vote.Message {
 				oldVotes = append(oldVotes, vote)

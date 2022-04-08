@@ -59,3 +59,35 @@ func (i ResponseInfo) String() string {
 type ResponseReflection struct {
 	E *gateway.MessageCreateEvent
 }
+
+//
+// PermissionGroups is collection of "permissions". Each permission is a list of user IDs that have said permission.
+// Switching this to a list of {Name, Users} would maybe be better code-wise.
+type PermissionGroups struct {
+	ManageChannels    []int64 `json:"manage_channels,omitempty"`
+	ManagePermissions []int64 `json:"manage_permissions,omitempty"`
+}
+
+//
+// ActiveTopicVote is used by topics.go
+type ActiveTopicVote struct {
+	Message int64  `json:"message"`
+	Author  int64  `json:"author"`
+	Topic   string `json:"topic"`
+}
+
+type StarboardConfig struct {
+	Channel     int64              `json:"channel,omitempty"`      // channel post ID
+	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
+	Messages    []StarboardMessage `json:"messages,omitempty"`
+	Threshold   int64              `json:"threshold,omitempty"`
+}
+
+type StarboardMessage struct {
+	Author int64   `json:"author"`     // the original author ID
+	CID    int64   `json:"channel_id"` // the original channel ID
+	ID     int64   `json:"id"`         // the original message ID
+	PostID int64   `json:"message"`    // the starboard post message ID
+	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
+	Stars  []int64 `json:"stars"`      // list of added user IDs
+}

@@ -1,6 +1,7 @@
-package main
+package util
 
 import (
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"net/url"
 	"strings"
@@ -8,13 +9,13 @@ import (
 
 var (
 	escapedCheckmark = "%E2%9C%85"
-	escapedStar      = "%E2%AD%90"
+	EscapedStar      = "%E2%AD%90"
 	checkmarkEmoji   = discord.APIEmoji(escapedCheckmark)
 )
 
 func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 	e := ""
-	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(id, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		e = g.TopicVoteEmoji
 
 		if len(e) == 0 {
@@ -30,7 +31,7 @@ func GuildTopicVoteEmoji(id discord.GuildID) (string, error) {
 
 func GuildTopicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
 	e := ""
-	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(id, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		e = g.TopicVoteEmoji
 
 		if len(e) == 0 {

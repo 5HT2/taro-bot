@@ -1,32 +1,26 @@
-package main
+package cmd
 
 import (
+	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"strings"
 )
 
-// PermissionGroups is collection of "permissions". Each permission is a list of user IDs that have said permission.
-// Switching this to a list of {Name, Users} would maybe be better code-wise.
-type PermissionGroups struct {
-	ManageChannels    []int64 `json:"manage_channels,omitempty"`
-	ManagePermissions []int64 `json:"manage_permissions,omitempty"`
-}
-
 // HasPermission will return if the author of a command has said permission
-func HasPermission(permission string, c Command) *util.TaroError {
+func HasPermission(permission string, c Command) *bot.Error {
 	id := int64(c.e.Author.ID)
 
 	if UserHasPermission(permission, c, id) {
 		return nil
 	} else {
-		return util.GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
+		return bot.GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
 	}
 }
 
 // UserHasPermission will return if the user with id has said permission
 func UserHasPermission(permission string, c Command, id int64) bool {
 	users := make([]int64, 0)
-	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		users = getPermissionSlice(permission, g)
 		return g, "UserHasPermission: " + c.fnName
 	})
@@ -38,7 +32,7 @@ func UserHasPermission(permission string, c Command, id int64) bool {
 func GivePermission(permission string, id int64, c Command) error {
 	var err error = nil
 
-	GuildContext(c.e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 
 		users := getPermissionSlice(permission, g)
 		mention := util.GetUserMention(id)
@@ -46,7 +40,7 @@ func GivePermission(permission string, id int64, c Command) error {
 		if !util.SliceContains(users, id) {
 			users = append(users, id)
 		} else {
-			err = util.GenericError("GivePermission",
+			err = bot.GenericError("GivePermission",
 				"giving permission to "+mention,
 				"user already has permission \""+permission+"\"")
 		}
@@ -57,7 +51,7 @@ func GivePermission(permission string, id int64, c Command) error {
 		case "permissions":
 			g.Permissions.ManagePermissions = users
 		default:
-			err = util.GenericError("GivePermission",
+			err = bot.GenericError("GivePermission",
 				"giving permission to "+mention,
 				"couldn't find permission type \""+permission+"\"")
 		}
@@ -68,7 +62,7 @@ func GivePermission(permission string, id int64, c Command) error {
 	return err
 }
 
-func getPermissionSlice(permission string, guild *GuildConfig) []int64 {
+func getPermissionSlice(permission string, guild *bot.GuildConfig) []int64 {
 	permission = strings.ToLower(permission)
 
 	switch permission {

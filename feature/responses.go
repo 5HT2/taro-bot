@@ -1,4 +1,4 @@
-package main
+package feature
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ func RegisterResponses() {
 }
 
 func PrefixResponse(r bot.ResponseReflection) string {
-	prefix := defaultPrefix
-	GuildContext(r.E.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	prefix := bot.DefaultPrefix
+	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		prefix = g.Prefix
 		return g, "PrefixResponse"
 	})

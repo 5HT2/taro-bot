@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"errors"
+	"github.com/5HT2/taro-bot/bot"
 	"golang.org/x/net/html"
 	"image/color"
 	"path/filepath"
@@ -77,7 +78,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 	c.A = 0xff
 
 	if s[0] != '#' {
-		return c, GenericError("ParseHexColorFast", "parsing \""+s+"\"", "missing #")
+		return c, bot.GenericError("ParseHexColorFast", "parsing \""+s+"\"", "missing #")
 	}
 
 	hexToByte := func(b byte) byte {
@@ -89,7 +90,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 		case b >= 'A' && b <= 'F':
 			return b - 'A' + 10
 		}
-		err = SyntaxError("ParseHexColorFast", s)
+		err = bot.SyntaxError("ParseHexColorFast", s)
 		return 0
 	}
 
@@ -103,7 +104,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 		c.G = hexToByte(s[2]) * 17
 		c.B = hexToByte(s[3]) * 17
 	default:
-		err = SyntaxError("ParseHexColorFast", s)
+		err = bot.SyntaxError("ParseHexColorFast", s)
 	}
 	return
 }

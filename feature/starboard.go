@@ -1,7 +1,8 @@
-package main
+package feature
 
 import (
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -10,22 +11,6 @@ import (
 	"strings"
 	"time"
 )
-
-type StarboardConfig struct {
-	Channel     int64              `json:"channel,omitempty"`      // channel post ID
-	NsfwChannel int64              `json:"nsfw_channel,omitempty"` // nsfw post channel ID
-	Messages    []StarboardMessage `json:"messages,omitempty"`
-	Threshold   int64              `json:"threshold,omitempty"`
-}
-
-type StarboardMessage struct {
-	Author int64   `json:"author"`     // the original author ID
-	CID    int64   `json:"channel_id"` // the original channel ID
-	ID     int64   `json:"id"`         // the original message ID
-	PostID int64   `json:"message"`    // the starboard post message ID
-	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
-	Stars  []int64 `json:"stars"`      // list of added user IDs
-}
 
 var (
 	stars3Emoji = "⭐"
@@ -39,7 +24,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 	start := time.Now().UnixMilli()
 
-	GuildContext(e.GuildID, func(g *GuildConfig) (*GuildConfig, string) {
+	bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		if g.Starboard.Threshold == 0 {
 			g.Starboard.Threshold = 3
 		}
@@ -51,31 +36,25 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 
 		// Not a star
-		if e.Emoji.APIString().PathString() != escapedStar {
+		if e.Emoji.APIString().PathString() != util.EscapedStar {
 			log.Printf("Not a star emoji\n")
 			return g, "StarboardReactionHandler: check reaction emoji"
 		}
 
 		msg, err := bot.Client.Message(e.ChannelID, e.MessageID)
 		if err != nil {
-			if *debugLog {
-				log.Printf("Error retrieving starred message: %v\n", err)
-			}
 			return g, "StarboardReactionHandler: get reaction message"
 		}
 		channel, err := bot.Client.Channel(e.ChannelID)
 		if err != nil {
-			if *debugLog {
-				log.Printf("Error retrieving starred message channel: %v\n", err)
-			}
 			return g, "StarboardReactionHandler: get reaction channel"
 		}
 
-		var sMsg *StarboardMessage = nil
+		var sMsg *bot.StarboardMessage = nil
 		newPost := true
 		cID := int64(channel.ID)
 
-		log.Printf("Checking channel for starboard message %s\n", CreateMessageLink(int64(e.GuildID), msg, false))
+		log.Printf("Checking channel for starboard message %s\n", cmd.CreateMessageLink(int64(e.GuildID), msg, false))
 
 		// If user reacts to a post in a starboard channel
 		if cID == g.Starboard.Channel || cID == g.Starboard.NsfwChannel {
@@ -102,7 +81,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 		}
 
 		if newPost {
-			sMsg = &StarboardMessage{
+			sMsg = &bot.StarboardMessage{
 				Author: int64(msg.Author.ID),
 				CID:    int64(msg.ChannelID),
 				ID:     int64(msg.ID),
@@ -141,7 +120,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 		// Update our reactions in case any are missing from the API
 		for _, reaction := range msg.Reactions {
-			if reaction.Emoji.APIString().PathString() == escapedStar {
+			if reaction.Emoji.APIString().PathString() == util.EscapedStar {
 				userReactions, err := bot.Client.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
 				if err != nil {
 					log.Printf("Failed to get userReactions: %s\n", err)
@@ -178,7 +157,7 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 
 			// Try to find a URL in the message content
 			description := msg.Content
-			url := urlRegex.MatchString(msg.Content)
+			url := cmd.UrlRegex.MatchString(msg.Content)
 
 			// Set the embed image to the URL and try to find the first attached image in the message attachments
 			var image *discord.EmbedImage = nil
@@ -203,11 +182,11 @@ func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 				return g, "StarboardReactionHandler: get sMsg.Author"
 			}
 
-			field := discord.EmbedField{Name: "Source", Value: CreateMessageLink(int64(e.GuildID), msg, true)}
+			field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true)}
 			footer := discord.EmbedFooter{Text: strconv.FormatInt(sMsg.Author, 10)}
 			embed := discord.Embed{
 				Description: description,
-				Author:      CreateEmbedAuthor(*member),
+				Author:      cmd.CreateEmbedAuthor(*member),
 				Fields:      []discord.EmbedField{field},
 				Footer:      &footer,
 				Timestamp:   msg.Timestamp,

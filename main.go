@@ -5,6 +5,8 @@ import (
 	"context"
 	"flag"
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
+	"github.com/5HT2/taro-bot/feature"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -29,8 +31,8 @@ func main() {
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
 	// Load config before anything else, as it will be needed
-	LoadConfig()
-	var token = config.BotToken
+	bot.LoadConfig()
+	var token = bot.C.BotToken
 	if token == "" {
 		log.Fatalln("No bot_token given")
 	}
@@ -48,8 +50,8 @@ func main() {
 	}
 
 	// Add handlers
-	c.AddHandler(MessageReactionAddEvent)
-	c.AddHandler(MessageCreateEvent)
+	c.AddHandler(messageReactionAddEvent)
+	c.AddHandler(messageCreateEvent)
 
 	if err := c.Open(context.Background()); err != nil {
 		log.Fatalln("Failed to connect:", err)
@@ -72,9 +74,9 @@ func main() {
 	// Call plugins after logging in with the bot, but before doing anything else at all
 	plugins.Load(*pluginDir)
 
-	go SetupConfigSaving()
-	go RegisterCommands()
-	go RegisterResponses()
+	go bot.SetupConfigSaving()
+	go cmd.RegisterCommands()
+	go feature.RegisterResponses()
 	util.RegisterHttpBashRequests()
 	bot.Scheduler.StartAsync()
 
@@ -86,7 +88,7 @@ func main() {
 
 func checkExited() {
 	log.Printf("Last exit code was %v\n", *lastExitCode)
-	if config.OperatorChannel == 0 || config.OperatorID == 0 {
+	if bot.C.OperatorChannel == 0 || bot.C.OperatorID == 0 {
 		log.Printf("Not uploading logs, OperatorChannel or OperatorID were not set\n")
 		return
 	}
@@ -107,14 +109,28 @@ func checkExited() {
 		log.Fatalln(err)
 	}
 
+	if *debugLog {
+		log.Printf("%v\n", bot.C.OperatorID)
+	}
+
 	// Format stacktrace
-	stack := "<@" + strconv.FormatInt(config.OperatorID, 10) + ">\n```\n" + strings.Join(lines, "\n")
+	stack := "<@" + strconv.FormatInt(bot.C.OperatorID, 10) + ">\n```\n" + strings.Join(lines, "\n")
 	if len(stack) > 1996 {
 		stack = stack[:1996]
 	}
 	stack += "\n```"
 
-	if _, err = bot.Client.SendMessage(discord.ChannelID(config.OperatorChannel), stack); err != nil {
+	if _, err = bot.Client.SendMessage(discord.ChannelID(bot.C.OperatorChannel), stack); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func messageReactionAddEvent(e *gateway.MessageReactionAddEvent) {
+	go feature.StarboardReactionHandler(e)
+	go feature.TopicReactionHandler(e)
+}
+
+func messageCreateEvent(e *gateway.MessageCreateEvent) {
+	go cmd.CommandHandler(e)
+	go feature.ResponseHandler(e)
 }

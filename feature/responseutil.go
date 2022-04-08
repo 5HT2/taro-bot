@@ -1,7 +1,8 @@
-package main
+package feature
 
 import (
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -53,12 +54,12 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	}
 
 	if response.Embed {
-		_, err := SendCustomEmbed(e.ChannelID, embed)
+		_, err := cmd.SendCustomEmbed(e.ChannelID, embed)
 		if err != nil {
 			log.Printf("Error sending global response: %v\n", err)
 		}
 	} else {
-		_, err := SendCustomMessage(e.ChannelID, msgContent)
+		_, err := cmd.SendCustomMessage(e.ChannelID, msgContent)
 		if err != nil {
 			log.Printf("Error sending global response: %v\n", err)
 		}
