@@ -9,13 +9,6 @@ import (
 	"strings"
 )
 
-type Command struct {
-	e      *gateway.MessageCreateEvent
-	name   string
-	fnName string
-	args   []string
-}
-
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
 	defer util.LogPanic()
