@@ -7,32 +7,32 @@ import (
 )
 
 // HasPermission will return if the author of a command has said permission
-func HasPermission(permission string, c Command) *bot.Error {
-	id := int64(c.e.Author.ID)
+func HasPermission(permission string, c bot.Command) *bot.Error {
+	id := int64(c.E.Author.ID)
 
 	if UserHasPermission(permission, c, id) {
 		return nil
 	} else {
-		return bot.GenericError(c.fnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
+		return bot.GenericError(c.FnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
 	}
 }
 
 // UserHasPermission will return if the user with id has said permission
-func UserHasPermission(permission string, c Command, id int64) bool {
+func UserHasPermission(permission string, c bot.Command, id int64) bool {
 	users := make([]int64, 0)
-	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		users = getPermissionSlice(permission, g)
-		return g, "UserHasPermission: " + c.fnName
+		return g, "UserHasPermission: " + c.FnName
 	})
 
 	return util.SliceContains(users, id)
 }
 
 // GivePermission will return nil if the permission was successfully given to the user with a matching id
-func GivePermission(permission string, id int64, c Command) error {
+func GivePermission(permission string, id int64, c bot.Command) error {
 	var err error = nil
 
-	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 
 		users := getPermissionSlice(permission, g)
 		mention := util.GetUserMention(id)
@@ -56,7 +56,7 @@ func GivePermission(permission string, id int64, c Command) error {
 				"couldn't find permission type \""+permission+"\"")
 		}
 
-		return g, "GivePermission: " + c.fnName
+		return g, "GivePermission: " + c.FnName
 	})
 
 	return err

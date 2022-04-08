@@ -18,29 +18,29 @@ func RegisterCommands() {
 
 	bot.Commands = append(bot.Commands,
 		[]bot.CommandInfo{
-			{FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
-			{FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
-			{FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
-			{FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
-			{FnName: "KirbyCommand", Name: "kirby"},
-			{FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
-			{FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
-			{FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
-			{FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
+			{Fn: ChannelCommand, FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
+			{Fn: StealEmojiCommand, FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
+			{Fn: FrogCommand, FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
+			{Fn: HelpCommand, FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
+			{Fn: KirbyCommand, FnName: "KirbyCommand", Name: "kirby"},
+			{Fn: PermissionCommand, FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
+			{Fn: PingCommand, FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
+			{Fn: PrefixCommand, FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
+			{Fn: TopicCommand, FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
 		}...,
 	)
 }
 
-func (c Command) StealEmojiCommand() error {
+func StealEmojiCommand(c bot.Command) error {
 	// try to get emoji ID
-	emojiID, argErr := ParseInt64Arg(c.args, 1)
+	emojiID, argErr := ParseInt64Arg(c.Args, 1)
 	// try to get emoji URL
 	if argErr != nil {
-		emojiID, argErr = ParseEmojiUrlArg(c.args, 1)
+		emojiID, argErr = ParseEmojiUrlArg(c.Args, 1)
 	}
 	// try to get sent emoji
 	if argErr != nil {
-		emojiID, argErr = ParseEmojiIdArg(c.args, 1)
+		emojiID, argErr = ParseEmojiIdArg(c.Args, 1)
 	}
 	// no emoji found
 	if argErr != nil {
@@ -50,7 +50,7 @@ func (c Command) StealEmojiCommand() error {
 	//
 	// we now have the emoji ID, get the name
 
-	emojiName, argErr := ParseStringArg(c.args, 2, false)
+	emojiName, argErr := ParseStringArg(c.Args, 2, false)
 	if argErr != nil {
 		return bot.GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
 	}
@@ -81,17 +81,17 @@ func (c Command) StealEmojiCommand() error {
 		Name:  emojiName,
 		Image: image,
 		AuditLogReason: api.AuditLogReason(
-			"emoji created by " + util.GetUserMention(int64(c.e.Author.ID)),
+			"emoji created by " + util.GetUserMention(int64(c.E.Author.ID)),
 		),
 	}
 
-	if emoji, err := bot.Client.CreateEmoji(c.e.GuildID, createEmojiData); err != nil {
+	if emoji, err := bot.Client.CreateEmoji(c.E.GuildID, createEmojiData); err != nil {
 		// error with uploading
 		return bot.GenericError("StealEmojiCommand", "uploading emoji", err.Error())
 	} else {
 		// uploaded successfully, send a nice embed
 		_, err := bot.Client.SendMessage(
-			c.e.ChannelID,
+			c.E.ChannelID,
 			emoji.String(),
 			discord.Embed{Title: "Emoji stolen ;)", Color: bot.SuccessColor},
 		)
@@ -99,15 +99,15 @@ func (c Command) StealEmojiCommand() error {
 	}
 }
 
-func (c Command) TopicCommand() error {
-	topic, argErr := ParseAllArgs(c.args)
+func TopicCommand(c bot.Command) error {
+	topic, argErr := ParseAllArgs(c.Args)
 	if argErr != nil {
 		return argErr
 	}
 
 	topicsEnabled := false
-	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.e.ChannelID))
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.E.ChannelID))
 		return g, "TopicCommand: check topicsEnabled"
 	})
 
@@ -116,18 +116,18 @@ func (c Command) TopicCommand() error {
 		return err
 	}
 
-	msg, err := SendEmbed(c, "New topic suggested!", c.e.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
+	msg, err := SendEmbed(c, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
 	if err != nil {
 		return err
 	}
 
-	emoji, err := util.GuildTopicVoteApiEmoji(c.e.GuildID)
+	emoji, err := util.GuildTopicVoteApiEmoji(c.E.GuildID)
 	if err != nil {
 		return err
 	}
 
-	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		g.ActiveTopicVotes = append(g.ActiveTopicVotes, bot.ActiveTopicVote{Message: int64(msg.ID), Author: int64(c.e.Author.ID), Topic: topic})
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		g.ActiveTopicVotes = append(g.ActiveTopicVotes, bot.ActiveTopicVote{Message: int64(msg.ID), Author: int64(c.E.Author.ID), Topic: topic})
 		return g, "TopicCommand: append ActiveTopicVotes"
 	})
 
@@ -138,19 +138,19 @@ func (c Command) TopicCommand() error {
 	return nil
 }
 
-func (c Command) ChannelCommand() error {
-	arg1, _ := ParseStringArg(c.args, 1, true)
+func ChannelCommand(c bot.Command) error {
+	arg1, _ := ParseStringArg(c.Args, 1, true)
 
 	switch arg1 {
 	case "archive":
 		err := HasPermission("channels", c)
 		if err == nil {
-			bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 				if g.ArchiveRole == 0 {
-					err = bot.GenericError(c.fnName, "getting archive role", "`archive_role` not set in guild config")
+					err = bot.GenericError(c.FnName, "getting archive role", "`archive_role` not set in guild config")
 				}
 				if g.ArchiveCategory == 0 {
-					err = bot.GenericError(c.fnName, "getting archive category", "`archive_category` not set in guild config")
+					err = bot.GenericError(c.FnName, "getting archive category", "`archive_category` not set in guild config")
 				}
 				return g, "ChannelCommand: check archive permission"
 			})
@@ -159,7 +159,7 @@ func (c Command) ChannelCommand() error {
 				return err
 			}
 
-			channel, err := bot.Client.Channel(c.e.ChannelID)
+			channel, err := bot.Client.Channel(c.E.ChannelID)
 			if err != nil {
 				return err
 			}
@@ -167,11 +167,11 @@ func (c Command) ChannelCommand() error {
 			overwrites := make([]discord.Overwrite, 0)
 			var data api.ModifyChannelData
 
-			bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 				// Copy everything except the archive and @everyone roles to overwrites
 				for _, overwrite := range channel.Overwrites {
 					id := int64(overwrite.ID)
-					if id != int64(c.e.GuildID) && id != g.ArchiveRole {
+					if id != int64(c.E.GuildID) && id != g.ArchiveRole {
 						overwrites = append(overwrites, overwrite)
 						break
 					}
@@ -180,7 +180,7 @@ func (c Command) ChannelCommand() error {
 				overwrites = append(
 					overwrites,
 					discord.Overwrite{
-						ID:   discord.Snowflake(c.e.GuildID),
+						ID:   discord.Snowflake(c.E.GuildID),
 						Type: discord.OverwriteRole,
 						Deny: discord.PermissionViewChannel,
 					},
@@ -195,7 +195,7 @@ func (c Command) ChannelCommand() error {
 				return g, "ChannelCommand: create overwrites data"
 			})
 
-			err = bot.Client.ModifyChannel(c.e.ChannelID, data)
+			err = bot.Client.ModifyChannel(c.E.ChannelID, data)
 			if err != nil {
 				return err
 			} else {
@@ -208,19 +208,19 @@ func (c Command) ChannelCommand() error {
 	case "topic": // TODO: This is terrible. Future me please re-write.
 		err := HasPermission("channels", c)
 		if err == nil {
-			channels := []int64{int64(c.e.ChannelID)}
+			channels := []int64{int64(c.E.ChannelID)}
 
-			if argChannels, err := ParseChannelSliceArg(c.args, 3, -1); err == nil && len(argChannels) != 0 {
+			if argChannels, err := ParseChannelSliceArg(c.Args, 3, -1); err == nil && len(argChannels) != 0 {
 				channels = argChannels
 			}
 			channelsStr := util.JoinInt64Slice(channels, ", ", "<#", ">")
 
-			if arg2, _ := ParseStringArg(c.args, 2, true); err != nil {
+			if arg2, _ := ParseStringArg(c.Args, 2, true); err != nil {
 				return err
 			} else {
 				switch arg2 {
 				case "enable":
-					bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 						for _, channel := range channels {
 							if !util.SliceContains(g.EnabledTopicChannels, channel) {
 								g.EnabledTopicChannels = append(g.EnabledTopicChannels, channel)
@@ -231,7 +231,7 @@ func (c Command) ChannelCommand() error {
 					_, err := SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
 					return err
 				case "disable":
-					bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 						for _, channel := range channels {
 							if util.SliceContains(g.EnabledTopicChannels, channel) {
 								g.EnabledTopicChannels = util.SliceRemove(g.EnabledTopicChannels, channel)
@@ -242,13 +242,13 @@ func (c Command) ChannelCommand() error {
 					_, err := SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
 					return err
 				case "emoji":
-					arg3, animated, err3 := ParseEmojiArg(c.args, 3, true)
+					arg3, animated, err3 := ParseEmojiArg(c.Args, 3, true)
 					if err3 != nil {
 						return err3
 					}
 
 					if arg3 == nil {
-						if emoji, err := util.GuildTopicVoteEmoji(c.e.GuildID); err != nil {
+						if emoji, err := util.GuildTopicVoteEmoji(c.E.GuildID); err != nil {
 							return err
 						} else {
 							_, err = SendEmbed(c, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
@@ -261,7 +261,7 @@ func (c Command) ChannelCommand() error {
 							return err
 						}
 
-						bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+						bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 							g.TopicVoteEmoji = configEmoji
 							return g, "ChannelCommand: update TopicVoteEmoji"
 						})
@@ -270,12 +270,12 @@ func (c Command) ChannelCommand() error {
 						return err
 					}
 				case "threshold":
-					arg3, err3 := ParseInt64Arg(c.args, 3)
+					arg3, err3 := ParseInt64Arg(c.Args, 3)
 					if err3 != nil {
 						return err3
 					}
 
-					bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 						if arg3 <= 0 {
 							arg3 = 3
 						}
@@ -290,7 +290,7 @@ func (c Command) ChannelCommand() error {
 					noTopicChan := false
 					formattedChannels := ""
 
-					bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 						formattedChannels = util.JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
 						noTopicChan = len(g.EnabledTopicChannels) == 0
 						return g, "ChannelCommand: get enabled topic channels"
@@ -311,13 +311,13 @@ func (c Command) ChannelCommand() error {
 	case "starboard":
 		err := HasPermission("channels", c)
 		if err == nil {
-			if arg2, _ := ParseStringArg(c.args, 2, true); err != nil {
+			if arg2, _ := ParseStringArg(c.Args, 2, true); err != nil {
 				return err
 			} else {
-				arg3, errParse := ParseChannelArg(c.args, 3)
+				arg3, errParse := ParseChannelArg(c.Args, 3)
 				var err error = nil
 
-				bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 					switch arg2 {
 					case "regular":
 						if errParse != nil {
@@ -354,7 +354,7 @@ func (c Command) ChannelCommand() error {
 							Description: regularC + "\n" + nsfwC,
 							Color:       bot.DefaultColor,
 						}
-						_, err = SendCustomEmbed(c.e.ChannelID, embed)
+						_, err = SendCustomEmbed(c.E.ChannelID, embed)
 						return g, "ChannelCommand: format starboard channels"
 					}
 				})
@@ -372,18 +372,18 @@ func (c Command) ChannelCommand() error {
 	}
 }
 
-func (c Command) PermissionCommand() error {
-	arg1, _ := ParseStringArg(c.args, 1, true)
+func PermissionCommand(c bot.Command) error {
+	arg1, _ := ParseStringArg(c.Args, 1, true)
 
 	switch arg1 {
 	case "give":
 		err := HasPermission("permissions", c)
 		if err == nil {
-			permission, argErr := ParseStringArg(c.args, 2, true)
+			permission, argErr := ParseStringArg(c.Args, 2, true)
 			if argErr != nil {
 				return argErr
 			}
-			id, argErr := ParseUserArg(c.args, 3)
+			id, argErr := ParseUserArg(c.Args, 3)
 			if argErr != nil {
 				return argErr
 			}
@@ -409,8 +409,8 @@ func (c Command) PermissionCommand() error {
 	}
 }
 
-func (c Command) PrefixCommand() error {
-	arg, argErr := ParseStringArg(c.args, 1, false)
+func PrefixCommand(c bot.Command) error {
+	arg, argErr := ParseStringArg(c.Args, 1, false)
 	if argErr != nil {
 		return argErr
 	}
@@ -418,20 +418,20 @@ func (c Command) PrefixCommand() error {
 	// Filter spaces
 	arg = strings.ReplaceAll(arg, " ", "")
 	if len(arg) == 0 {
-		return bot.GenericError(c.fnName, "getting prefix", "prefix is empty")
+		return bot.GenericError(c.FnName, "getting prefix", "prefix is empty")
 	}
 
 	// Prefix is okay, set it in the cache
 	//
 
 	bot.C.Run(func(config *bot.Config) {
-		config.PrefixCache[int64(c.e.GuildID)] = arg
+		config.PrefixCache[int64(c.E.GuildID)] = arg
 	})
 
 	// Also set it in the guild
 	//
 
-	bot.GuildContext(c.e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		g.Prefix = arg
 		return g, "PrefixCommand"
 	})
@@ -441,11 +441,11 @@ func (c Command) PrefixCommand() error {
 		Footer:      &discord.EmbedFooter{Text: "At any time you can ping the bot with the word \"prefix\" to get the current prefix"},
 		Color:       bot.SuccessColor,
 	}
-	_, err := SendCustomEmbed(c.e.ChannelID, embed)
+	_, err := SendCustomEmbed(c.E.ChannelID, embed)
 	return err
 }
 
-func (c Command) HelpCommand() error {
+func HelpCommand(c bot.Command) error {
 	fmtCmds := make([]string, 0)
 	for _, cmd := range bot.Commands {
 		fmtCmds = append(fmtCmds, cmd.MarkdownString())
@@ -458,7 +458,7 @@ func (c Command) HelpCommand() error {
 	return err
 }
 
-func (c Command) PingCommand() error {
+func PingCommand(c bot.Command) error {
 	if msg, err := SendEmbed(c,
 		"Ping!",
 		"Waiting for API response...",
@@ -474,7 +474,7 @@ func (c Command) PingCommand() error {
 	}
 }
 
-func (c Command) FrogCommand() error {
+func FrogCommand(c bot.Command) error {
 	frogData, _, err := util.RequestUrl("https://frog.pics/api/random", http.MethodGet)
 	if err != nil {
 		return err
@@ -500,12 +500,13 @@ func (c Command) FrogCommand() error {
 		Image: &discord.EmbedImage{URL: frogPicture.ImageUrl},
 	}
 
-	_, err = SendCustomEmbed(c.e.ChannelID, embed)
+	_, err = SendCustomEmbed(c.E.ChannelID, embed)
 	return err
 }
 
-func (c Command) KirbyCommand() {
-	content, _ := ParseAllArgs(c.args)
+func KirbyCommand(c bot.Command) error {
+	content, _ := ParseAllArgs(c.Args)
 	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
 	_, _ = SendMessage(c, content)
+	return nil
 }

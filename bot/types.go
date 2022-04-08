@@ -14,11 +14,19 @@ import (
 // CommandInfo is the info a command provides to register itself. FnName is the function called by reflection.
 // The Name and Aliases are used to call the command via Discord.
 type CommandInfo struct {
+	Fn          func(Command) error
 	FnName      string
 	Name        string
 	Description string
 	Aliases     []string
 	GuildOnly   bool
+}
+
+type Command struct {
+	E      *gateway.MessageCreateEvent
+	FnName string
+	Name   string
+	Args   []string
 }
 
 func (i CommandInfo) String() string {

@@ -25,7 +25,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 
 	cmdInfo := getCommandWithName(cmdName)
 	if cmdInfo != nil {
-		command := Command{e: e, name: cmdName, fnName: cmdInfo.FnName, args: cmdArgs}
+		command := bot.Command{E: e, FnName: cmdInfo.FnName, Name: cmdName, Args: cmdArgs}
 
 		if cmdInfo.GuildOnly && !e.GuildID.IsValid() {
 			_, err := SendEmbed(command, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
@@ -35,13 +35,9 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 			return
 		}
 
-		result := util.InvokeFunc(command, cmdInfo.FnName)
-		if len(result) > 0 {
-			err, _ := result[0].Interface().(error)
-			if err != nil {
-				log.Printf("Error with \"%s\" command (Invoked): %v\n", cmdName, err)
-				SendErrorEmbed(command, err)
-			}
+		if err := cmdInfo.Fn(command); err != nil {
+			log.Printf("Error with \"%s\" command: %v\n", cmdName, err)
+			SendErrorEmbed(command, err)
 		}
 	}
 }

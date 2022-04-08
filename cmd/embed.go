@@ -33,13 +33,13 @@ func SendExternalErrorEmbed(c discord.ChannelID, cmdName string, err error) (*di
 	return SendCustomEmbed(c, makeEmbed("Error running `"+cmdName+"`", err.Error(), bot.ErrorColor))
 }
 
-func SendErrorEmbed(c Command, err error) {
-	_, _ = SendEmbed(c, "Error running `"+c.name+"`", err.Error(), bot.ErrorColor)
+func SendErrorEmbed(c bot.Command, err error) {
+	_, _ = SendEmbed(c, "Error running `"+c.Name+"`", err.Error(), bot.ErrorColor)
 }
 
-func SendEmbed(c Command, title string, description string, color discord.Color) (*discord.Message, error) {
+func SendEmbed(c bot.Command, title string, description string, color discord.Color) (*discord.Message, error) {
 	msg, err := bot.Client.SendEmbeds(
-		c.e.ChannelID,
+		c.E.ChannelID,
 		makeEmbed(title, description, color),
 	)
 	if err != nil {
@@ -48,9 +48,9 @@ func SendEmbed(c Command, title string, description string, color discord.Color)
 	return msg, err
 }
 
-func SendMessage(c Command, content string) (*discord.Message, error) {
+func SendMessage(c bot.Command, content string) (*discord.Message, error) {
 	msg, err := bot.Client.SendMessage(
-		c.e.ChannelID,
+		c.E.ChannelID,
 		content,
 	)
 	if err != nil {
