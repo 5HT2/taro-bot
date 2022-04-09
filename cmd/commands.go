@@ -13,9 +13,6 @@ import (
 )
 
 func RegisterCommands() {
-	bot.Mutex.Lock()
-	defer bot.Mutex.Unlock()
-
 	bot.Commands = append(bot.Commands,
 		[]bot.CommandInfo{
 			{Fn: ChannelCommand, FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},

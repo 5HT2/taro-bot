@@ -71,14 +71,16 @@ func main() {
 		return
 	}
 
-	// Call plugins after logging in with the bot, but before doing anything else at all
-	plugins.Load(*pluginDir)
-
-	go bot.SetupConfigSaving()
-	go cmd.RegisterCommands()
-	go feature.RegisterResponses()
+	// We want http bash requests immediately accessible just in case something needs them.
+	// Though, this shouldn't really ever happen, it doesn't hurt.
 	util.RegisterHttpBashRequests()
-	bot.Scheduler.StartAsync()
+
+	// Call plugins after logging in with the bot, but before doing anything else at all
+	go plugins.RegisterAll(*pluginDir)
+
+	// Now we can start the routine-based tasks
+	go bot.SetupConfigSaving()
+	go bot.Scheduler.StartAsync()
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 

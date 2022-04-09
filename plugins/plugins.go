@@ -26,9 +26,6 @@ func (p Plugin) String() string {
 }
 
 func (p *Plugin) Register() {
-	bot.Mutex.Lock()
-	defer bot.Mutex.Unlock()
-
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
 }

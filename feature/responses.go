@@ -6,9 +6,6 @@ import (
 )
 
 func RegisterResponses() {
-	bot.Mutex.Lock()
-	defer bot.Mutex.Unlock()
-
 	bot.Responses = append(bot.Responses,
 		bot.ResponseInfo{
 			Fn:       PrefixResponse,
