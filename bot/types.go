@@ -110,9 +110,11 @@ type StarboardMessage struct {
 //
 // JobInfo is used by features in order to easily return a job, and allow the bot to handle the errors
 type JobInfo struct {
-	Fn        func()
-	Tag       string
-	Scheduler *gocron.Scheduler
+	Fn             func()
+	Tag            string
+	Scheduler      *gocron.Scheduler
+	CheckCondition bool
+	Condition      bool
 }
 
 func (i JobInfo) String() string {

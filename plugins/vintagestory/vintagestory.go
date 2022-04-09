@@ -16,10 +16,6 @@ var (
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
-	if bot.User.ID == botID {
-		vintageStorySetup()
-	}
-
 	return &plugins.Plugin{
 		Name:        "VintageStory",
 		Description: "Manages VS Docker containers",
@@ -31,6 +27,19 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Title:    "VintageStory",
 			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "vs", "restart"},
 			MatchMin: 3,
+		}},
+		Jobs: []bot.JobInfo{{
+			Fn:             RunBackups,
+			Tag:            "backup-vs-daily",
+			Scheduler:      bot.Scheduler.Every(1).Day().At("04:00"),
+			CheckCondition: true,
+			Condition:      bot.User.ID == botID,
+		}, {
+			Fn:             RunBackups,
+			Tag:            "backup-vs-weekly",
+			Scheduler:      bot.Scheduler.Cron("15 4 * * SUN"),
+			CheckCondition: true,
+			Condition:      bot.User.ID == botID,
 		}},
 	}
 }
@@ -59,63 +68,46 @@ func VintageStoryRebootResponse(r bot.Response) string {
 	return "Okay, sent restart command(s). Responses:\n\n" + strings.Join(responses, "")
 }
 
-func vintageStorySetup() {
-	logVS := func(desc string, err error) {
-		color := bot.DefaultColor
-		embed := discord.Embed{
-			Title:       "VintageStory",
-			Description: desc,
-			Color:       color,
-		}
-
-		if err != nil {
-			embed.Description += err.Error()
-			embed.Color = bot.ErrorColor
-		}
-
-		_, err = bot.Client.SendEmbeds(discord.ChannelID(vsChannel), embed)
-		if err != nil {
-			log.Printf("Error with logVS: %v\n", err)
-		}
+func LogVS(desc string, err error) {
+	color := bot.DefaultColor
+	embed := discord.Embed{
+		Title:       "VintageStory",
+		Description: desc,
+		Color:       color,
 	}
 
-	backupVS := func(name, path, backupName string) {
-		logVS(fmt.Sprintf("Shutting down `%s`...", name), nil)
-		if _, err := httpBashRequests.Run("docker stop " + name); err != nil {
-			logVS("Error with Docker: ", err)
-			return
-		}
-
-		if _, err := httpBashRequests.Run(fmt.Sprintf("sudo cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
-			logVS("Error with copying file: ", err)
-			return
-		}
-
-		if res, err := httpBashRequests.Run("docker start " + name); err != nil {
-			logVS("Error with Docker: ", err)
-			return
-		} else {
-			logVS(fmt.Sprintf("Started `%s`\n```\n%s\n```", name, res), nil)
-		}
+	if err != nil {
+		embed.Description += err.Error()
+		embed.Color = bot.ErrorColor
 	}
 
-	// Run a daily backup at 04:00
-	if job, err := bot.Scheduler.Every(1).Day().At("04:00").Do(func() {
-		backupVS("vintagestory0", "fs/vintagestory/Saves/", "daily.vcdbs")
-		backupVS("vintagestory1", "fs/vs1/Saves/", "daily.vcdbs")
-	}); err != nil {
-		log.Printf("error setting up job: %v\n%v\n", job, err)
+	_, err = bot.Client.SendEmbeds(discord.ChannelID(vsChannel), embed)
+	if err != nil {
+		log.Printf("Error with logVS: %v\n", err)
+	}
+}
+
+func BackupVS(name, path, backupName string) {
+	LogVS(fmt.Sprintf("Shutting down `%s`...", name), nil)
+	if _, err := httpBashRequests.Run("docker stop " + name); err != nil {
+		LogVS("Error with Docker: ", err)
+		return
+	}
+
+	if _, err := httpBashRequests.Run(fmt.Sprintf("sudo cp %sdefault.vcdbs %s%s", path, path, backupName)); err != nil {
+		LogVS("Error with copying file: ", err)
+		return
+	}
+
+	if res, err := httpBashRequests.Run("docker start " + name); err != nil {
+		LogVS("Error with Docker: ", err)
+		return
 	} else {
-		log.Printf("setup job: %v\n", job)
+		LogVS(fmt.Sprintf("Started `%s`\n```\n%s\n```", name, res), nil)
 	}
+}
 
-	// Run a weekly backup at 04:15 on Sunday
-	if job, err := bot.Scheduler.Cron("15 4 * * SUN").Do(func() {
-		backupVS("vintagestory0", "fs/vintagestory/Saves/", "weekly.vcdbs")
-		backupVS("vintagestory1", "fs/vs1/Saves/", "weekly.vcdbs")
-	}); err != nil {
-		log.Printf("error setting up job: %v\n%v\n", job, err)
-	} else {
-		log.Printf("setup job: %v\n", job)
-	}
+func RunBackups() {
+	BackupVS("vintagestory0", "fs/vintagestory/Saves/", "daily.vcdbs")
+	BackupVS("vintagestory1", "fs/vs1/Saves/", "daily.vcdbs")
 }
