@@ -7,6 +7,7 @@ package bot
 import (
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/go-co-op/gocron"
 	"strings"
 )
 
@@ -104,4 +105,16 @@ type StarboardMessage struct {
 	PostID int64   `json:"message"`    // the starboard post message ID
 	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
 	Stars  []int64 `json:"stars"`      // list of added user IDs
+}
+
+//
+// JobInfo is used by features in order to easily return a job, and allow the bot to handle the errors
+type JobInfo struct {
+	Fn        func()
+	Tag       string
+	Scheduler *gocron.Scheduler
+}
+
+func (i JobInfo) String() string {
+	return fmt.Sprintf("[%p, %v, %v]", i.Fn, i.Tag, i.Scheduler)
 }

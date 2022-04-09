@@ -19,15 +19,17 @@ type Plugin struct {
 	Version     string             // Version in semver, e.g.., 1.1.0
 	Commands    []bot.CommandInfo  // Commands to register, could be none
 	Responses   []bot.ResponseInfo // Responses to register, could be none
+	Jobs        []bot.JobInfo      // Jobs to register, could be none
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses)
+	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses, p.Jobs)
 }
 
 func (p *Plugin) Register() {
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
+	bot.Jobs = append(bot.Jobs, p.Jobs...) // these need to have RegisterJobs called in order to function
 }
 
 func Load(dir string) {

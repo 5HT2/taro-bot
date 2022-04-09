@@ -4,7 +4,28 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/feature"
+	"log"
 )
+
+// ClearJobs will go through bot.Jobs and handle the de-registration of them
+func ClearJobs() {
+	for _, job := range bot.Jobs {
+		_ = job.Scheduler.RemoveByTag(job.Tag)
+	}
+
+	bot.Jobs = make([]bot.JobInfo, 0)
+}
+
+// RegisterJobs will go through bot.Jobs and handle the re-registration of them
+func RegisterJobs() {
+	for _, job := range bot.Jobs {
+		if rJob, err := job.Scheduler.Tag(job.Tag).Do(job.Fn); err != nil {
+			log.Printf("failed to register job (%s): %v\n", job.Tag, err)
+		} else {
+			log.Printf("registered job: %v\n", rJob)
+		}
+	}
+}
 
 // RegisterAll will register all bot features, and then load plugins
 func RegisterAll(dir string) {
@@ -20,7 +41,13 @@ func RegisterAll(dir string) {
 	cmd.RegisterCommands()
 	feature.RegisterResponses()
 
+	// We want to do this before registering plugins, same as regular features
+	ClearJobs()
+
 	// This registers the plugins we have downloaded
 	// This does not build new plugins for us, which instead has to be done separately
 	Load(dir)
+
+	// This registers the new jobs that plugins have scheduled
+	RegisterJobs()
 }
