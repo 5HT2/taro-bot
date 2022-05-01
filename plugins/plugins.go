@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/util"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -32,17 +33,20 @@ func (p *Plugin) Register() {
 	bot.Jobs = append(bot.Jobs, p.Jobs...) // these need to have RegisterJobs called in order to function
 }
 
-func Load(dir string) {
+func Load(dir, pluginList string) {
 	d, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Printf("plugin loading failed: couldn't load dir: %s\n", err)
 		return
 	}
 
+	plugins := parsePluginsList(pluginList)
 	pluginInit := &PluginInit{}
 
+	log.Printf("plugin list: [%s]\n", strings.Join(plugins, ", "))
+
 	for _, entry := range d {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") && util.SliceContains(plugins, entry.Name()) {
 			pluginPath := filepath.Join(dir, entry.Name())
 			log.Printf("plugin found: %s\n", entry.Name())
 
@@ -67,4 +71,15 @@ func Load(dir string) {
 			}
 		}
 	}
+}
+
+func parsePluginsList(pluginList string) []string {
+	plugins := make([]string, 0)
+	for _, s := range strings.Split(pluginList, " ") {
+		p := strings.ToLower(s) + ".so"
+		if !util.SliceContains(plugins, p) {
+			plugins = append(plugins, p)
+		}
+	}
+	return plugins
 }

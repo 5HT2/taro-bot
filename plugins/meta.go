@@ -31,7 +31,7 @@ func RegisterJobs() {
 }
 
 // RegisterAll will register all bot features, and then load plugins
-func RegisterAll(dir string) {
+func RegisterAll(dir, pluginList string) {
 	bot.Mutex.Lock()
 	defer bot.Mutex.Unlock()
 
@@ -49,7 +49,7 @@ func RegisterAll(dir string) {
 
 	// This registers the plugins we have downloaded
 	// This does not build new plugins for us, which instead has to be done separately
-	Load(dir)
+	Load(dir, pluginList)
 
 	// This registers the new jobs that plugins have scheduled
 	RegisterJobs()

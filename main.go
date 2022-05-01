@@ -21,6 +21,7 @@ import (
 
 var (
 	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
+	pluginList   = flag.String("plugins", "base spotifytoyoutube remindme", "List of plugins to load")
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
@@ -76,7 +77,7 @@ func main() {
 	util.RegisterHttpBashRequests()
 
 	// Call plugins after logging in with the bot, but before doing anything else at all
-	go plugins.RegisterAll(*pluginDir)
+	go plugins.RegisterAll(*pluginDir, *pluginList)
 
 	// Now we can start the routine-based tasks
 	go bot.SetupConfigSaving()
