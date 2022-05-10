@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
@@ -336,6 +337,20 @@ func ChannelCommand(c bot.Command) error {
 							_, err = SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", bot.SuccessColor)
 							return g, "ChannelCommand: disable nsfw starboard"
 						}
+					case "threshold":
+						if arg3, errParse := ParseInt64Arg(c.Args, 3); errParse != nil {
+							err = errParse
+						} else {
+							if arg3 <= 0 {
+								arg3 = 1
+							}
+
+							g.Starboard.Threshold = arg3
+							_, err = SendEmbed(c, "Starboard Threshold", fmt.Sprintf("✅ Set threshold to: %v", arg3), bot.SuccessColor)
+						}
+
+						return g, "ChannelCommand: set threshold"
+
 					default:
 						regularC := "✅ Regular Starboard <#" + strconv.FormatInt(g.Starboard.Channel, 10) + ">"
 						nsfwC := "✅ NSFW Starboard <#" + strconv.FormatInt(g.Starboard.NsfwChannel, 10) + ">"
@@ -363,7 +378,7 @@ func ChannelCommand(c bot.Command) error {
 	default:
 		_, err := SendEmbed(c,
 			"Channel",
-			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`\n- `starboard set regular|nsfw [channel]`",
+			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`\n- `starboard regular|nsfw [channel]`\n- `starboard threshold [threshold]`",
 			bot.DefaultColor)
 		return err
 	}
