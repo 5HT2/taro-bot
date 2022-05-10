@@ -36,4 +36,5 @@ This is the simplest example of the `config/config.json` file, you only need `bo
   - [x] Allow selecting a range of args to return as one
 - [ ] Each command should be able to register its own config settings
 - [x] Asynchronous config states. Right now you need to store it in a variable.
-- [x] Better scalability.
+- [x] Better scalability
+- [ ] Cluster / Sharding support
