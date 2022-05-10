@@ -410,7 +410,10 @@ func PermissionCommand(c bot.Command) error {
 					"Permissions",
 					"Successfully gave "+util.GetUserMention(bot.C.OperatorID)+" permission to use \""+permission+"\"",
 					bot.SuccessColor)
-				return err
+
+				if err != nil {
+					SendErrorEmbed(c, err)
+				}
 			}
 		}
 
