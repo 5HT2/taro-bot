@@ -397,10 +397,28 @@ func PermissionCommand(c bot.Command) error {
 		} else {
 			return err
 		}
+	case "op":
+		if bot.C.OperatorID == 0 || int64(c.E.Author.ID) != bot.C.OperatorID {
+			return bot.GenericError("PermissionCommand", "granting operator access", "user is not the bot operator!")
+		}
+
+		for _, permission := range Permissions {
+			if err := GivePermission(permission, bot.C.OperatorID, c); err != nil {
+				SendErrorEmbed(c, err)
+			} else {
+				_, err = SendEmbed(c,
+					"Permissions",
+					"Successfully gave "+util.GetUserMention(bot.C.OperatorID)+" permission to use \""+permission+"\"",
+					bot.SuccessColor)
+				return err
+			}
+		}
+
+		return nil
 	default:
 		_, err := SendEmbed(c,
 			"Permissions",
-			"Available arguments are:\n- `give` <permission> <user>",
+			"Available arguments are:\n- `give` <permission> <user>\n- `op`",
 			bot.DefaultColor)
 		return err
 	}

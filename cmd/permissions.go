@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+var (
+	Permissions = []string{"channels", "permissions"}
+)
+
 // HasPermission will return if the author of a command has said permission
 func HasPermission(permission string, c bot.Command) *bot.Error {
 	id := int64(c.E.Author.ID)
