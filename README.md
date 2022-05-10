@@ -3,9 +3,9 @@
 A Discord bot built in Go and Arikawa.
 
 Notable features:
-- Auto-response system that can call Go code from JSON
 - Automatic command registration, with info support such as aliases and descriptions
 - Strict arg parsing and selection
+- Flexible auto-response and auto-scheduling system that can call Go code
 - Automatic error handling via friendly messages given to the user :)
 - Asynchronous event handling with concurrency-safe configs
 - Fully-fledged plugin support
