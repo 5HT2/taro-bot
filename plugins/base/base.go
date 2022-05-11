@@ -12,9 +12,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Name:        "Taro Base",
 		Description: "The base commands and responses included as part of the bot",
 		Version:     "1.0.0",
-		Commands: []bot.CommandInfo{
-			{Fn: InviteCommand, FnName: "InviteCommand", Name: "invite", Description: "Invite the bot to your own server!"},
-		},
+		Commands: []bot.CommandInfo{{
+			Fn:          InviteCommand,
+			FnName:      "InviteCommand",
+			Name:        "invite",
+			Description: "Invite the bot to your own server!",
+		}},
 		Responses: []bot.ResponseInfo{},
 	}
 }
