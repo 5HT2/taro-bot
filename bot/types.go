@@ -55,6 +55,7 @@ func (i CommandInfo) MarkdownString() string {
 // The Regexes are used to call the response via Discord.
 type ResponseInfo struct {
 	Fn           func(Response) string
+	Silent       bool
 	Embed        bool
 	Title        string
 	Regexes      []string
