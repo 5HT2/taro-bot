@@ -25,6 +25,7 @@ var (
 
 	SuccessColor   discord.Color = 0x3cde5a
 	ErrorColor     discord.Color = 0xde413c
+	WarnColor      discord.Color = 0xde953c
 	DefaultColor   discord.Color = 0x493cde
 	StarboardColor discord.Color = 0xffac33
 )
