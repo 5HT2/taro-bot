@@ -17,123 +17,16 @@ func RegisterCommands() {
 	bot.Commands = append(bot.Commands,
 		[]bot.CommandInfo{
 			{Fn: ChannelCommand, FnName: "ChannelCommand", Name: "channel", Description: "Manage channels", GuildOnly: true},
-			{Fn: StealEmojiCommand, FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
 			{Fn: FrogCommand, FnName: "FrogCommand", Name: "frog", Description: "\\*hands you a random frog pic\\*"},
 			{Fn: HelpCommand, FnName: "HelpCommand", Name: "help", Aliases: []string{"h"}},
 			{Fn: KirbyCommand, FnName: "KirbyCommand", Name: "kirby"},
 			{Fn: PermissionCommand, FnName: "PermissionCommand", Name: "permission", Aliases: []string{"perm"}, Description: "Manage user permissions", GuildOnly: true},
 			{Fn: PingCommand, FnName: "PingCommand", Name: "ping", Description: "Returns the current API latency"},
 			{Fn: PrefixCommand, FnName: "PrefixCommand", Name: "prefix", Description: "Set the bot prefix for your guild", GuildOnly: true},
+			{Fn: StealEmojiCommand, FnName: "StealEmojiCommand", Name: "stealemoji", Aliases: []string{"se"}, Description: "Upload an emoji to the current guild", GuildOnly: true},
 			{Fn: TopicCommand, FnName: "TopicCommand", Name: "topic", Description: "Suggest a new topic for the current channel", GuildOnly: true},
 		}...,
 	)
-}
-
-func StealEmojiCommand(c bot.Command) error {
-	// try to get emoji ID
-	emojiID, argErr := ParseInt64Arg(c.Args, 1)
-	// try to get emoji URL
-	if argErr != nil {
-		emojiID, argErr = ParseEmojiUrlArg(c.Args, 1)
-	}
-	// try to get sent emoji
-	if argErr != nil {
-		emojiID, argErr = ParseEmojiIdArg(c.Args, 1)
-	}
-	// no emoji found
-	if argErr != nil {
-		return argErr
-	}
-
-	//
-	// we now have the emoji ID, get the name
-
-	emojiName, argErr := ParseStringArg(c.Args, 2, false)
-	if argErr != nil {
-		return bot.GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
-	}
-
-	//
-	// we now have the emoji ID and name, get the bytes
-
-	url := "https://cdn.discordapp.com/emojis/" + strconv.FormatInt(emojiID, 10)
-	bytes, res, err := util.RequestUrl(url+".gif", http.MethodGet)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode != 200 {
-		bytes, res, err = util.RequestUrl(url+".png", http.MethodGet)
-		if err != nil {
-			return err
-		}
-
-		if res.StatusCode != 200 {
-			return bot.GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
-		}
-	}
-
-	// now we try to upload it
-
-	image := api.Image{ContentType: res.Header.Get("content-type"), Content: bytes}
-	createEmojiData := api.CreateEmojiData{
-		Name:  emojiName,
-		Image: image,
-		AuditLogReason: api.AuditLogReason(
-			"emoji created by " + util.GetUserMention(int64(c.E.Author.ID)),
-		),
-	}
-
-	if emoji, err := bot.Client.CreateEmoji(c.E.GuildID, createEmojiData); err != nil {
-		// error with uploading
-		return bot.GenericError("StealEmojiCommand", "uploading emoji", err.Error())
-	} else {
-		// uploaded successfully, send a nice embed
-		_, err := bot.Client.SendMessage(
-			c.E.ChannelID,
-			emoji.String(),
-			discord.Embed{Title: "Emoji stolen ;)", Color: bot.SuccessColor},
-		)
-		return err
-	}
-}
-
-func TopicCommand(c bot.Command) error {
-	topic, argErr := ParseAllArgs(c.Args)
-	if argErr != nil {
-		return argErr
-	}
-
-	topicsEnabled := false
-	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.E.ChannelID))
-		return g, "TopicCommand: check topicsEnabled"
-	})
-
-	if !topicsEnabled {
-		_, err := SendEmbed(c, "Topics are disabled in this channel!", "", bot.ErrorColor)
-		return err
-	}
-
-	msg, err := SendEmbed(c, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
-	if err != nil {
-		return err
-	}
-
-	emoji, err := util.GuildTopicVoteApiEmoji(c.E.GuildID)
-	if err != nil {
-		return err
-	}
-
-	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		g.ActiveTopicVotes = append(g.ActiveTopicVotes, bot.ActiveTopicVote{Message: int64(msg.ID), Author: int64(c.E.Author.ID), Topic: topic})
-		return g, "TopicCommand: append ActiveTopicVotes"
-	})
-
-	if err := bot.Client.React(msg.ChannelID, msg.ID, emoji); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func ChannelCommand(c bot.Command) error {
@@ -384,6 +277,56 @@ func ChannelCommand(c bot.Command) error {
 	}
 }
 
+func FrogCommand(c bot.Command) error {
+	frogData, _, err := util.RequestUrl("https://frog.pics/api/random", http.MethodGet)
+	if err != nil {
+		return err
+	}
+
+	type FrogPicture struct {
+		ImageUrl    string `json:"image_url"`
+		MedianColor string `json:"median_color"`
+	}
+	var frogPicture FrogPicture
+
+	if err := json.Unmarshal(frogData, &frogPicture); err != nil {
+		return err
+	}
+
+	color, err := util.ParseHexColorFast("#" + frogPicture.MedianColor)
+	if err != nil {
+		return err
+	}
+
+	embed := discord.Embed{
+		Color: discord.Color(util.ConvertColorToInt32(color)),
+		Image: &discord.EmbedImage{URL: frogPicture.ImageUrl},
+	}
+
+	_, err = SendCustomEmbed(c.E.ChannelID, embed)
+	return err
+}
+
+func HelpCommand(c bot.Command) error {
+	fmtCmds := make([]string, 0)
+	for _, cmd := range bot.Commands {
+		fmtCmds = append(fmtCmds, cmd.MarkdownString())
+	}
+
+	_, err := SendEmbed(c,
+		"Taro Help",
+		strings.Join(fmtCmds, "\n\n"),
+		bot.DefaultColor)
+	return err
+}
+
+func KirbyCommand(c bot.Command) error {
+	content, _ := ParseAllArgs(c.Args)
+	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
+	_, _ = SendMessage(c, content)
+	return nil
+}
+
 func PermissionCommand(c bot.Command) error {
 	arg1, _ := ParseStringArg(c.Args, 1, true)
 
@@ -442,6 +385,22 @@ func PermissionCommand(c bot.Command) error {
 	}
 }
 
+func PingCommand(c bot.Command) error {
+	if msg, err := SendEmbed(c,
+		"Ping!",
+		"Waiting for API response...",
+		bot.DefaultColor); err != nil {
+		return err
+	} else {
+		curTime := time.Now().UnixMilli()
+		msgTime := msg.Timestamp.Time().UnixMilli()
+
+		embed := makeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", bot.SuccessColor)
+		_, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, "", embed)
+		return err
+	}
+}
+
 func PrefixCommand(c bot.Command) error {
 	arg, argErr := ParseStringArg(c.Args, 1, false)
 	if argErr != nil {
@@ -478,68 +437,109 @@ func PrefixCommand(c bot.Command) error {
 	return err
 }
 
-func HelpCommand(c bot.Command) error {
-	fmtCmds := make([]string, 0)
-	for _, cmd := range bot.Commands {
-		fmtCmds = append(fmtCmds, cmd.MarkdownString())
+func StealEmojiCommand(c bot.Command) error {
+	// try to get emoji ID
+	emojiID, argErr := ParseInt64Arg(c.Args, 1)
+	// try to get emoji URL
+	if argErr != nil {
+		emojiID, argErr = ParseEmojiUrlArg(c.Args, 1)
+	}
+	// try to get sent emoji
+	if argErr != nil {
+		emojiID, argErr = ParseEmojiIdArg(c.Args, 1)
+	}
+	// no emoji found
+	if argErr != nil {
+		return argErr
 	}
 
-	_, err := SendEmbed(c,
-		"Taro Help",
-		strings.Join(fmtCmds, "\n\n"),
-		bot.DefaultColor)
-	return err
-}
+	//
+	// we now have the emoji ID, get the name
 
-func PingCommand(c bot.Command) error {
-	if msg, err := SendEmbed(c,
-		"Ping!",
-		"Waiting for API response...",
-		bot.DefaultColor); err != nil {
+	emojiName, argErr := ParseStringArg(c.Args, 2, false)
+	if argErr != nil {
+		return bot.GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
+	}
+
+	//
+	// we now have the emoji ID and name, get the bytes
+
+	url := "https://cdn.discordapp.com/emojis/" + strconv.FormatInt(emojiID, 10)
+	bytes, res, err := util.RequestUrl(url+".gif", http.MethodGet)
+	if err != nil {
 		return err
+	}
+	if res.StatusCode != 200 {
+		bytes, res, err = util.RequestUrl(url+".png", http.MethodGet)
+		if err != nil {
+			return err
+		}
+
+		if res.StatusCode != 200 {
+			return bot.GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
+		}
+	}
+
+	// now we try to upload it
+
+	image := api.Image{ContentType: res.Header.Get("content-type"), Content: bytes}
+	createEmojiData := api.CreateEmojiData{
+		Name:  emojiName,
+		Image: image,
+		AuditLogReason: api.AuditLogReason(
+			"emoji created by " + util.GetUserMention(int64(c.E.Author.ID)),
+		),
+	}
+
+	if emoji, err := bot.Client.CreateEmoji(c.E.GuildID, createEmojiData); err != nil {
+		// error with uploading
+		return bot.GenericError("StealEmojiCommand", "uploading emoji", err.Error())
 	} else {
-		curTime := time.Now().UnixMilli()
-		msgTime := msg.Timestamp.Time().UnixMilli()
-
-		embed := makeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", bot.SuccessColor)
-		_, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, "", embed)
+		// uploaded successfully, send a nice embed
+		_, err := bot.Client.SendMessage(
+			c.E.ChannelID,
+			emoji.String(),
+			discord.Embed{Title: "Emoji stolen ;)", Color: bot.SuccessColor},
+		)
 		return err
 	}
 }
 
-func FrogCommand(c bot.Command) error {
-	frogData, _, err := util.RequestUrl("https://frog.pics/api/random", http.MethodGet)
+func TopicCommand(c bot.Command) error {
+	topic, argErr := ParseAllArgs(c.Args)
+	if argErr != nil {
+		return argErr
+	}
+
+	topicsEnabled := false
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.E.ChannelID))
+		return g, "TopicCommand: check topicsEnabled"
+	})
+
+	if !topicsEnabled {
+		_, err := SendEmbed(c, "Topics are disabled in this channel!", "", bot.ErrorColor)
+		return err
+	}
+
+	msg, err := SendEmbed(c, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
 	if err != nil {
 		return err
 	}
 
-	type FrogPicture struct {
-		ImageUrl    string `json:"image_url"`
-		MedianColor string `json:"median_color"`
-	}
-	var frogPicture FrogPicture
-
-	if err := json.Unmarshal(frogData, &frogPicture); err != nil {
-		return err
-	}
-
-	color, err := util.ParseHexColorFast("#" + frogPicture.MedianColor)
+	emoji, err := util.GuildTopicVoteApiEmoji(c.E.GuildID)
 	if err != nil {
 		return err
 	}
 
-	embed := discord.Embed{
-		Color: discord.Color(util.ConvertColorToInt32(color)),
-		Image: &discord.EmbedImage{URL: frogPicture.ImageUrl},
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		g.ActiveTopicVotes = append(g.ActiveTopicVotes, bot.ActiveTopicVote{Message: int64(msg.ID), Author: int64(c.E.Author.ID), Topic: topic})
+		return g, "TopicCommand: append ActiveTopicVotes"
+	})
+
+	if err := bot.Client.React(msg.ChannelID, msg.ID, emoji); err != nil {
+		return err
 	}
 
-	_, err = SendCustomEmbed(c.E.ChannelID, embed)
-	return err
-}
-
-func KirbyCommand(c bot.Command) error {
-	content, _ := ParseAllArgs(c.Args)
-	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
-	_, _ = SendMessage(c, content)
 	return nil
 }
