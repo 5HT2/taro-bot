@@ -11,7 +11,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	return &plugins.Plugin{
 		Name:        "Taro Base",
 		Description: "The base commands and responses included as part of the bot",
-		Version:     "1.0.0",
+		Version:     "1.0.1",
 		Commands: []bot.CommandInfo{{
 			Fn:          InviteCommand,
 			FnName:      "InviteCommand",
@@ -25,7 +25,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 func InviteCommand(c bot.Command) error {
 	_, err := cmd.SendEmbed(c,
 		bot.User.Username+" invite", fmt.Sprintf("[Click to add me to your own server!](https://discord.com/oauth2/authorize?client_id=%v&permissions=%v&scope=bot)", bot.User.ID, bot.PermissionsHex),
-		bot.DefaultColor,
+		bot.SuccessColor,
 	)
 	return err
 }
