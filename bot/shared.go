@@ -17,10 +17,11 @@ var (
 	Jobs      = make([]JobInfo, 0)
 	Mutex     = sync.Mutex{}
 
-	HttpClient = http.Client{Timeout: 5 * time.Second}
-	Client     session.Session
-	User       *discord.User
-	Scheduler  = gocron.NewScheduler(getTimeZone())
+	HttpClient     = http.Client{Timeout: 5 * time.Second}
+	Client         session.Session
+	User           *discord.User
+	PermissionsHex = 278136147008
+	Scheduler      = gocron.NewScheduler(getTimeZone())
 
 	SuccessColor   discord.Color = 0x3cde5a
 	ErrorColor     discord.Color = 0xde413c
