@@ -76,7 +76,7 @@ func getPermissionSlice(permission string, guild *bot.GuildConfig) []int64 {
 		return guild.Permissions.ManageChannels
 	case "permissions":
 		return guild.Permissions.ManagePermissions
-	case "moderation":
+	case "moderate":
 		return guild.Permissions.Moderation
 	default:
 		return make([]int64, 0)
