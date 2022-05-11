@@ -323,7 +323,9 @@ func HelpCommand(c bot.Command) error {
 func KirbyCommand(c bot.Command) error {
 	content, _ := ParseAllArgs(c.Args)
 	_, _ = SendMessage(c, "<:kirbyfeet:893291555744542730>")
-	_, _ = SendMessage(c, content)
+	if len(content) > 0 {
+		_, _ = SendMessage(c, content)
+	}
 	return nil
 }
 

@@ -13,7 +13,7 @@ func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message
 		embed,
 	)
 	if err != nil {
-		log.Printf("Error sending embed: %v", err)
+		log.Printf("Error sending embed: %v (%v)", err, embed)
 	}
 	return msg, err
 }
@@ -38,12 +38,13 @@ func SendErrorEmbed(c bot.Command, err error) {
 }
 
 func SendEmbed(c bot.Command, title string, description string, color discord.Color) (*discord.Message, error) {
+	embed := makeEmbed(title, description, color)
 	msg, err := bot.Client.SendEmbeds(
 		c.E.ChannelID,
-		makeEmbed(title, description, color),
+		embed,
 	)
 	if err != nil {
-		log.Printf("Error sending embed: %v", err)
+		log.Printf("Error sending embed: %v (%v)", err, embed)
 	}
 	return msg, err
 }
@@ -54,7 +55,7 @@ func SendMessage(c bot.Command, content string) (*discord.Message, error) {
 		content,
 	)
 	if err != nil {
-		log.Printf("Error sending embed: %v", err)
+		log.Printf("Error sending message: %v", err)
 	}
 	return msg, err
 }
