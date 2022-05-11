@@ -21,7 +21,7 @@ import (
 
 var (
 	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
-	pluginList   = flag.String("plugins", "base spotifytoyoutube remindme", "List of plugins to load")
+	pluginList   = flag.String("plugins", "base spotifytoyoutube remindme tenor-delete", "List of plugins to load")
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
