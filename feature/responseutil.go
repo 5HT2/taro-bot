@@ -30,11 +30,6 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 		return
 	}
 
-	// Don't respond if the response is silent
-	if response.Silent {
-		return
-	}
-
 	// If there is a channel whitelist, and it doesn't contain the original message's channel ID, return
 	if len(response.LockChannels) > 0 && !util.SliceContains(response.LockChannels, int64(e.ChannelID)) {
 		return
@@ -56,6 +51,12 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 
 		embed.Description = result
 		msgContent = result
+	}
+
+	// Don't respond with a message if the response is silent
+	// This has to be called AFTER response.Fn
+	if response.Silent {
+		return
 	}
 
 	if response.Embed {
