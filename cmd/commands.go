@@ -373,19 +373,32 @@ func PermissionCommand(c bot.Command) error {
 			return bot.GenericError("PermissionCommand", "granting operator access", "user is not the bot operator!")
 		}
 
+		color := bot.SuccessColor
+		errs := 0
+		responses := make([]string, 0)
+
 		for _, permission := range Permissions {
 			if err := GivePermission(permission, id, c); err != nil {
-				SendErrorEmbed(c, err)
+				responses = append(responses, fmt.Sprintf("⛔ Failed to give \"%s\" permission:%s\n", permission, err.Error()))
+				errs += 1
 			} else {
-				_, err = SendEmbed(c,
-					"Permissions",
-					"Successfully gave "+util.GetUserMention(id)+" permission to use \""+permission+"\"",
-					bot.SuccessColor)
-
-				if err != nil {
-					SendErrorEmbed(c, err)
-				}
+				responses = append(responses, fmt.Sprintf("✅ Granted \"%s\" permission\n", permission))
 			}
+		}
+
+		if errs == len(Permissions) {
+			color = bot.ErrorColor
+		} else if errs > 0 {
+			color = bot.WarnColor
+		}
+
+		_, err = SendEmbed(c,
+			"Permissions",
+			strings.Join(responses, "\n"),
+			color)
+
+		if err != nil {
+			SendErrorEmbed(c, err)
 		}
 
 		return nil
