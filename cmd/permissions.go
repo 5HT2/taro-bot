@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Permissions = []string{"channels", "permissions"}
+	Permissions = []string{"channels", "permissions", "moderate"}
 )
 
 // HasPermission will return if the author of a command has said permission
@@ -54,6 +54,8 @@ func GivePermission(permission string, id int64, c bot.Command) error {
 			g.Permissions.ManageChannels = users
 		case "permissions":
 			g.Permissions.ManagePermissions = users
+		case "moderate":
+			g.Permissions.Moderation = users
 		default:
 			err = bot.GenericError("GivePermission",
 				"giving permission to "+mention,
@@ -74,6 +76,8 @@ func getPermissionSlice(permission string, guild *bot.GuildConfig) []int64 {
 		return guild.Permissions.ManageChannels
 	case "permissions":
 		return guild.Permissions.ManagePermissions
+	case "moderation":
+		return guild.Permissions.Moderation
 	default:
 		return make([]int64, 0)
 	}

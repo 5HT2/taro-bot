@@ -78,6 +78,7 @@ type Response struct {
 type PermissionGroups struct {
 	ManageChannels    []int64 `json:"manage_channels,omitempty"`
 	ManagePermissions []int64 `json:"manage_permissions,omitempty"`
+	Moderation        []int64 `json:"moderation,omitempty"`
 }
 
 //
