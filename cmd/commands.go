@@ -373,7 +373,7 @@ func PermissionCommand(c bot.Command) error {
 		}
 
 		for _, permission := range Permissions {
-			if err := GivePermission(permission, bot.C.OperatorID, c); err != nil {
+			if err := GivePermission(permission, int64(c.E.Author.ID), c); err != nil {
 				SendErrorEmbed(c, err)
 			} else {
 				_, err = SendEmbed(c,
