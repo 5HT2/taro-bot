@@ -364,11 +364,11 @@ func PermissionCommand(c bot.Command) error {
 		for _, r := range roles {
 			if r.Permissions.Has(discord.PermissionAdministrator) {
 				admin = true
+				break
 			}
 		}
 
-		id := int64(c.E.Author.ID)
-		if (id != 0 && id != bot.C.OperatorID) && !admin {
+		if int64(c.E.Author.ID) != bot.C.OperatorID && !admin {
 			return bot.GenericError("PermissionCommand", "granting operator access", "user is not the bot operator!")
 		}
 
