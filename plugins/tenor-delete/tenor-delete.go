@@ -50,6 +50,10 @@ func TenorDeleteResponse(r bot.Response) string {
 func TenorDeleteCommand(c bot.Command) error {
 	var err error
 
+	if err = cmd.HasPermission("moderate", c); err != nil {
+		return err
+	}
+
 	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		id := int64(c.E.GuildID)
 
