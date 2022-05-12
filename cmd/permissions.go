@@ -195,10 +195,6 @@ func hasAdmin(id discord.GuildID, memberRoles []discord.RoleID, user discord.Use
 			PermissionCache.guilds[n] = g
 			break
 		}
-
-		g = guildAdmins{id: id, admins: []guildUser{{lastCheck: time.Now().Unix(), id: user.ID, admin: admin}}}
-		log.Printf("permission cache: No guild cache found, setting: %v\n", g)
-		PermissionCache.guilds[n] = g
 	}
 
 	if !found {
