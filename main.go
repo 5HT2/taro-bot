@@ -52,9 +52,17 @@ func main() {
 	}
 
 	// Add handlers
-	c.AddHandler(messageReactionAddEvent)
-	c.AddHandler(messageCreateEvent)
-	c.AddHandler(guildMemberUpdateEvent)
+	c.AddHandler(func(e *gateway.MessageReactionAddEvent) {
+		go feature.StarboardReactionHandler(e)
+		go feature.TopicReactionHandler(e)
+	})
+	c.AddHandler(func(e *gateway.MessageCreateEvent) {
+		go cmd.CommandHandler(e)
+		go feature.ResponseHandler(e)
+	})
+	c.AddHandler(func(e *gateway.GuildMemberUpdateEvent) {
+		go cmd.UpdateMemberCache(e)
+	})
 
 	if err := c.Open(context.Background()); err != nil {
 		log.Fatalln("Failed to connect:", err)
@@ -128,18 +136,4 @@ func checkExited() {
 	if _, err = bot.Client.SendMessage(discord.ChannelID(bot.C.OperatorChannel), stack); err != nil {
 		log.Fatalln(err)
 	}
-}
-
-func messageReactionAddEvent(e *gateway.MessageReactionAddEvent) {
-	go feature.StarboardReactionHandler(e)
-	go feature.TopicReactionHandler(e)
-}
-
-func messageCreateEvent(e *gateway.MessageCreateEvent) {
-	go cmd.CommandHandler(e)
-	go feature.ResponseHandler(e)
-}
-
-func guildMemberUpdateEvent(e *gateway.GuildMemberUpdateEvent) {
-	go cmd.UpdateMemberCache(e)
 }
