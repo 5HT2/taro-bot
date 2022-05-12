@@ -364,7 +364,7 @@ func PermissionCommand(c bot.Command) error {
 		}
 		admin := false
 		for _, r := range roles {
-			if r.Permissions.Has(discord.PermissionAdministrator) {
+			if r.Permissions.Has(discord.PermissionAdministrator) && util.SliceContains(c.E.Member.RoleIDs, r.ID) {
 				admin = true
 				break
 			}
