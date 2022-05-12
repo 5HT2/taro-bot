@@ -30,7 +30,7 @@ func SendCustomMessage(c discord.ChannelID, content string) (*discord.Message, e
 }
 
 func SendExternalErrorEmbed(c discord.ChannelID, cmdName string, err error) (*discord.Message, error) {
-	return SendCustomEmbed(c, makeEmbed("Error running `"+cmdName+"`", err.Error(), bot.ErrorColor))
+	return SendCustomEmbed(c, MakeEmbed("Error running `"+cmdName+"`", err.Error(), bot.ErrorColor))
 }
 
 func SendErrorEmbed(c bot.Command, err error) {
@@ -38,7 +38,7 @@ func SendErrorEmbed(c bot.Command, err error) {
 }
 
 func SendEmbed(c bot.Command, title string, description string, color discord.Color) (*discord.Message, error) {
-	embed := makeEmbed(title, description, color)
+	embed := MakeEmbed(title, description, color)
 	msg, err := bot.Client.SendEmbeds(
 		c.E.ChannelID,
 		embed,
@@ -82,7 +82,7 @@ func CreateMessageLink(guild int64, message *discord.Message, jump bool) string 
 	return link
 }
 
-func makeEmbed(title string, description string, color discord.Color) discord.Embed {
+func MakeEmbed(title string, description string, color discord.Color) discord.Embed {
 	return discord.Embed{
 		Title:       title,
 		Description: description,

@@ -2,8 +2,6 @@ package plugins
 
 import (
 	"github.com/5HT2/taro-bot/bot"
-	"github.com/5HT2/taro-bot/cmd"
-	"github.com/5HT2/taro-bot/feature"
 	"log"
 )
 
@@ -40,11 +38,7 @@ func RegisterAll(dir, pluginList string) {
 	bot.Commands = make([]bot.CommandInfo, 0)
 	bot.Responses = make([]bot.ResponseInfo, 0)
 
-	// This registers the base features
-	cmd.RegisterCommands()
-	feature.RegisterResponses()
-
-	// We want to do this before registering plugins, same as regular features
+	// We want to do this before registering plugins
 	ClearJobs()
 
 	// This registers the plugins we have downloaded

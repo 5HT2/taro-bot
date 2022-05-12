@@ -47,7 +47,7 @@ func HasPermission(permission string, c bot.Command) *bot.Error {
 
 // UserHasPermission will return if the user with id has said permission
 func UserHasPermission(permission string, c bot.Command, id int64) bool {
-	if hasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
+	if HasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
 		return true
 	}
 
@@ -117,7 +117,7 @@ func getPermissionSlice(permission string, guild *bot.GuildConfig) []int64 {
 	}
 }
 
-func hasAdminCached(id discord.GuildID, memberRoles []discord.RoleID, user discord.User) bool {
+func HasAdminCached(id discord.GuildID, memberRoles []discord.RoleID, user discord.User) bool {
 	PermissionCache.mutex.Lock()
 	defer PermissionCache.mutex.Unlock()
 
@@ -126,14 +126,14 @@ func hasAdminCached(id discord.GuildID, memberRoles []discord.RoleID, user disco
 			for _, u := range g.admins {
 				// If ID matches and the last check was more recent than 10 minutes ago
 				if u.id == user.ID && time.Now().Unix()-u.lastCheck < 600 {
-					log.Printf("hasAdminCached: found %v\n", u.id)
+					log.Printf("HasAdminCached: found %v\n", u.id)
 					return u.admin
 				}
 			}
 		}
 	}
 
-	log.Printf("hasAdminCached: didn't find anyone\n")
+	log.Printf("HasAdminCached: didn't find anyone\n")
 	return hasAdmin(id, memberRoles, user)
 }
 
