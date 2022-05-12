@@ -358,20 +358,8 @@ func PermissionCommand(c bot.Command) error {
 			return err
 		}
 	case "op":
-		roles, err := bot.Client.Roles(c.E.GuildID)
-		if err != nil {
-			return err
-		}
-		admin := false
-		for _, r := range roles {
-			if r.Permissions.Has(discord.PermissionAdministrator) && util.SliceContains(c.E.Member.RoleIDs, r.ID) {
-				admin = true
-				break
-			}
-		}
-
 		id := int64(c.E.Author.ID)
-		if id != bot.C.OperatorID && !admin {
+		if id != bot.C.OperatorID && !hasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
 			return bot.GenericError("PermissionCommand", "granting operator access", "user is not the bot operator!")
 		}
 
@@ -394,16 +382,12 @@ func PermissionCommand(c bot.Command) error {
 			color = bot.WarnColor
 		}
 
-		_, err = SendEmbed(c,
+		_, err := SendEmbed(c,
 			"Permissions",
 			strings.Join(responses, "\n"),
 			color)
 
-		if err != nil {
-			SendErrorEmbed(c, err)
-		}
-
-		return nil
+		return err
 	default:
 		_, err := SendEmbed(c,
 			"Permissions",

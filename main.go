@@ -43,6 +43,7 @@ func main() {
 		gateway.IntentGuildEmojis,
 		gateway.IntentGuildMessageReactions,
 		gateway.IntentDirectMessages,
+		gateway.IntentGuildMembers,
 	)
 	bot.Client = *c
 
@@ -53,6 +54,7 @@ func main() {
 	// Add handlers
 	c.AddHandler(messageReactionAddEvent)
 	c.AddHandler(messageCreateEvent)
+	c.AddHandler(guildMemberUpdateEvent)
 
 	if err := c.Open(context.Background()); err != nil {
 		log.Fatalln("Failed to connect:", err)
@@ -136,4 +138,8 @@ func messageReactionAddEvent(e *gateway.MessageReactionAddEvent) {
 func messageCreateEvent(e *gateway.MessageCreateEvent) {
 	go cmd.CommandHandler(e)
 	go feature.ResponseHandler(e)
+}
+
+func guildMemberUpdateEvent(e *gateway.GuildMemberUpdateEvent) {
+	go cmd.UpdateMemberCache(e)
 }
