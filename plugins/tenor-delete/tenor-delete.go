@@ -22,8 +22,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          TenorDeleteCommand,
 			FnName:      "TenorDeleteCommand",
 			Name:        "tenordelete",
-			Description: "Toggle tenor deletion on or off"},
-		},
+			Description: "Toggle tenor deletion on or off",
+			GuildOnly:   true,
+		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       TenorDeleteResponse,
 			Regexes:  []string{tenorRegex.String()},
