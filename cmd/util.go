@@ -28,7 +28,7 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 		command := bot.Command{E: e, FnName: cmdInfo.FnName, Name: cmdName, Args: cmdArgs}
 
 		if cmdInfo.GuildOnly && !e.GuildID.IsValid() {
-			_, err := SendEmbed(command, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
+			_, err := SendEmbed(e, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
 			if err != nil {
 				log.Printf("Error with \"%s\" command (Cancelled): %v\n", cmdName, err)
 			}

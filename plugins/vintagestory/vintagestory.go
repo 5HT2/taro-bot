@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -23,8 +24,6 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Commands:    []bot.CommandInfo{},
 		Responses: []bot.ResponseInfo{{
 			Fn:       VintageStoryRebootResponse,
-			Embed:    true,
-			Title:    "VintageStory",
 			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "vs", "restart"},
 			MatchMin: 3,
 		}},
@@ -44,9 +43,10 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	}
 }
 
-func VintageStoryRebootResponse(r bot.Response) string {
+func VintageStoryRebootResponse(r bot.Response) {
 	if bot.User.ID != botID {
-		return "Not setup for this bot instance!"
+		_, _ = cmd.SendEmbed(r.E, "VintageStory", "Not setup for this bot instance!", bot.ErrorColor)
+		return
 	}
 
 	servers := []string{"vintagestory0"}
@@ -65,7 +65,7 @@ func VintageStoryRebootResponse(r bot.Response) string {
 		}
 	}
 
-	return "Okay, sent restart command(s). Responses:\n\n" + strings.Join(responses, "")
+	_, _ = cmd.SendEmbed(r.E, "VintageStory", "Okay, sent restart command(s). Responses:\n\n"+strings.Join(responses, ""), bot.DefaultColor)
 }
 
 func LogVS(desc string, err error) {

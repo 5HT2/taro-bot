@@ -103,7 +103,7 @@ func ChannelCommand(c bot.Command) error {
 			if err != nil {
 				return err
 			} else {
-				_, err = cmd.SendEmbed(c, "Channels", "Successfully archived channel", bot.SuccessColor)
+				_, err = cmd.SendEmbed(c.E, "Channels", "Successfully archived channel", bot.SuccessColor)
 				return err
 			}
 		} else {
@@ -132,7 +132,7 @@ func ChannelCommand(c bot.Command) error {
 						}
 						return g, "ChannelCommand: topic enable"
 					})
-					_, err := cmd.SendEmbed(c, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
+					_, err := cmd.SendEmbed(c.E, "Channel Topic", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
 					return err
 				case "disable":
 					bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
@@ -143,7 +143,7 @@ func ChannelCommand(c bot.Command) error {
 						}
 						return g, "ChannelCommand: topic disable"
 					})
-					_, err := cmd.SendEmbed(c, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
+					_, err := cmd.SendEmbed(c.E, "Channel Topic", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
 					return err
 				case "emoji":
 					arg3, animated, err3 := cmd.ParseEmojiArg(c.Args, 3, true)
@@ -155,7 +155,7 @@ func ChannelCommand(c bot.Command) error {
 						if emoji, err := util.GuildTopicVoteEmoji(c.E.GuildID); err != nil {
 							return err
 						} else {
-							_, err = cmd.SendEmbed(c, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
+							_, err = cmd.SendEmbed(c.E, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
 							return err
 						}
 					} else {
@@ -170,7 +170,7 @@ func ChannelCommand(c bot.Command) error {
 							return g, "ChannelCommand: update TopicVoteEmoji"
 						})
 
-						_, err = cmd.SendEmbed(c, "Set Topic Vote Emoji To:", emoji, bot.SuccessColor)
+						_, err = cmd.SendEmbed(c.E, "Set Topic Vote Emoji To:", emoji, bot.SuccessColor)
 						return err
 					}
 				case "threshold":
@@ -188,7 +188,7 @@ func ChannelCommand(c bot.Command) error {
 						return g, "ChannelCommand: update topic vote threshold"
 					})
 
-					_, err := cmd.SendEmbed(c, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), bot.SuccessColor)
+					_, err := cmd.SendEmbed(c.E, "Set Topic Vote Threshold To:", strconv.FormatInt(arg3, 10), bot.SuccessColor)
 					return err
 				default:
 					noTopicChan := false
@@ -201,11 +201,11 @@ func ChannelCommand(c bot.Command) error {
 					})
 
 					if noTopicChan {
-						_, err := cmd.SendEmbed(c, "Channel Topic", "There are currently no allowed topic channels", bot.DefaultColor)
+						_, err := cmd.SendEmbed(c.E, "Channel Topic", "There are currently no allowed topic channels", bot.DefaultColor)
 						return err
 					}
 
-					_, err := cmd.SendEmbed(c, "Channel Topic", "Allowed Topic Channels:\n\n"+formattedChannels, bot.DefaultColor)
+					_, err := cmd.SendEmbed(c.E, "Channel Topic", "Allowed Topic Channels:\n\n"+formattedChannels, bot.DefaultColor)
 					return err
 				}
 			}
@@ -226,21 +226,21 @@ func ChannelCommand(c bot.Command) error {
 					case "regular":
 						if errParse != nil {
 							g.Starboard.Channel = 0
-							_, err = cmd.SendEmbed(c, "Starboard Channels", "⛔ Disabled regular starboard", bot.ErrorColor)
+							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "⛔ Disabled regular starboard", bot.ErrorColor)
 							return g, "ChannelCommand: enable regular starboard"
 						} else {
 							g.Starboard.Channel = arg3
-							_, err = cmd.SendEmbed(c, "Starboard Channels", "✅ Enabled regular starboard", bot.SuccessColor)
+							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "✅ Enabled regular starboard", bot.SuccessColor)
 							return g, "ChannelCommand: disable regular starboard"
 						}
 					case "nsfw":
 						if errParse != nil {
 							g.Starboard.NsfwChannel = 0
-							_, err = cmd.SendEmbed(c, "Starboard Channels", "⛔ Disabled NSFW starboard", bot.ErrorColor)
+							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "⛔ Disabled NSFW starboard", bot.ErrorColor)
 							return g, "ChannelCommand: enable nsfw starboard"
 						} else {
 							g.Starboard.NsfwChannel = arg3
-							_, err = cmd.SendEmbed(c, "Starboard Channels", "✅ Enabled NSFW starboard", bot.SuccessColor)
+							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "✅ Enabled NSFW starboard", bot.SuccessColor)
 							return g, "ChannelCommand: disable nsfw starboard"
 						}
 					case "threshold":
@@ -252,7 +252,7 @@ func ChannelCommand(c bot.Command) error {
 							}
 
 							g.Starboard.Threshold = arg3
-							_, err = cmd.SendEmbed(c, "Starboard Threshold", fmt.Sprintf("✅ Set threshold to: %v", arg3), bot.SuccessColor)
+							_, err = cmd.SendEmbed(c.E, "Starboard Threshold", fmt.Sprintf("✅ Set threshold to: %v", arg3), bot.SuccessColor)
 						}
 
 						return g, "ChannelCommand: set threshold"
@@ -282,7 +282,7 @@ func ChannelCommand(c bot.Command) error {
 			return err
 		}
 	default:
-		_, err := cmd.SendEmbed(c,
+		_, err := cmd.SendEmbed(c.E,
 			"Channel",
 			"Available arguments are:\n- `archive`\n- `topic enable|disable|emoji|threshold`\n- `starboard regular|nsfw [channel]`\n- `starboard threshold [threshold]`",
 			bot.DefaultColor)
@@ -309,7 +309,7 @@ func PermissionCommand(c bot.Command) error {
 			if err := cmd.GivePermission(permission, id, c); err != nil {
 				return err
 			} else {
-				_, err = cmd.SendEmbed(c,
+				_, err = cmd.SendEmbed(c.E,
 					"Permissions",
 					"Successfully gave "+util.GetUserMention(id)+" permission to use \""+permission+"\"",
 					bot.SuccessColor)
@@ -343,14 +343,14 @@ func PermissionCommand(c bot.Command) error {
 			color = bot.WarnColor
 		}
 
-		_, err := cmd.SendEmbed(c,
+		_, err := cmd.SendEmbed(c.E,
 			"Permissions",
 			strings.Join(responses, "\n"),
 			color)
 
 		return err
 	default:
-		_, err := cmd.SendEmbed(c,
+		_, err := cmd.SendEmbed(c.E,
 			"Permissions",
 			"Available arguments are:\n- `give` <permission> <user>\n- `op`",
 			bot.DefaultColor)
@@ -371,11 +371,11 @@ func TopicCommand(c bot.Command) error {
 	})
 
 	if !topicsEnabled {
-		_, err := cmd.SendEmbed(c, "Topics are disabled in this channel!", "", bot.ErrorColor)
+		_, err := cmd.SendEmbed(c.E, "Topics are disabled in this channel!", "", bot.ErrorColor)
 		return err
 	}
 
-	msg, err := cmd.SendEmbed(c, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
+	msg, err := cmd.SendEmbed(c.E, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
 	if err != nil {
 		return err
 	}

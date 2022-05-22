@@ -2,9 +2,7 @@ package feature
 
 import (
 	"github.com/5HT2/taro-bot/bot"
-	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/util"
-	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"regexp"
@@ -40,35 +38,8 @@ func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 		return
 	}
 
-	embed := discord.Embed{
-		Title: response.Title,
-		Color: bot.DefaultColor,
-	}
-	msgContent := ""
-
 	if response.Fn != nil {
-		result := response.Fn(bot.Response{E: e})
-
-		embed.Description = result
-		msgContent = result
-	}
-
-	// Don't respond with a message if the response is silent
-	// This has to be called AFTER response.Fn
-	if response.Silent {
-		return
-	}
-
-	if response.Embed {
-		_, err := cmd.SendCustomEmbed(e.ChannelID, embed)
-		if err != nil {
-			log.Printf("Error sending global response: %v\n", err)
-		}
-	} else {
-		_, err := cmd.SendCustomMessage(e.ChannelID, msgContent)
-		if err != nil {
-			log.Printf("Error sending global response: %v\n", err)
-		}
+		response.Fn(bot.Response{E: e})
 	}
 }
 

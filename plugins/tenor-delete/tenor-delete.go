@@ -26,14 +26,13 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		},
 		Responses: []bot.ResponseInfo{{
 			Fn:       TenorDeleteResponse,
-			Silent:   true,
 			Regexes:  []string{tenorRegex.String()},
 			MatchMin: 1,
 		}},
 	}
 }
 
-func TenorDeleteResponse(r bot.Response) string {
+func TenorDeleteResponse(r bot.Response) {
 	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		if util.SliceContains(g.EnabledTenorDelete, int64(r.E.GuildID)) {
 			if err := bot.Client.DeleteMessage(r.E.ChannelID, r.E.Message.ID, "Matched Tenor gif"); err != nil {
@@ -43,8 +42,6 @@ func TenorDeleteResponse(r bot.Response) string {
 
 		return g, "TenorDeleteResponse"
 	})
-
-	return ""
 }
 
 func TenorDeleteCommand(c bot.Command) error {
@@ -59,10 +56,10 @@ func TenorDeleteCommand(c bot.Command) error {
 
 		if util.SliceContains(g.EnabledTenorDelete, id) {
 			g.EnabledTenorDelete = util.SliceRemove(g.EnabledTenorDelete, id)
-			_, err = cmd.SendEmbed(c, "Tenor Delete", "⛔ Disabled Tenor Delete for this guild", bot.ErrorColor)
+			_, err = cmd.SendEmbed(c.E, "Tenor Delete", "⛔ Disabled Tenor Delete for this guild", bot.ErrorColor)
 		} else {
 			g.EnabledTenorDelete = append(g.EnabledTenorDelete, id)
-			_, err = cmd.SendEmbed(c, "Tenor Delete", "✅ Enabled Tenor Delete for this guild", bot.SuccessColor)
+			_, err = cmd.SendEmbed(c.E, "Tenor Delete", "✅ Enabled Tenor Delete for this guild", bot.SuccessColor)
 		}
 
 		return g, "TenorDeleteCommand"

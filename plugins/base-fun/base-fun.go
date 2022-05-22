@@ -71,9 +71,9 @@ func FrogCommand(c bot.Command) error {
 
 func KirbyCommand(c bot.Command) error {
 	content, _ := cmd.ParseAllArgs(c.Args)
-	_, _ = cmd.SendMessage(c, "<:kirbyfeet:893291555744542730>")
+	_, _ = cmd.SendMessage(c.E, "<:kirbyfeet:893291555744542730>")
 	if len(content) > 0 {
-		_, _ = cmd.SendMessage(c, content)
+		_, _ = cmd.SendMessage(c.E, content)
 	}
 	return nil
 }

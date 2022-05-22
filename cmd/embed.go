@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"strconv"
 )
@@ -34,13 +35,13 @@ func SendExternalErrorEmbed(c discord.ChannelID, cmdName string, err error) (*di
 }
 
 func SendErrorEmbed(c bot.Command, err error) {
-	_, _ = SendEmbed(c, "Error running `"+c.Name+"`", err.Error(), bot.ErrorColor)
+	_, _ = SendEmbed(c.E, "Error running `"+c.Name+"`", err.Error(), bot.ErrorColor)
 }
 
-func SendEmbed(c bot.Command, title string, description string, color discord.Color) (*discord.Message, error) {
+func SendEmbed(e *gateway.MessageCreateEvent, title string, description string, color discord.Color) (*discord.Message, error) {
 	embed := MakeEmbed(title, description, color)
 	msg, err := bot.Client.SendEmbeds(
-		c.E.ChannelID,
+		e.ChannelID,
 		embed,
 	)
 	if err != nil {
@@ -49,9 +50,9 @@ func SendEmbed(c bot.Command, title string, description string, color discord.Co
 	return msg, err
 }
 
-func SendMessage(c bot.Command, content string) (*discord.Message, error) {
+func SendMessage(e *gateway.MessageCreateEvent, content string) (*discord.Message, error) {
 	msg, err := bot.Client.SendMessage(
-		c.E.ChannelID,
+		e.ChannelID,
 		content,
 	)
 	if err != nil {

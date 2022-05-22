@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/5HT2/taro-bot/bot"
+	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"log"
@@ -27,20 +28,20 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Commands:    []bot.CommandInfo{},
 		Responses: []bot.ResponseInfo{{
 			Fn:       SpotifyToYoutubeResponse,
-			Embed:    false,
 			Regexes:  []string{spotifyRegex.String()},
 			MatchMin: 1,
 		}},
 	}
 }
 
-func SpotifyToYoutubeResponse(r bot.Response) string {
+func SpotifyToYoutubeResponse(r bot.Response) {
 	// Get the Spotify link from the message
 	//
 
 	spotifyUrl := spotifyRegex.FindStringSubmatch(r.E.Content)
 	if len(spotifyUrl) == 0 {
-		return "Error: Couldn't find Spotify link in message"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't find Spotify link in message", bot.ErrorColor)
+		return
 	}
 
 	// Get Artist and Song Title from Spotify
@@ -48,15 +49,18 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 
 	content, resp, err := util.RequestUrl(spotifyUrl[0], http.MethodGet)
 	if err != nil {
-		return "Error: " + err.Error()
+		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		return
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "Error: Spotify returned a `" + strconv.Itoa(resp.StatusCode) + "` status code, expected `200`"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: Spotify returned a `"+strconv.Itoa(resp.StatusCode)+"` status code, expected `200`", bot.ErrorColor)
+		return
 	}
 
 	node, err := util.ExtractNode(string(content), func(str string) bool { return str == "title" })
 	if err != nil {
-		return "Error: " + err.Error()
+		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		return
 	}
 
 	text := &bytes.Buffer{}
@@ -65,13 +69,15 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 
 	res := spotifyTitleRegex.FindStringSubmatch(text.String())
 	if len(res) == 0 {
-		return "Error: Couldn't parse Spotify song title"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't parse Spotify song title", bot.ErrorColor)
+		return
 	}
 
 	log.Printf("SpotifyToYoutube: res: [%s]\n", strings.Join(res, ", "))
 
 	if len(res) != 4 {
-		return "Error: `res` is not 4: `[" + strings.Join(res, ", ") + "]`"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: `res` is not 4: `["+strings.Join(res, ", ")+"]`", bot.ErrorColor)
+		return
 	}
 
 	// Get available instances from invidious
@@ -84,7 +90,8 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 
 	instancesStr, err := util.RetryFunc(fn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
-		return "Error: " + err.Error()
+		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		return
 	}
 
 	type InvidiousInstance struct {
@@ -113,7 +120,8 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 		}
 	}
 	if len(searchUrls) == 0 {
-		return "Error: Couldn't find any Invidious instance to search with"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't find any Invidious instance to search with", bot.ErrorColor)
+		return
 	}
 	log.Printf("SpotifyToYoutube: searchUrls %s\n", searchUrls)
 
@@ -122,7 +130,8 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 
 	content = util.RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
 	if content == nil {
-		return "Error: no non-nil response from `searchUrls`"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: no non-nil response from `searchUrls`", bot.ErrorColor)
+		return
 	}
 
 	// Parse returned YouTube result
@@ -135,13 +144,15 @@ func SpotifyToYoutubeResponse(r bot.Response) string {
 	var searchResults []YoutubeSearchResult
 	err = json.Unmarshal(content, &searchResults)
 	if err != nil {
-		return "Error: " + err.Error()
+		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		return
 	}
 
 	if len(searchResults) == 0 {
-		return "Error: No search results found"
+		_, _ = cmd.SendEmbed(r.E, "", "Error: No search results found", bot.ErrorColor)
+		return
 	}
 	log.Printf("SpotifyToYoutube: searchResults[0] %s\n", searchResults[0])
 
-	return "https://youtu.be/" + searchResults[0].ID
+	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResults[0].ID)
 }

@@ -41,7 +41,6 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       PrefixResponse,
-			Embed:    true,
 			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "prefix"},
 			MatchMin: 2,
 		}},
@@ -54,7 +53,7 @@ func HelpCommand(c bot.Command) error {
 		fmtCmds = append(fmtCmds, command.MarkdownString())
 	}
 
-	_, err := cmd.SendEmbed(c,
+	_, err := cmd.SendEmbed(c.E,
 		"Taro Help",
 		strings.Join(fmtCmds, "\n\n"),
 		bot.DefaultColor)
@@ -62,7 +61,7 @@ func HelpCommand(c bot.Command) error {
 }
 
 func InviteCommand(c bot.Command) error {
-	_, err := cmd.SendEmbed(c,
+	_, err := cmd.SendEmbed(c.E,
 		bot.User.Username+" invite", fmt.Sprintf("[Click to add me to your own server!](https://discord.com/oauth2/authorize?client_id=%v&permissions=%v&scope=bot)", bot.User.ID, bot.PermissionsHex),
 		bot.SuccessColor,
 	)
@@ -70,7 +69,7 @@ func InviteCommand(c bot.Command) error {
 }
 
 func PingCommand(c bot.Command) error {
-	if msg, err := cmd.SendEmbed(c,
+	if msg, err := cmd.SendEmbed(c.E,
 		"Ping!",
 		"Waiting for API response...",
 		bot.DefaultColor); err != nil {
@@ -121,12 +120,12 @@ func PrefixCommand(c bot.Command) error {
 	return err
 }
 
-func PrefixResponse(r bot.Response) string {
+func PrefixResponse(r bot.Response) {
 	prefix := bot.DefaultPrefix
 	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		prefix = g.Prefix
 		return g, "PrefixResponse"
 	})
 
-	return fmt.Sprintf("The current prefix is `%s`", prefix)
+	_, _ = cmd.SendEmbed(r.E, "", fmt.Sprintf("The current prefix is `%s`", prefix), bot.DefaultColor)
 }
