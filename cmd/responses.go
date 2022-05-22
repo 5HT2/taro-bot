@@ -1,4 +1,4 @@
-package feature
+package cmd
 
 import (
 	"github.com/5HT2/taro-bot/bot"

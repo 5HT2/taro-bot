@@ -58,7 +58,7 @@ func main() {
 	})
 	c.AddHandler(func(e *gateway.MessageCreateEvent) {
 		go cmd.CommandHandler(e)
-		go feature.ResponseHandler(e)
+		go cmd.ResponseHandler(e)
 	})
 	c.AddHandler(func(e *gateway.GuildMemberUpdateEvent) {
 		go cmd.UpdateMemberCache(e)
