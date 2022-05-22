@@ -41,7 +41,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       PrefixResponse,
-			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "prefix"},
+			Regexes:  []string{"<@!?DISCORD_BOT_ID>", "(prefix|help)"},
 			MatchMin: 2,
 		}},
 	}
