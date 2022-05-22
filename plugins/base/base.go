@@ -50,7 +50,10 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 func HelpCommand(c bot.Command) error {
 	fmtCmds := make([]string, 0)
 	for _, command := range bot.Commands {
-		fmtCmds = append(fmtCmds, command.MarkdownString())
+		// Filter GuildOnly commands when not in a guild
+		if !command.GuildOnly || c.E.GuildID.IsValid() {
+			fmtCmds = append(fmtCmds, command.MarkdownString())
+		}
 	}
 
 	_, err := cmd.SendEmbed(c.E,
