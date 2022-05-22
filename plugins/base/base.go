@@ -121,11 +121,16 @@ func PrefixCommand(c bot.Command) error {
 }
 
 func PrefixResponse(r bot.Response) {
+	if !r.E.GuildID.IsValid() {
+		_, _ = cmd.SendEmbed(r.E, "", "Commands in DMs don't use a prefix!\nUse `help` for a list of commands.", bot.DefaultColor)
+		return
+	}
+
 	prefix := bot.DefaultPrefix
 	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 		prefix = g.Prefix
 		return g, "PrefixResponse"
 	})
 
-	_, _ = cmd.SendEmbed(r.E, "", fmt.Sprintf("The current prefix is `%s`", prefix), bot.DefaultColor)
+	_, _ = cmd.SendEmbed(r.E, "", fmt.Sprintf("The current prefix is `%s`\nUse `%shelp` for a list of commands.", prefix, prefix), bot.DefaultColor)
 }
