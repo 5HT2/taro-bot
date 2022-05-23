@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/go-co-op/gocron"
+	"reflect"
 	"strings"
 )
 
@@ -71,6 +72,33 @@ type Response struct {
 }
 
 //
+// JobInfo is used by features in order to easily return a job, and allow the bot to handle the errors
+type JobInfo struct {
+	Fn             func()
+	Tag            string
+	Scheduler      *gocron.Scheduler
+	CheckCondition bool
+	Condition      bool
+}
+
+func (i JobInfo) String() string {
+	return fmt.Sprintf("[%p, %v, %v]", i.Fn, i.Tag, i.Scheduler)
+}
+
+//
+// HandlerInfo is used by features in order to register a gateway handler
+type HandlerInfo struct {
+	Fn     func(interface{})
+	FnName string
+	FnType reflect.Type
+	FnRm   func()
+}
+
+func (i HandlerInfo) String() string {
+	return fmt.Sprintf("[%p, %s, %s, %p]", i.Fn, i.FnName, i.FnType, i.FnRm)
+}
+
+//
 // PermissionGroups is collection of "permissions". Each permission is a list of user IDs that have said permission.
 // Switching this to a list of {Name, Users} would maybe be better code-wise.
 type PermissionGroups struct {
@@ -80,7 +108,7 @@ type PermissionGroups struct {
 }
 
 //
-// ActiveTopicVote is used by topics.go
+// ActiveTopicVote is used by suggest-topic.go
 type ActiveTopicVote struct {
 	Message int64  `json:"message"`
 	Author  int64  `json:"author"`
@@ -104,18 +132,4 @@ type StarboardMessage struct {
 	PostID int64   `json:"message"`    // the starboard post message ID
 	IsNsfw bool    `json:"nsfw"`       // if the original message was made in an NSFW channel
 	Stars  []int64 `json:"stars"`      // list of added user IDs
-}
-
-//
-// JobInfo is used by features in order to easily return a job, and allow the bot to handle the errors
-type JobInfo struct {
-	Fn             func()
-	Tag            string
-	Scheduler      *gocron.Scheduler
-	CheckCondition bool
-	Condition      bool
-}
-
-func (i JobInfo) String() string {
-	return fmt.Sprintf("[%p, %v, %v]", i.Fn, i.Tag, i.Scheduler)
 }

@@ -1,12 +1,14 @@
-package feature
+package main
 
 import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
+	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +20,25 @@ var (
 	stars6Emoji = "💫"
 	stars9Emoji = "✨"
 )
+
+func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+	return &plugins.Plugin{
+		Name:        "Starboard",
+		Description: "Pin messages to a custom channel",
+		Version:     "1.0.0",
+		Commands:    []bot.CommandInfo{},
+		Responses:   []bot.ResponseInfo{},
+		Handlers: []bot.HandlerInfo{{
+			Fn:     handlerCast,
+			FnName: "StarboardReactionHandler",
+			FnType: reflect.TypeOf(StarboardReactionHandler),
+		}},
+	}
+}
+
+func handlerCast(e interface{}) {
+	StarboardReactionHandler(e.(*gateway.MessageReactionAddEvent))
+}
 
 func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
 	defer util.LogPanic()

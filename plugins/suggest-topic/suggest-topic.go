@@ -1,15 +1,36 @@
-package feature
+package main
 
 import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
+	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
+	"reflect"
 	"strconv"
 )
+
+func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+	return &plugins.Plugin{
+		Name:        "Suggest Topic",
+		Description: "Allow suggesting a topic for the current channel",
+		Version:     "1.0.0",
+		Commands:    []bot.CommandInfo{},
+		Responses:   []bot.ResponseInfo{},
+		Handlers: []bot.HandlerInfo{{
+			Fn:     handlerCast,
+			FnName: "TopicReactionHandler",
+			FnType: reflect.TypeOf(TopicReactionHandler),
+		}},
+	}
+}
+
+func handlerCast(e interface{}) {
+	TopicReactionHandler(e.(*gateway.MessageReactionAddEvent))
+}
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
 	defer util.LogPanic()

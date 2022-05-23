@@ -6,7 +6,6 @@ import (
 	"flag"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
-	"github.com/5HT2/taro-bot/feature"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -21,7 +20,7 @@ import (
 
 var (
 	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
-	pluginList   = flag.String("plugins", "base base-fun base-extra spotifytoyoutube remindme tenor-delete", "List of plugins to load")
+	pluginList   = flag.String("plugins", "base base-fun base-extra spotifytoyoutube remindme tenor-delete starboard suggest-topic", "List of plugins to load")
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
@@ -52,10 +51,6 @@ func main() {
 	}
 
 	// Add handlers
-	c.AddHandler(func(e *gateway.MessageReactionAddEvent) {
-		go feature.StarboardReactionHandler(e)
-		go feature.TopicReactionHandler(e)
-	})
 	c.AddHandler(func(e *gateway.MessageCreateEvent) {
 		go cmd.CommandHandler(e)
 		go cmd.ResponseHandler(e)

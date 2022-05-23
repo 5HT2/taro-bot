@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"io/ioutil"
 	"log"
 	"path/filepath"
 	"plugin"
+	"reflect"
 	"strings"
 )
 
@@ -21,17 +23,19 @@ type Plugin struct {
 	Commands    []bot.CommandInfo  // Commands to register, could be none
 	Responses   []bot.ResponseInfo // Responses to register, could be none
 	Jobs        []bot.JobInfo      // Jobs to register, could be none
+	Handlers    []bot.HandlerInfo  // Handlers to register, could be none
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses, p.Jobs)
+	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses, p.Jobs, p.Handlers)
 }
 
 // Register will register a plugin's commands, responses and jobs to the bot
 func (p *Plugin) Register() {
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
-	bot.Jobs = append(bot.Jobs, p.Jobs...) // these need to have RegisterJobs called in order to function
+	bot.Jobs = append(bot.Jobs, p.Jobs...)             // these need to have RegisterJobs called in order to function
+	bot.Handlers = append(bot.Handlers, p.Handlers...) // these need to have RegisterHandlers called in order to function
 }
 
 // Load will load all the plugins from dir specified in pluginList
@@ -98,6 +102,48 @@ func RegisterJobs() {
 	}
 }
 
+// ClearHandlers will go through bot.Handlers and handle the de-registration of them
+func ClearHandlers() {
+	for _, handler := range bot.Handlers {
+		if handler.FnRm != nil {
+			handler.FnRm()
+		}
+	}
+
+	bot.Handlers = make([]bot.HandlerInfo, 0)
+}
+
+// RegisterHandlers will go through bot.Handlers and handle the re-registration of them
+func RegisterHandlers() {
+	for n, i := range bot.Handlers {
+		// This is necessary because the loop mutates bot.Handlers as an invisible side effect.
+		// Removing this will cause ghosts to enter your computer and call bot.Client.AddHandler even when fn == nil
+		handler := bot.HandlerInfo{Fn: i.Fn, FnName: i.FnName, FnType: i.FnType}
+
+		var fn any
+		// Implement necessary handler types here when failing to register.
+		// This has to be done manually, by hand, because Go is unable to pass a real type as a parameter.
+		// Believe me, I tried doing so with reflection and got nothing to show for it after 5 hours.
+		// If this behavior changes as Go finally figures out their situation with generics, that would be
+		// nice to implement here, as a consideration for the future.
+		switch handler.FnType {
+		case reflect.TypeOf(func(e *gateway.MessageReactionAddEvent) {}):
+			fn = func(e *gateway.MessageReactionAddEvent) {
+				handler.Fn(e)
+			}
+		default:
+			log.Printf("failed to register handler (%s): type %v not recognized\n", handler.FnName, handler.FnType)
+			continue
+		}
+
+		if fn != nil {
+			rm := bot.Client.AddHandler(fn)
+			bot.Handlers[n].FnRm = rm
+			log.Printf("registered handler: %v\n", bot.Handlers[n])
+		}
+	}
+}
+
 // RegisterAll will register all bot features, and then load plugins
 func RegisterAll(dir, pluginList string) {
 	bot.Mutex.Lock()
@@ -110,13 +156,15 @@ func RegisterAll(dir, pluginList string) {
 
 	// We want to do this before registering plugins
 	ClearJobs()
+	ClearHandlers()
 
 	// This registers the plugins we have downloaded
 	// This does not build new plugins for us, which instead has to be done separately
 	Load(dir, pluginList)
 
-	// This registers the new jobs that plugins have scheduled
+	// This registers the new jobs that plugins have scheduled, and the handlers that they return
 	RegisterJobs()
+	RegisterHandlers()
 }
 
 func parsePluginsList(pluginList string) []string {
