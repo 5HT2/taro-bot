@@ -8,7 +8,6 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"strconv"
 	"strings"
 )
 
@@ -104,75 +103,6 @@ func ChannelCommand(c bot.Command) error {
 				return err
 			} else {
 				_, err = cmd.SendEmbed(c.E, "Channels", "Successfully archived channel", bot.SuccessColor)
-				return err
-			}
-		} else {
-			return err
-		}
-	case "starboard":
-		err := cmd.HasPermission("channels", c)
-		if err == nil {
-			if arg2, _ := cmd.ParseStringArg(c.Args, 2, true); err != nil {
-				return err
-			} else {
-				arg3, errParse := cmd.ParseChannelArg(c.Args, 3)
-				var err error = nil
-
-				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-					switch arg2 {
-					case "regular":
-						if errParse != nil {
-							g.Starboard.Channel = 0
-							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "⛔ Disabled regular starboard", bot.ErrorColor)
-							return g, "ChannelCommand: enable regular starboard"
-						} else {
-							g.Starboard.Channel = arg3
-							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "✅ Enabled regular starboard", bot.SuccessColor)
-							return g, "ChannelCommand: disable regular starboard"
-						}
-					case "nsfw":
-						if errParse != nil {
-							g.Starboard.NsfwChannel = 0
-							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "⛔ Disabled NSFW starboard", bot.ErrorColor)
-							return g, "ChannelCommand: enable nsfw starboard"
-						} else {
-							g.Starboard.NsfwChannel = arg3
-							_, err = cmd.SendEmbed(c.E, "Starboard Channels", "✅ Enabled NSFW starboard", bot.SuccessColor)
-							return g, "ChannelCommand: disable nsfw starboard"
-						}
-					case "threshold":
-						if arg3, errParse := cmd.ParseInt64Arg(c.Args, 3); errParse != nil {
-							err = errParse
-						} else {
-							if arg3 <= 0 {
-								arg3 = 1
-							}
-
-							g.Starboard.Threshold = arg3
-							_, err = cmd.SendEmbed(c.E, "Starboard Threshold", fmt.Sprintf("✅ Set threshold to: %v", arg3), bot.SuccessColor)
-						}
-
-						return g, "ChannelCommand: set threshold"
-
-					default:
-						regularC := "✅ Regular Starboard <#" + strconv.FormatInt(g.Starboard.Channel, 10) + ">"
-						nsfwC := "✅ NSFW Starboard <#" + strconv.FormatInt(g.Starboard.NsfwChannel, 10) + ">"
-						if g.Starboard.Channel == 0 {
-							regularC = "⛔ Regular Starboard"
-						}
-						if g.Starboard.NsfwChannel == 0 {
-							nsfwC = "⛔ NSFW Starboard"
-						}
-
-						embed := discord.Embed{
-							Title:       "Starboard Channels",
-							Description: regularC + "\n" + nsfwC,
-							Color:       bot.DefaultColor,
-						}
-						_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
-						return g, "ChannelCommand: format starboard channels"
-					}
-				})
 				return err
 			}
 		} else {
