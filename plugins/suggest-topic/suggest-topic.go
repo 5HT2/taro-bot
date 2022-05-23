@@ -25,6 +25,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Description: "Configure allowed topic channels",
 			Aliases:     []string{"topiccfg", "cfgtopic"},
 			GuildOnly:   true,
+		}, {
+			Fn:          TopicCommand,
+			FnName:      "TopicCommand",
+			Name:        "topic",
+			Description: "Suggest a new topic for the current channel",
+			GuildOnly:   true,
 		}},
 		Responses: []bot.ResponseInfo{},
 		Handlers: []bot.HandlerInfo{{
@@ -149,6 +155,45 @@ func TopicConfigCommand(c bot.Command) error {
 	} else {
 		return err
 	}
+}
+
+func TopicCommand(c bot.Command) error {
+	topic, argErr := cmd.ParseAllArgs(c.Args)
+	if argErr != nil {
+		return argErr
+	}
+
+	topicsEnabled := false
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		topicsEnabled = util.SliceContains(g.EnabledTopicChannels, int64(c.E.ChannelID))
+		return g, "TopicCommand: check topicsEnabled"
+	})
+
+	if !topicsEnabled {
+		_, err := cmd.SendEmbed(c.E, "Topics are disabled in this channel!", "", bot.ErrorColor)
+		return err
+	}
+
+	msg, err := cmd.SendEmbed(c.E, "New topic suggested!", c.E.Author.Mention()+" suggests: "+topic, bot.DefaultColor)
+	if err != nil {
+		return err
+	}
+
+	emoji, err := util.GuildTopicVoteApiEmoji(c.E.GuildID)
+	if err != nil {
+		return err
+	}
+
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		g.ActiveTopicVotes = append(g.ActiveTopicVotes, bot.ActiveTopicVote{Message: int64(msg.ID), Author: int64(c.E.Author.ID), Topic: topic})
+		return g, "TopicCommand: append ActiveTopicVotes"
+	})
+
+	if err := bot.Client.React(msg.ChannelID, msg.ID, emoji); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
