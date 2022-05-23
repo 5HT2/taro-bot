@@ -29,12 +29,3 @@ This is the simplest example of the `config/config.json` file, you only need `bo
     "bot_token": "bot token goes here"
 }
 ```
-
-## TODO
-
-- [ ] Allow `"stuff here"` in order to create single args that contain spaces
-  - [x] Allow selecting a range of args to return as one
-- [ ] Each command should be able to register its own config settings
-- [x] Asynchronous config states. Right now you need to store it in a variable.
-- [x] Better scalability
-- [ ] Cluster / Sharding support
