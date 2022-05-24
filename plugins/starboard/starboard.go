@@ -37,15 +37,11 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		Responses: []bot.ResponseInfo{},
 		Handlers: []bot.HandlerInfo{{
-			Fn:     handlerCast,
+			Fn:     StarboardReactionHandler,
 			FnName: "StarboardReactionHandler",
-			FnType: reflect.TypeOf(StarboardReactionHandler),
+			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
-}
-
-func handlerCast(e interface{}) {
-	StarboardReactionHandler(e.(*gateway.MessageReactionAddEvent))
 }
 
 func StarboardConfigCommand(c bot.Command) error {
@@ -124,9 +120,10 @@ func StarboardConfigCommand(c bot.Command) error {
 	}
 }
 
-func StarboardReactionHandler(e *gateway.MessageReactionAddEvent) {
+func StarboardReactionHandler(i interface{}) {
 	defer util.LogPanic()
 
+	e := i.(*gateway.MessageReactionAddEvent)
 	start := time.Now().UnixMilli()
 
 	bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {

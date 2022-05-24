@@ -34,15 +34,11 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		Responses: []bot.ResponseInfo{},
 		Handlers: []bot.HandlerInfo{{
-			Fn:     handlerCast,
+			Fn:     TopicReactionHandler,
 			FnName: "TopicReactionHandler",
-			FnType: reflect.TypeOf(TopicReactionHandler),
+			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
-}
-
-func handlerCast(e interface{}) {
-	TopicReactionHandler(e.(*gateway.MessageReactionAddEvent))
 }
 
 func TopicConfigCommand(c bot.Command) error {
@@ -196,8 +192,9 @@ func TopicCommand(c bot.Command) error {
 	return nil
 }
 
-func TopicReactionHandler(e *gateway.MessageReactionAddEvent) {
+func TopicReactionHandler(i interface{}) {
 	defer util.LogPanic()
+	e := i.(*gateway.MessageReactionAddEvent)
 
 	reactionMatchesActiveVote := false
 	bot.GuildContext(e.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
