@@ -30,6 +30,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"perm"},
 			Description: "Manage user permissions",
 			GuildOnly:   true,
+		}, {
+			Fn:          ProfilePicCommand,
+			FnName:      "ProfilePicCommand",
+			Name:        "profilepic",
+			Aliases:     []string{"pfp"},
+			Description: "Get the profile picture of someone",
 		}},
 		Responses: []bot.ResponseInfo{},
 	}
@@ -177,4 +183,39 @@ func PermissionCommand(c bot.Command) error {
 			bot.DefaultColor)
 		return err
 	}
+}
+
+func ProfilePicCommand(c bot.Command) error {
+	self := false
+	id, argErr := cmd.ParseInt64Arg(c.Args, 1)
+	if argErr != nil {
+		id, argErr = cmd.ParseUserArg(c.Args, 1)
+		if argErr != nil {
+			self = true
+			id = int64(c.E.Author.ID)
+		}
+	}
+
+	hash := ""
+	name := c.E.Member.Nick
+	if self {
+		hash = c.E.Author.Avatar
+	} else {
+		user, err := bot.Client.User(discord.UserID(id))
+		if err != nil {
+			return err
+		}
+		hash = user.Avatar
+		name = user.Username
+	}
+
+	url := fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png?size=2048", id, hash)
+	e := discord.Embed{
+		Title: name,
+		URL:   url,
+		Image: &discord.EmbedImage{URL: url},
+		Color: discord.NullColor,
+	}
+	_, err := cmd.SendCustomEmbed(c.E.ChannelID, e)
+	return err
 }
