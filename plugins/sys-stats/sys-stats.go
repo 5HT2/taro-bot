@@ -83,7 +83,7 @@ func SysStatsCommand(c bot.Command) error {
 		string(kernel),
 		fmt.Sprintf("%v days, %v hour%s", days, hoursInt, hoursS),
 		fmt.Sprintf("%.2f%%", float64(cpuAfter.User-cpuBefore.User)/float64(cpuAfter.Total-cpuBefore.Total)*100),
-		fmt.Sprintf("%.1f GB/%.1f GB", float64(mem.Used)*0.000000001, float64(mem.Total)*0.000000001),
+		fmt.Sprintf("%.1f GB/%.1f GB", float64(mem.Used)/1024*0.000001, float64(mem.Total)/1024*0.000001),
 	}
 
 	o := 0
