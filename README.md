@@ -2,19 +2,19 @@
 
 A Discord bot built in Go and Arikawa.
 
-Notable features:
+**Notable features:**
 - Strict arg parsing and selection
 - Automatic error handling via friendly messages given to the user :)
 - Asynchronous event handling with concurrency-safe configs
 - Fully-fledged plugin support
 
-A feature (plugin) is able to:
+**A feature (plugin) is able to:**
 - Return comprehensive commands, with [info support such as aliases and descriptions](https://github.com/5HT2/taro-bot/blob/99b929ac18d583a38a332405b45dd53d57143b17/plugins/base/base.go#L19).
 - Return "auto responses", with [flexible message matching to call Go code](https://github.com/5HT2/taro-bot/blob/99b929ac18d583a38a332405b45dd53d57143b17/plugins/tenor-delete/tenor-delete.go#L28).
 - Return scheduled jobs, to be [called at an interval or based on conditions](https://github.com/5HT2/taro-bot/blob/99b929ac18d583a38a332405b45dd53d57143b17/plugins/vintagestory/vintagestory.go#L30).
 - Register event handlers to Discord's gateway, such as [when a reaction is added to a message](https://github.com/5HT2/taro-bot/blob/99b929ac18d583a38a332405b45dd53d57143b17/plugins/starboard/starboard.go#L123).
 
-All bot features are plugins, and can be enabled or disabled on demand (default plugins are loaded with the `-plugins` flag), with hot-reloading being added soon ([#8](https://github.com/5HT2/taro-bot/issues/8)).
+**All bot features are plugins**, and can be enabled or disabled on demand (default plugins are loaded with the `-plugins` flag), with hot-reloading being added soon ([#8](https://github.com/5HT2/taro-bot/issues/8)).
 
 ## Usage
 
