@@ -16,6 +16,8 @@ A Discord bot built in Go and Arikawa.
 
 **All bot features are plugins**, and can be enabled or disabled on demand, with hot-reloading being added soon ([#8](https://github.com/5HT2/taro-bot/issues/8)).
 
+More information about using and creating plugins is described in the [plugin documentation](https://github.com/5HT2/taro-bot/blob/master/plugins).
+
 ## Usage
 
 ```
