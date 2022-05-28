@@ -49,7 +49,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		// If CheckCondition is set to true explicitly, the job will only be REGISTERED if Condition is also true.
 		// Using CheckCondition and Condition can be used to make a job only register if the bot ID matches something, and so on.
 		// Condition only affects job registration, and is not checked when running a job.
-		// Jobs must be reloaded by reloading the plugin if you want them to check if Condition has been updated (eg, if using variables outside of the plugin).
+		// Jobs must be reloaded by reloading the plugin if you want them to check if Condition has been updated (eg, if using variables outside the plugin).
 		Jobs: []bot.JobInfo{{
 			Fn:        EveryMinuteJob,
 			Tag:       "example-plugin-every-minute",
