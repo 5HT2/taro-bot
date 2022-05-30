@@ -79,7 +79,7 @@ func StarboardConfigCommand(c bot.Command) error {
 					}
 				case "threshold":
 					if arg3, errParse := cmd.ParseInt64Arg(c.Args, 2); errParse != nil {
-						err = errParse
+						_, err = cmd.SendEmbed(c.E, "Starboard Threshold", fmt.Sprintf("Current star threshold is: %v", g.Starboard.Threshold), bot.DefaultColor)
 					} else {
 						if arg3 <= 0 {
 							arg3 = 1
@@ -110,7 +110,7 @@ func StarboardConfigCommand(c bot.Command) error {
 				default:
 					_, err = cmd.SendEmbed(c.E,
 						"Configure Starboard",
-						"Available arguments are:\n- `list`\n- `threshold [threshold]`\n- `nsfw|regular [channel]`",
+						"Available arguments are:\n- `list`\n- `threshold <threshold>`\n- `nsfw|regular [channel]`",
 						bot.DefaultColor)
 					return g, "StarboardConfigCommand: show help"
 				}
