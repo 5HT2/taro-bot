@@ -20,6 +20,8 @@ var (
 	stars5Emoji = "🌟"
 	stars6Emoji = "💫"
 	stars9Emoji = "✨"
+
+	starboardColor discord.Color = 0xffac33
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -292,7 +294,7 @@ func StarboardReactionHandler(i interface{}) {
 				Fields:      []discord.EmbedField{field},
 				Footer:      &footer,
 				Timestamp:   msg.Timestamp,
-				Color:       bot.StarboardColor,
+				Color:       starboardColor,
 				Image:       image,
 			}
 

@@ -21,14 +21,13 @@ var (
 	HttpClient     = http.Client{Timeout: 5 * time.Second}
 	Client         state.State
 	User           *discord.User
-	PermissionsHex = 278136147008
+	PermissionsHex = 278136147008 // this is currently only used in base.go, but it is in shared.go because it is bot-level and should be set by the person maintaining the bot code
 	Scheduler      = gocron.NewScheduler(getTimeZone())
 
-	SuccessColor   discord.Color = 0x3cde5a
-	ErrorColor     discord.Color = 0xde413c
-	WarnColor      discord.Color = 0xde953c
-	DefaultColor   discord.Color = 0x493cde
-	StarboardColor discord.Color = 0xffac33
+	SuccessColor discord.Color = 0x3cde5a
+	ErrorColor   discord.Color = 0xde413c
+	WarnColor    discord.Color = 0xde953c
+	DefaultColor discord.Color = 0x493cde
 )
 
 func getTimeZone() *time.Location {
