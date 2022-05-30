@@ -2,7 +2,7 @@ package bot
 
 import (
 	"github.com/diamondburned/arikawa/v3/discord"
-	"github.com/diamondburned/arikawa/v3/session"
+	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/go-co-op/gocron"
 	"log"
 	"net/http"
@@ -19,7 +19,7 @@ var (
 	Mutex     = sync.Mutex{}
 
 	HttpClient     = http.Client{Timeout: 5 * time.Second}
-	Client         session.Session
+	Client         state.State
 	User           *discord.User
 	PermissionsHex = 278136147008
 	Scheduler      = gocron.NewScheduler(getTimeZone())

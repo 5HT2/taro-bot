@@ -10,7 +10,7 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
-	"github.com/diamondburned/arikawa/v3/session"
+	"github.com/diamondburned/arikawa/v3/state"
 	"log"
 	"os"
 	"runtime"
@@ -38,7 +38,7 @@ func main() {
 		log.Fatalln("No bot_token given")
 	}
 
-	c := session.NewWithIntents("Bot "+token,
+	c := state.NewWithIntents("Bot "+token,
 		gateway.IntentGuildMessages,
 		gateway.IntentGuildEmojis,
 		gateway.IntentGuildMessageReactions,
