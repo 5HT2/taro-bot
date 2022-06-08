@@ -19,7 +19,7 @@ import (
 
 var (
 	pathValidation = regexp.MustCompile(`[^a-z\d.]`)
-	fileMode       = os.FileMode(0644)
+	fileMode       = os.FileMode(0755)
 	plugins        = make([]*Plugin, 0)
 )
 
