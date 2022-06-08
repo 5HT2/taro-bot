@@ -13,3 +13,8 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 	}
 	return strings.Join(elems, sep)
 }
+
+// GetUserMention will return a formatted user mention from an id
+func GetUserMention(id int64) string {
+	return "<@!" + strconv.FormatInt(id, 10) + ">"
+}

@@ -7,7 +7,6 @@ import (
 	"golang.org/x/net/html"
 	"image/color"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -61,11 +60,6 @@ func ExtractNodeText(n *html.Node, buf *bytes.Buffer) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		ExtractNodeText(c, buf)
 	}
-}
-
-// GetUserMention will return a formatted user mention from an id
-func GetUserMention(id int64) string {
-	return "<@!" + strconv.FormatInt(id, 10) + ">"
 }
 
 // ConvertColorToInt32 will convert 3 uint8s into one int32
