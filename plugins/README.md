@@ -10,7 +10,7 @@ This README describes how to use plugins. See the [README](../README.md) in the 
 
 ## Default plugins
 
-Plugins that are loaded by default when running the bot are registered with the `-plugins` flag, and the `main.go` file maintains a list of plugins which are included by "default" with the bot.
+Plugins that are loaded by default when running the bot are registered with the `-plugins` flag, and the `plugin-name.go` file maintains a list of plugins which are included by "default" with the bot.
 
 Using this flag you are able to:
 - Disable all plugins (use `-plugins=""`)
@@ -43,15 +43,15 @@ Currently, hot-reloading is technically possible but there are no commands to do
 ## Creating a plugin
 
 All a plugin has to do is
-- Have a `main.go` with a `package main` which declares a `func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin`.
-- Be inside the `plugins/` (or other) directory in a directory under its own name, for example, `plugins/base/main.go` or `plugins/base-extra/main.go`
+- Have a `plugin-name.go` with a `package main` which declares a `func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin`.
+- Be inside the `plugins/` (or other) directory in a directory under its own name, for example, `plugins/base/base.go` or `plugins/base-extra/base-extra.go`
 
 The actual [`plugins.go`](https://github.com/5HT2/taro-bot/blob/master/plugins/plugins.go) code is heavily documented and explains the technical process of how plugins are loaded and work.
 
-An example plugin's `main.go` can be found [in the `plugins` folder](https://github.com/5HT2/taro-bot/blob/master/plugins/example/main.go).
+An example plugin's `example.go` can be found [in the `plugins` folder](https://github.com/5HT2/taro-bot/blob/master/plugins/example/example.go).
 
 ## Dockerfile
 
 Currently, the Dockerfile will compile all plugins in `plugins/` and load the default plugins list.
 In the future, a way to retroactively download and add plugins will be added, see [#21](https://github.com/5HT2/taro-bot/issues/21).
-For now, modify `main.go` to load your plugin by default.
+For now, modify `plugin-name.go` to load your plugin by default.
