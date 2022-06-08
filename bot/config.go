@@ -101,11 +101,11 @@ func SetupConfigSaving() {
 func LoadConfig() {
 	bytes, err := os.ReadFile("config/config.json")
 	if err != nil {
-		log.Fatalf("Error loading config: %v\n", err)
+		log.Fatalf("error loading config: %v\n", err)
 	}
 
 	if err := json.Unmarshal(bytes, &C); err != nil {
-		log.Fatalf("Error unmarshalling config: %v\n", err)
+		log.Fatalf("error unmarshalling config: %v\n", err)
 	}
 
 	// Load prefix cache
@@ -127,14 +127,14 @@ func SaveConfig() {
 	})
 
 	if err != nil {
-		log.Printf("Failed to marshal config: %v\n", err)
+		log.Printf("failed to marshal config: %v\n", err)
 		return
 	}
 
 	err = os.WriteFile("config/config.json", bytes, fileMode)
 	if err != nil {
-		log.Printf("Failed to write config: %v\n", err)
+		log.Printf("failed to write config: %v\n", err)
 	} else {
-		log.Printf("Successfully saved config\n")
+		log.Printf("successfully saved taro config\n")
 	}
 }
