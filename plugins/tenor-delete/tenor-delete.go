@@ -6,18 +6,27 @@ import (
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"log"
+	"reflect"
 	"regexp"
+	"sync"
 )
 
 var (
+	p          *plugins.Plugin
+	mutex      sync.Mutex
 	tenorRegex = regexp.MustCompile(`http(s)?://t([ex])nor\.[A-z]+/view/.*`)
 )
 
+type config struct {
+	Guilds map[string]bool `json:"guilds,omitempty"` // [guild id]enabled
+}
+
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
-	return &plugins.Plugin{
+	p = &plugins.Plugin{
 		Name:        "Tenor Delete",
 		Description: "Automatically delete tenor gifs",
 		Version:     "1.0.0",
+		ConfigType:  reflect.TypeOf(config{}),
 		Commands: []bot.CommandInfo{{
 			Fn:          TenorDeleteCommand,
 			FnName:      "TenorDeleteCommand",
@@ -31,18 +40,23 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 1,
 		}},
 	}
+	p.Config = p.LoadConfig()
+	return p
 }
 
 func TenorDeleteResponse(r bot.Response) {
-	bot.GuildContext(r.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		if util.SliceContains(g.EnabledTenorDelete, int64(r.E.GuildID)) {
-			if err := bot.Client.DeleteMessage(r.E.ChannelID, r.E.Message.ID, "Matched Tenor gif"); err != nil {
-				log.Printf("TenorDeleteResponse: %v\n", err)
-			}
-		}
+	mutex.Lock()
+	defer mutex.Unlock()
 
-		return g, "TenorDeleteResponse"
-	})
+	if p.Config == nil {
+		return
+	}
+
+	if enabled, ok := p.Config.(config).Guilds[util.GuildIDStr(r.E.GuildID)]; ok && enabled {
+		if err := bot.Client.DeleteMessage(r.E.ChannelID, r.E.Message.ID, "Matched Tenor gif"); err != nil {
+			log.Printf("TenorDeleteResponse: %v\n", err)
+		}
+	}
 }
 
 func TenorDeleteCommand(c bot.Command) error {
@@ -50,21 +64,24 @@ func TenorDeleteCommand(c bot.Command) error {
 		return err
 	}
 
+	id := util.GuildIDStr(c.E.GuildID)
 	var err error = nil
 
-	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		id := int64(c.E.GuildID)
+	mutex.Lock()
+	defer mutex.Unlock()
 
-		if util.SliceContains(g.EnabledTenorDelete, id) {
-			g.EnabledTenorDelete = util.SliceRemove(g.EnabledTenorDelete, id)
-			_, err = cmd.SendEmbed(c.E, "Tenor Delete", "⛔ Disabled Tenor Delete for this guild", bot.ErrorColor)
-		} else {
-			g.EnabledTenorDelete = append(g.EnabledTenorDelete, id)
-			_, err = cmd.SendEmbed(c.E, "Tenor Delete", "✅ Enabled Tenor Delete for this guild", bot.SuccessColor)
-		}
+	if p.Config == nil {
+		p.Config = config{Guilds: map[string]bool{id: false}}
+	}
 
-		return g, "TenorDeleteCommand"
-	})
+	enabled, _ := p.Config.(config).Guilds[id]
+	p.Config.(config).Guilds[id] = !enabled
+
+	if !enabled {
+		_, err = cmd.SendEmbed(c.E, "Tenor Delete", "✅ Enabled Tenor Delete for this guild", bot.SuccessColor)
+	} else {
+		_, err = cmd.SendEmbed(c.E, "Tenor Delete", "⛔ Disabled Tenor Delete for this guild", bot.ErrorColor)
+	}
 
 	return err
 }
