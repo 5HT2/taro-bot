@@ -39,6 +39,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"err", "e"},
 		}},
 		// This is used to ensure type safety when loading the Config
+		// If you forget to declare this and use p.LoadConfig(), you will get a safe panic when loading
 		ConfigType: reflect.TypeOf(config{}),
 		// Responses are called based on regex matching the message.
 		// DISCORD_BOT_ID is replaced in the regex matching, and this response will be called by pinging the bot with the word test or help.
