@@ -52,34 +52,6 @@ func (p *Plugin) Register() {
 	bot.Handlers = append(bot.Handlers, p.Handlers...) // these need to have RegisterHandlers called in order to function
 }
 
-// SetupConfigSaving will run each plugin's SaveConfig every 5 minutes with a ticker
-func SetupConfigSaving() {
-	ticker := time.NewTicker(5 * time.Minute)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				for _, p := range plugins {
-					p.SaveConfig()
-				}
-			}
-		}
-	}()
-}
-
-func NewInterface(typ reflect.Type, data []byte) (interface{}, error) {
-	if typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-		dst := reflect.New(typ).Elem()
-		err := json.Unmarshal(data, dst.Addr().Interface())
-		return dst.Addr().Interface(), err
-	} else {
-		dst := reflect.New(typ).Elem()
-		err := json.Unmarshal(data, dst.Addr().Interface())
-		return dst.Interface(), err
-	}
-}
-
 func (p *Plugin) LoadConfig() (i interface{}) {
 	defer util.LogPanic() // This code is unsafe, we should log if it panics
 
@@ -89,8 +61,7 @@ func (p *Plugin) LoadConfig() (i interface{}) {
 		return i
 	}
 
-	obj, err := NewInterface(p.ConfigType, bytes)
-
+	obj, err := util.NewInterface(p.ConfigType, bytes)
 	if err != nil {
 		log.Printf("plugin config unmarshalling failed (%s): %s\n", p.Name, err)
 		return i
@@ -118,6 +89,21 @@ func (p *Plugin) SaveConfig() {
 			log.Printf("saved config for %s", p.Name)
 		}
 	}
+}
+
+// SetupConfigSaving will run each plugin's SaveConfig every 5 minutes with a ticker
+func SetupConfigSaving() {
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				for _, p := range plugins {
+					p.SaveConfig()
+				}
+			}
+		}
+	}()
 }
 
 // Load will load all the plugins from dir specified in pluginList

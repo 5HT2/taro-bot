@@ -1,7 +1,9 @@
 package util
 
 import (
+	"encoding/json"
 	"log"
+	"reflect"
 	"runtime/debug"
 	"time"
 )
@@ -39,6 +41,19 @@ func RetryFunc(fn retryFunction, n int, delayMs time.Duration) ([]byte, error) {
 	}
 
 	return fn()
+}
+
+func NewInterface(typ reflect.Type, data []byte) (interface{}, error) {
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+		dst := reflect.New(typ).Elem()
+		err := json.Unmarshal(data, dst.Addr().Interface())
+		return dst.Addr().Interface(), err
+	} else {
+		dst := reflect.New(typ).Elem()
+		err := json.Unmarshal(data, dst.Addr().Interface())
+		return dst.Interface(), err
+	}
 }
 
 // SliceContains will return if slice s contains e
