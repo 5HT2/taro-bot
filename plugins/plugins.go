@@ -73,7 +73,7 @@ func (p *Plugin) LoadConfig() (i interface{}) {
 
 func (p *Plugin) SaveConfig() {
 	if p.Config == nil || p.ConfigType == nil {
-		log.Printf("skipping saving %s", p.Name)
+		log.Printf("skipping saving %s\n", p.Name)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (p *Plugin) SaveConfig() {
 		if err = os.WriteFile(getConfigPath(p), bytes, fileMode); err != nil {
 			log.Printf("plugin config writing failed (%s): %s\n", p.Name, err)
 		} else {
-			log.Printf("saved config for %s", p.Name)
+			log.Printf("saved config for %s\n", p.Name)
 		}
 	}
 }
