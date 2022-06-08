@@ -20,7 +20,7 @@ import (
 var (
 	pathValidation = regexp.MustCompile(`[^a-z\d.]`)
 	fileMode       = os.FileMode(0644)
-	plugins        = make([]Plugin, 0)
+	plugins        = make([]*Plugin, 0)
 )
 
 type PluginInit struct {
@@ -44,7 +44,7 @@ func (p Plugin) String() string {
 
 // Register will register a plugin's commands, responses and jobs to the bot
 func (p *Plugin) Register() {
-	plugins = append(plugins, *p)
+	plugins = append(plugins, p)
 
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
@@ -219,7 +219,7 @@ func RegisterAll(dir, pluginList string) {
 
 	// This is done to clear the existing plugins that have already been registered, if this is called after the bot
 	// has already been initialized. This allows reloading plugins at runtime.
-	plugins = make([]Plugin, 0)
+	plugins = make([]*Plugin, 0)
 	bot.Commands = make([]bot.CommandInfo, 0)
 	bot.Responses = make([]bot.ResponseInfo, 0)
 
