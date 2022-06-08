@@ -82,7 +82,6 @@ type GuildConfig struct {
 	TopicVoteThreshold   int64             `json:"topic_vote_threshold,omitempty"`
 	TopicVoteEmoji       string            `json:"topic_vote_emoji,omitempty"`
 	Starboard            StarboardConfig   `json:"starboard_config"`
-	EnabledTenorDelete   []int64           `json:"enabled_tenor_delete"` // TODO: Remove when #11 is closed
 }
 
 // SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker
