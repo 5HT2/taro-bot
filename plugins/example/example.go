@@ -12,10 +12,16 @@ import (
 	"reflect"
 )
 
+var p *plugins.Plugin
+
+type config struct {
+	Fn string `json:"fn"`
+}
+
 // InitPlugin is called when a plugin is registered, and is used to register commands, responses, jobs and handlers.
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	// All the `FeatureNameInfo` fields are optional, and can be omitted.
-	return &plugins.Plugin{
+	p = &plugins.Plugin{
 		Name:        "Example plugin",
 		Description: "This is an example plugin",
 		Version:     "1.0.0",
@@ -32,6 +38,8 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Description: "This command will only return errors",
 			Aliases:     []string{"err", "e"},
 		}},
+		// This is used to ensure type safety when loading the Config
+		ConfigType: reflect.TypeOf(config{}),
 		// Responses are called based on regex matching the message.
 		// DISCORD_BOT_ID is replaced in the regex matching, and this response will be called by pinging the bot with the word test or help.
 		// MatchMin means that a minimum of two of the Regexes need to match.
@@ -63,6 +71,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
+	// When loading a config, you should cast to the correct type, to force a panic if the config is malformed
+	p.Config = p.LoadConfig().(config)
+	return p
 }
 
 // ExampleCommand (.example) is a basic example of returning just a message with a command.

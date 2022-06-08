@@ -1,16 +1,26 @@
 package plugins
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"plugin"
 	"reflect"
+	"regexp"
 	"strings"
+	"time"
+)
+
+var (
+	pathValidation = regexp.MustCompile(`[^a-z\d.]`)
+	fileMode       = os.FileMode(0644)
+	plugins        = make([]Plugin, 0)
 )
 
 type PluginInit struct {
@@ -20,6 +30,8 @@ type Plugin struct {
 	Name        string             // Name of the plugin to display to users
 	Description string             // Description of what the plugin does
 	Version     string             // Version in semver, e.g.., 1.1.0
+	Config      interface{}        // Config is the Plugin's config, can be nil
+	ConfigType  reflect.Type       // ConfigType is the type to validate parse the config with
 	Commands    []bot.CommandInfo  // Commands to register, could be none
 	Responses   []bot.ResponseInfo // Responses to register, could be none
 	Jobs        []bot.JobInfo      // Jobs to register, could be none
@@ -32,10 +44,80 @@ func (p Plugin) String() string {
 
 // Register will register a plugin's commands, responses and jobs to the bot
 func (p *Plugin) Register() {
+	plugins = append(plugins, *p)
+
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
 	bot.Jobs = append(bot.Jobs, p.Jobs...)             // these need to have RegisterJobs called in order to function
 	bot.Handlers = append(bot.Handlers, p.Handlers...) // these need to have RegisterHandlers called in order to function
+}
+
+// SetupConfigSaving will run each plugin's SaveConfig every 5 minutes with a ticker
+func SetupConfigSaving() {
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				for _, p := range plugins {
+					p.SaveConfig()
+				}
+			}
+		}
+	}()
+}
+
+func NewInterface(typ reflect.Type, data []byte) (interface{}, error) {
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+		dst := reflect.New(typ).Elem()
+		err := json.Unmarshal(data, dst.Addr().Interface())
+		return dst.Addr().Interface(), err
+	} else {
+		dst := reflect.New(typ).Elem()
+		err := json.Unmarshal(data, dst.Addr().Interface())
+		return dst.Interface(), err
+	}
+}
+
+func (p *Plugin) LoadConfig() (i interface{}) {
+	defer util.LogPanic() // This code is unsafe, we should log if it panics
+
+	bytes, err := os.ReadFile(getConfigPath(p))
+	if err != nil {
+		log.Printf("plugin config reading failed (%s): %s\n", p.Name, err)
+		return i
+	}
+
+	obj, err := NewInterface(p.ConfigType, bytes)
+
+	if err != nil {
+		log.Printf("plugin config unmarshalling failed (%s): %s\n", p.Name, err)
+		return i
+	}
+
+	log.Printf("plugin config loaded for %s\n", p.Name)
+	return obj
+}
+
+func (p *Plugin) SaveConfig() {
+	if p.Config == nil || p.ConfigType == nil {
+		log.Printf("skipping saving %s", p.Name)
+		return
+	}
+
+	// This is faster than checking if it exists
+	_ = os.Mkdir("config/"+getConfigDir(p), fileMode)
+
+	if bytes, err := json.MarshalIndent(p.Config, "", "    "); err != nil {
+		log.Printf("plugin config marshalling failed (%s): %s\n", p.Name, err)
+	} else {
+		if err = os.WriteFile(getConfigPath(p), bytes, fileMode); err != nil {
+			log.Printf("plugin config writing failed (%s): %s\n", p.Name, err)
+		} else {
+			log.Printf("saved config for %s", p.Name)
+		}
+	}
 }
 
 // Load will load all the plugins from dir specified in pluginList
@@ -151,6 +233,7 @@ func RegisterAll(dir, pluginList string) {
 
 	// This is done to clear the existing plugins that have already been registered, if this is called after the bot
 	// has already been initialized. This allows reloading plugins at runtime.
+	plugins = make([]Plugin, 0)
 	bot.Commands = make([]bot.CommandInfo, 0)
 	bot.Responses = make([]bot.ResponseInfo, 0)
 
@@ -165,6 +248,9 @@ func RegisterAll(dir, pluginList string) {
 	// This registers the new jobs that plugins have scheduled, and the handlers that they return
 	RegisterJobs()
 	RegisterHandlers()
+
+	// This enables config saving for all loaded plugins
+	SetupConfigSaving()
 }
 
 func parsePluginsList(pluginList string) []string {
@@ -176,4 +262,12 @@ func parsePluginsList(pluginList string) []string {
 		}
 	}
 	return plugins
+}
+
+func getConfigPath(p *Plugin) string {
+	return fmt.Sprintf("config/%s/%s.json", getConfigDir(p), p.Version)
+}
+
+func getConfigDir(p *Plugin) string {
+	return pathValidation.ReplaceAllString(strings.ToLower(p.Name), "-")
 }
