@@ -39,7 +39,7 @@ type Plugin struct {
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.Commands, p.Responses, p.Jobs, p.Handlers)
+	return fmt.Sprintf("[%s, %s, %v, %p, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.Config, p.ConfigType, p.Commands, p.Responses, p.Jobs, p.Handlers)
 }
 
 // Register will register a plugin's commands, responses and jobs to the bot
