@@ -50,12 +50,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
-			Fn:     ReactionAddHandler,
-			FnName: "ReactionAddHandler",
+			Fn:     RoleMenuReactionAddHandler,
+			FnName: "RoleMenuReactionAddHandler",
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}, {
-			Fn:     ReactionRemoveHandler,
-			FnName: "ReactionRemoveHandler",
+			Fn:     RoleMenuReactionRemoveHandler,
+			FnName: "RoleMenuReactionRemoveHandler",
 			FnType: reflect.TypeOf(func(event *gateway.MessageReactionRemoveEvent) {}),
 		}},
 	}
@@ -161,7 +161,7 @@ func RoleMenuCommand(c bot.Command) error {
 	}
 }
 
-func ReactionAddHandler(i interface{}) {
+func RoleMenuReactionAddHandler(i interface{}) {
 	defer util.LogPanic()
 	e := i.(*gateway.MessageReactionAddEvent)
 
@@ -182,7 +182,7 @@ func ReactionAddHandler(i interface{}) {
 	}
 }
 
-func ReactionRemoveHandler(i interface{}) {
+func RoleMenuReactionRemoveHandler(i interface{}) {
 	defer util.LogPanic()
 	e := i.(*gateway.MessageReactionRemoveEvent)
 
