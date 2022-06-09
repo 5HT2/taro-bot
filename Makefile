@@ -16,6 +16,7 @@ deps:
 	go get -u github.com/5HT2C/http-bash-requests
 	go get -u github.com/go-co-op/gocron
 	go get -u github.com/mackerelio/go-osstat
+	go get -u github.com/forPelevin/gomoji
 	go get -u golang.org/x/net
 	go mod tidy
 
