@@ -74,13 +74,6 @@ func RoleMenuCommand(c bot.Command) error {
 	args, _ := cmd.ParseAllArgs(c.Args)
 	var roleConfigs []RoleConfig
 
-	example := []RoleConfig{{"<:astolfo:880936523644669962>", 881205936818122754}, {"<:trans_sunglasses:880628887481102336>", 881206354658885673}}
-	if args == "example" {
-		bytes, _ := json.MarshalIndent(example, "", "    ")
-		_, _ = cmd.SendMessage(c.E, "```json\n"+string(bytes)+"\n```")
-		return nil
-	}
-
 	if err := json.Unmarshal([]byte(args), &roleConfigs); err != nil {
 		return err
 	}
