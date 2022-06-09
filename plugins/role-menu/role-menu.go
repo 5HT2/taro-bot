@@ -19,7 +19,7 @@ import (
 var p *plugins.Plugin
 
 type config struct {
-	Menus map[string]map[string]Menu `json:"menus,omitempty"` // [guild id][message id]Menu
+	Menus map[string]map[string]Menu `json:"menus"` // [guild id][message id]Menu
 }
 
 type Menu struct {
@@ -115,12 +115,23 @@ func RoleMenuCommand(c bot.Command) error {
 			//
 			// Save final menu in config
 
-			finalMenu := Menu{Channel: int64(c.E.ChannelID), Roles: roles}
-			messageMenu := make(map[string]Menu)
-			messageMenu[msg.ID.String()] = finalMenu
-
 			menus := make(map[string]map[string]Menu, 0)
-			menus[c.E.GuildID.String()] = messageMenu
+			if p.Config != nil {
+				if menu, ok := p.Config.(config).Menus[c.E.GuildID.String()]; ok {
+					menus[c.E.GuildID.String()] = menu
+				}
+			}
+
+			createdMenu := Menu{Channel: int64(c.E.ChannelID), Roles: roles}
+
+			if _, ok := menus[c.E.GuildID.String()]; ok {
+				menus[c.E.GuildID.String()][msg.ID.String()] = createdMenu
+			} else {
+				messageMenu := make(map[string]Menu)
+				messageMenu[msg.ID.String()] = createdMenu
+				menus[c.E.GuildID.String()] = messageMenu
+			}
+
 			p.Config = config{Menus: menus}
 
 			// Add reactions to menu
