@@ -155,10 +155,11 @@ func ReactionAddHandler(i interface{}) {
 	}
 
 	roleID, auditLogReason := getRoleFromEvent(e.GuildID, e.MessageID, e.ChannelID, e.Emoji, true)
-	log.Printf("trying to add role: %v (%s)\n", roleID, auditLogReason)
-	if roleID == 0 {
+	if roleID == 0 || roleID == -1 {
 		return
 	}
+
+	log.Printf("trying to add role: %v (%s)\n", roleID, auditLogReason)
 
 	if err := bot.Client.AddRole(e.GuildID, e.UserID, discord.RoleID(roleID), api.AddRoleData{AuditLogReason: auditLogReason}); err != nil {
 		log.Printf("failed to add reaction role: %v\n", err)
@@ -172,6 +173,10 @@ func ReactionRemoveHandler(i interface{}) {
 	// Can't return for non-bot here, too lazy to lookup user. This shouldn't be possible, anyways.
 
 	roleID, auditLogReason := getRoleFromEvent(e.GuildID, e.MessageID, e.ChannelID, e.Emoji, false)
+	if roleID == 0 || roleID == -1 {
+		return
+	}
+
 	log.Printf("trying to remove role: %v (%s)\n", roleID, auditLogReason)
 
 	if err := bot.Client.RemoveRole(e.GuildID, e.UserID, discord.RoleID(roleID), auditLogReason); err != nil {
