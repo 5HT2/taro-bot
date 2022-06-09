@@ -199,6 +199,10 @@ func RegisterHandlers() {
 			fn = func(e *gateway.MessageReactionAddEvent) {
 				handler.Fn(e)
 			}
+		case reflect.TypeOf(func(e *gateway.MessageReactionRemoveEvent) {}):
+			fn = func(e *gateway.MessageReactionRemoveEvent) {
+				handler.Fn(e)
+			}
 		default:
 			log.Printf("failed to register handler (%s): type %v not recognized\n", handler.FnName, handler.FnType)
 			continue
