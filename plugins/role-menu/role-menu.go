@@ -101,9 +101,12 @@ func RoleMenuCommand(c bot.Command) error {
 			lines = append(lines, fmt.Sprintf("<%s> <@&%v>", apiEmoji, role.RoleID))
 		}
 
-		if msg, err := bot.Client.SendMessage(c.E.ChannelID, strings.Join(lines, "\n")); err != nil {
+		if msg, err := bot.Client.SendMessage(c.E.ChannelID, "Creating role menu..."); err != nil {
 			return err
 		} else {
+			// Edit role menu text into existing message
+			msg, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, strings.Join(lines, "\n"))
+
 			//
 			// Save final menu in config
 
