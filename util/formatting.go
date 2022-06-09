@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/diamondburned/arikawa/v3/discord"
 	"strconv"
 	"strings"
 )
@@ -18,9 +17,4 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 // GetUserMention will return a formatted user mention from an id
 func GetUserMention(id int64) string {
 	return "<@!" + strconv.FormatInt(id, 10) + ">"
-}
-
-// GuildIDStr will return a discord.GuildID as a string
-func GuildIDStr(id discord.GuildID) string {
-	return strconv.FormatUint(uint64(id), 10)
 }

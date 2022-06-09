@@ -4,7 +4,6 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
-	"github.com/5HT2/taro-bot/util"
 	"log"
 	"reflect"
 	"regexp"
@@ -52,7 +51,7 @@ func TenorDeleteResponse(r bot.Response) {
 		return
 	}
 
-	if enabled, ok := p.Config.(config).Guilds[util.GuildIDStr(r.E.GuildID)]; ok && enabled {
+	if enabled, ok := p.Config.(config).Guilds[r.E.GuildID.String()]; ok && enabled {
 		if err := bot.Client.DeleteMessage(r.E.ChannelID, r.E.Message.ID, "Matched Tenor gif"); err != nil {
 			log.Printf("TenorDeleteResponse: %v\n", err)
 		}
@@ -64,7 +63,7 @@ func TenorDeleteCommand(c bot.Command) error {
 		return err
 	}
 
-	id := util.GuildIDStr(c.E.GuildID)
+	id := c.E.GuildID.String()
 	var err error = nil
 
 	mutex.Lock()
