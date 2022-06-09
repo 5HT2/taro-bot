@@ -146,8 +146,16 @@ func ReactionAddHandler(i interface{}) {
 	defer util.LogPanic()
 	e := i.(*gateway.MessageReactionAddEvent)
 
+	// Don't modify bots / self
+	if e.Member.User.Bot {
+		return
+	}
+
 	roleID, auditLogReason := getRoleFromEvent(e.GuildID, e.MessageID, e.ChannelID, e.Emoji, true)
 	log.Printf("trying to add role: %v (%s)\n", roleID, auditLogReason)
+	if roleID == 0 {
+		return
+	}
 
 	if err := bot.Client.AddRole(e.GuildID, e.UserID, discord.RoleID(roleID), api.AddRoleData{AuditLogReason: auditLogReason}); err != nil {
 		log.Printf("failed to add reaction role: %v\n", err)
@@ -157,6 +165,8 @@ func ReactionAddHandler(i interface{}) {
 func ReactionRemoveHandler(i interface{}) {
 	defer util.LogPanic()
 	e := i.(*gateway.MessageReactionRemoveEvent)
+
+	// Can't return for non-bot here, too lazy to lookup user. This shouldn't be possible, anyways.
 
 	roleID, auditLogReason := getRoleFromEvent(e.GuildID, e.MessageID, e.ChannelID, e.Emoji, false)
 	log.Printf("trying to remove role: %v (%s)\n", roleID, auditLogReason)
