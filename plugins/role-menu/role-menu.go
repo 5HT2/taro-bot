@@ -97,7 +97,13 @@ func RoleMenuCommand(c bot.Command) error {
 		lines := make([]string, 0) // formatted role menu message
 
 		for parsedEmoji, role := range roles {
-			lines = append(lines, fmt.Sprintf("<%s> <@&%v>", parsedEmoji, role.RoleID))
+			if strings.Contains(parsedEmoji, ":") {
+				parsedEmoji = "<" + parsedEmoji + ">" // embed
+			} else {
+				apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
+				parsedEmoji = string(apiEmoji)
+			}
+			lines = append(lines, fmt.Sprintf("%s <@&%v>", parsedEmoji, role.RoleID))
 		}
 
 		if msg, err := bot.Client.SendMessage(c.E.ChannelID, "Creating role menu..."); err != nil {
