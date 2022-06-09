@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
@@ -67,8 +68,10 @@ func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 		name = member.User.Username
 	}
 
-	url := "https://cdn.discordapp.com/avatars/" + strconv.FormatUint(uint64(member.User.ID), 10) + "/" + member.User.Avatar + ".png?size=2048"
-	return &discord.EmbedAuthor{Name: name, Icon: url}
+	return &discord.EmbedAuthor{
+		Name: name,
+		Icon: fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=2048", member.User.ID.String(), member.User.Avatar),
+	}
 }
 
 func CreateMessageLink(guild int64, message *discord.Message, jump bool) string {
