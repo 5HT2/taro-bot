@@ -141,7 +141,6 @@ func StarboardReactionHandler(i interface{}) {
 
 		// Not a star
 		if e.Emoji.APIString().PathString() != util.EscapedStar {
-			log.Printf("Not a star emoji\n")
 			return g, "StarboardReactionHandler: check reaction emoji"
 		}
 
