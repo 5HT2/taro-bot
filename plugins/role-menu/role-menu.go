@@ -120,7 +120,7 @@ func RoleMenuCommand(c bot.Command) error {
 			p.Config = config{Menus: menus}
 
 			// Add reactions to menu
-			for parsedEmoji, _ := range roles {
+			for parsedEmoji := range roles {
 				apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
 				if err := bot.Client.React(msg.ChannelID, msg.ID, apiEmoji); err != nil {
 					log.Printf("failed to react when creating role menu: %v\n", err)
