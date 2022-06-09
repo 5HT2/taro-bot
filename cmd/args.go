@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/forPelevin/gomoji"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,7 +12,6 @@ import (
 var (
 	UrlRegex          = regexp.MustCompile(`https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)`)
 	emojiUrlRegex     = regexp.MustCompile(`^http(s)?://cdn\.discordapp\.com/emojis/([0-9]+)`)
-	emojiRegex        = regexp.MustCompile(`([\x{2000}-\x{3300}]|[\x{D83C}\x{D000}-\x{D83C}\x{DFFF}]|[\x{D83D}\x{D000}-\x{D83D}\x{DFFF}]|[\x{D83E}\x{D000}-\x{D83E}\x{DFFF}])+`)
 	discordEmojiRegex = regexp.MustCompile("<(a|):([A-z0-9_]+):([0-9]+)>")
 	pingRegex         = regexp.MustCompile("<@!?[0-9]+>")
 	channelRegex      = regexp.MustCompile("<#[0-9]+>")
@@ -84,8 +84,8 @@ func ParseEmojiArg(a []string, pos int, allowOmit bool) (*discord.APIEmoji, bool
 		return nil, false, argErr
 	}
 
-	if emojiRegex.MatchString(s) {
-		emoji := discord.APIEmoji(s)
+	if e := gomoji.CollectAll(s); len(e) == 1 {
+		emoji := discord.APIEmoji(e[0].Character)
 		return &emoji, false, nil
 	}
 
