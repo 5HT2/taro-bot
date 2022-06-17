@@ -131,6 +131,10 @@ func MsgThresholdMsgResponse(r bot.Response) {
 }
 
 func MsgThresholdCfgCommand(c bot.Command) error {
+	if err := cmd.HasPermission("moderate", c); err != nil {
+		return err
+	}
+
 	mutex.Lock()
 	defer mutex.Unlock()
 
