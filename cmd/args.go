@@ -188,6 +188,25 @@ func ParseStringArg(a []string, pos int, toLower bool) (string, *bot.Error) {
 	return s, nil
 }
 
+// ParseStringSliceArg will return the strings in a range, or an nil and an error
+func ParseStringSliceArg(a []string, pos1 int, pos2 int) ([]string, *bot.Error) {
+	if pos2 == -1 {
+		pos2 = len(a)
+	}
+
+	s, err := getArgRange(a, pos1, pos2, "ParseStringSliceArg")
+	if err != nil {
+		return nil, err
+	}
+
+	elems := make([]string, 0)
+	for _, str := range s {
+		elems = append(elems, str)
+	}
+
+	return elems, nil
+}
+
 // ParseBoolArg will return a bool (True / true / 1), or false with an error
 func ParseBoolArg(a []string, pos int) (bool, *bot.Error) {
 	s, argErr := checkArgExists(a, pos, "ParseStringArg")
