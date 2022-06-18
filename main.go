@@ -19,12 +19,13 @@ import (
 )
 
 var (
-	defaultPlugins = "base base-extra base-fun msg-threshold-role role-menu spotifytoyoutube starboard remindme sys-stats suggest-topic tenor-delete"
-	pluginDir      = flag.String("plugindir", "bin", "Default dir to search for plugins")
-	pluginList     = flag.String("plugins", defaultPlugins, "List of plugins to load")
-	lastExitCode   = flag.Int64("exited", 0, "Called by Dockerfile")
-	debugLog       = flag.Bool("debug", false, "Debug messages and faster config saving")
-	debugLogFile   = "/tmp/taro-bot.log"
+	defaultPlugins = "base base-extra base-fun leave-join-msg msg-threshold-role role-menu spotifytoyoutube " +
+		"starboard remindme sys-stats suggest-topic tenor-delete"
+	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
+	pluginList   = flag.String("plugins", defaultPlugins, "List of plugins to load")
+	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
+	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
+	debugLogFile = "/tmp/taro-bot.log"
 )
 
 func main() {
