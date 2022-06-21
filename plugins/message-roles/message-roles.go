@@ -43,7 +43,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Message Roles",
 		Description: "Assign a role once a message threshold has been reached",
-		Version:     "1.0.1",
+		Version:     "1.0.2",
 		Commands: []bot.CommandInfo{{
 			Fn:          MessageRolesConfigCommand,
 			FnName:      "MessageRolesConfigCommand",
