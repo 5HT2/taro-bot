@@ -62,6 +62,14 @@ func SendMessage(e *gateway.MessageCreateEvent, content string) (*discord.Messag
 	return msg, err
 }
 
+func SendMessageEmbedSafe(c discord.ChannelID, content string, embed *discord.Embed) (*discord.Message, error) {
+	if embed != nil {
+		return bot.Client.SendMessage(c, content, *embed)
+	}
+
+	return bot.Client.SendMessage(c, content)
+}
+
 func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 	name := member.Nick
 	if len(name) == 0 {
