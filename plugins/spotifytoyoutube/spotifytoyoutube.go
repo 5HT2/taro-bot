@@ -7,6 +7,7 @@ import (
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
+	"golang.org/x/net/html"
 	"log"
 	"net/http"
 	"net/url"
@@ -57,7 +58,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
-	node, err := util.ExtractNode(string(content), func(str string) bool { return str == "title" })
+	node, err := util.ExtractNode(string(content), func(node *html.Node) bool { return node.Data == "title" && node.FirstChild.Data != "Spotify" })
 	if err != nil {
 		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
 		return
