@@ -18,8 +18,6 @@ import (
 var (
 	p     *plugins.Plugin
 	mutex sync.Mutex
-
-	defaultUser = User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
 )
 
 type config struct {
@@ -133,10 +131,9 @@ func MsgThresholdMsgResponse(r bot.Response) {
 
 	// Check if the guild has an existing config
 	if cfg, ok := p.Config.(config).GuildUsers[r.E.GuildID.String()]; ok {
+		user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
+
 		// If the guild has an existing config, does this user exist in it yet?
-
-		user := defaultUser
-
 		if guildUser, ok := cfg[r.E.Author.ID.String()]; ok {
 			user = guildUser
 		}
@@ -149,7 +146,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 		p.Config.(config).GuildUsers[r.E.GuildID.String()][r.E.Author.ID.String()] = user
 	} else {
 		// Make a new user, populate it
-		user := defaultUser
+		user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
 		user = bumpMessages(roles, user, r.E.ChannelID)
 
 		// Users map not found, create it
