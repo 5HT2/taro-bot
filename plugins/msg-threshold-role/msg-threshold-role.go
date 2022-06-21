@@ -10,41 +10,48 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 )
 
 var (
 	p     *plugins.Plugin
 	mutex sync.Mutex
+
+	defaultUser = User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
 )
 
 type config struct {
-	GuildUsers      map[string]map[string]User `json:"guild_users,omitempty"`      // [guild id][user id]User
-	GuildThresholds map[string]ThresholdRole   `json:"guild_thresholds,omitempty"` // [guild id]threshold
+	GuildUsers map[string]map[string]User `json:"guild_users,omitempty"`   // [guild id][user id]User
+	GuildRoles map[string][]Role          `json:"guild_configs,omitempty"` // [guild id][]Role
+	// this could also be a [guild id][role id]Role for performance reasons, but it's only loop-searched in commands,
+	// so it can stay like this for now.
 }
 
 type User struct {
-	Msgs      int64 `json:"msgs"`
-	GivenRole bool  `json:"given_role"`
+	Msgs       map[string]int64 `json:"msgs"`        // [role id]number of messages
+	GivenRoles map[string]bool  `json:"given_roles"` // [role id]given role
 }
 
-type ThresholdRole struct {
-	Threshold       int64   `json:"threshold"`
-	Role            int64   `json:"role"`
-	ExcludeChannels []int64 `json:"exclude_channels,omitempty"`
+type Role struct {
+	Threshold int64   `json:"threshold"`
+	ID        int64   `json:"role"`
+	Whitelist []int64 `json:"whitelist"`
+	Blacklist []int64 `json:"blacklist"`
 }
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
-		Name:        "Message Threshold Roles",
+		Name:        "Message Roles",
 		Description: "Assign a role once a message threshold has been reached",
-		Version:     "1.0.0",
+		Version:     "1.0.1",
 		Commands: []bot.CommandInfo{{
-			Fn:          MsgThresholdCfgCommand,
-			FnName:      "MsgThresholdCfgCommand",
-			Name:        "msgthresholdcfg",
-			Aliases:     []string{"mtcfg"},
-			Description: "Edit message threshold role config",
+			Fn:          MessageRolesConfigCommand,
+			FnName:      "MessageRolesConfigCommand",
+			Name:        "messagerolesconfig",
+			Aliases:     []string{"mrcfg"},
+			Description: "Edit message roles config",
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Responses: []bot.ResponseInfo{{
@@ -65,56 +72,91 @@ func MsgThresholdMsgResponse(r bot.Response) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	threshold, ok := p.Config.(config).GuildThresholds[r.E.GuildID.String()]
+	roles, ok := p.Config.(config).GuildRoles[r.E.GuildID.String()]
 	if !ok {
 		return
 	}
 
 	// This guild has ExcludeChannels enabled and the message is from one of them
-	if len(threshold.ExcludeChannels) > 0 && util.SliceContains(threshold.ExcludeChannels, int64(r.E.ChannelID)) {
-		return
-	}
+	//if len(guildConfig.ExcludeChannels) > 0 && util.SliceContains(guildConfig.ExcludeChannels, int64(r.E.ChannelID)) {
+	//	return
+	//}
 
-	checkThreshold := func(threshold ThresholdRole, user User) User {
-		if !user.GivenRole && user.Msgs >= threshold.Threshold && threshold.Role != 0 && threshold.Threshold != 0 {
-			// Assign role
-			reason := fmt.Sprintf("user messages met threshold of %v", threshold.Threshold)
-			data := api.AddRoleData{AuditLogReason: api.AuditLogReason(reason)}
-			log.Printf("attempting to add threshold role: %v (%s)\n", threshold.Role, data)
+	// this will go and validate if the message channel is in the whitelist or blacklist, or neither, and bump the message count for said role
+	bumpMessages := func(roles []Role, user User, channel discord.ChannelID) User {
+		for _, role := range roles {
+			roleID := strconv.FormatInt(role.ID, 10)
 
-			if err := bot.Client.AddRole(r.E.GuildID, r.E.Author.ID, discord.RoleID(threshold.Role), data); err != nil {
-				log.Printf("failed to add threshold role: %v\n", err)
+			if len(role.Whitelist) > 0 {
+				// If a whitelist is enabled and the channel IS in the whitelist.
+				// We can't collapse this with && because we don't want the else to happen if a whitelist is enabled
+				// and the channel ISN'T in the whitelist.
+				if util.SliceContains(role.Whitelist, int64(channel)) {
+					user.Msgs[roleID] += 1
+				}
+			} else if len(role.Blacklist) > 0 {
+				// If a blacklist is enabled and the channel IS NOT in the blacklist.
+				// We can't collapse this with && because we don't want the else to happen if a blacklist is enabled
+				// and the channel IS in the blacklist.
+				if !util.SliceContains(role.Blacklist, int64(channel)) {
+					user.Msgs[roleID] += 1
+				}
 			} else {
-				user.GivenRole = true
+				user.Msgs[roleID] += 1
 			}
 		}
 
 		return user
 	}
 
+	// this will check each role if the threshold is met or not, and assign it if so
+	checkThreshold := func(roles []Role, user User) User {
+		for _, role := range roles {
+			roleID := strconv.FormatInt(role.ID, 10)
+			givenRole, _ := user.GivenRoles[roleID]
+
+			if !givenRole && user.Msgs[roleID] >= role.Threshold && role.ID != 0 && role.Threshold != 0 {
+				// Assign role
+				reason := fmt.Sprintf("user messages met threshold of %v for role <@&%v>", role.Threshold, role.ID)
+				data := api.AddRoleData{AuditLogReason: api.AuditLogReason(reason)}
+				log.Printf("attempting to add threshold role: %v (%s)\n", role.ID, data)
+
+				if err := bot.Client.AddRole(r.E.GuildID, r.E.Author.ID, discord.RoleID(role.ID), data); err != nil {
+					log.Printf("failed to add threshold role: %v\n", err)
+				} else {
+					user.GivenRoles[roleID] = true
+				}
+			}
+		}
+		return user
+	}
+
 	// Check if the guild has an existing config
 	if cfg, ok := p.Config.(config).GuildUsers[r.E.GuildID.String()]; ok {
 		// If the guild has an existing config, does this user exist in it yet?
-		if user, ok := cfg[r.E.Author.ID.String()]; ok {
-			// User exists, bump their messages and check the threshold
-			user.Msgs += 1
-			user = checkThreshold(threshold, user)
 
-			// Update the config
-			p.Config.(config).GuildUsers[r.E.GuildID.String()][r.E.Author.ID.String()] = user
-		} else {
-			// User not in this guild's config, add them to it.
-			user := User{Msgs: 1, GivenRole: false}
-			user = checkThreshold(threshold, user)
+		user := defaultUser
 
-			// Update the config
-			p.Config.(config).GuildUsers[r.E.GuildID.String()][r.E.Author.ID.String()] = user
+		if guildUser, ok := cfg[r.E.Author.ID.String()]; ok {
+			user = guildUser
 		}
+
+		// User not in this guild's config, add them to it.
+		user = bumpMessages(roles, user, r.E.ChannelID)
+		user = checkThreshold(roles, user)
+
+		// Update the config
+		p.Config.(config).GuildUsers[r.E.GuildID.String()][r.E.Author.ID.String()] = user
 	} else {
+		// Make a new user, populate it
+		user := defaultUser
+		user = bumpMessages(roles, user, r.E.ChannelID)
+
 		// Users map not found, create it
 		users := make(map[string]User)
-		users[r.E.Author.ID.String()] = User{Msgs: 1, GivenRole: false}
+		users[r.E.Author.ID.String()] = user
 
+		// If there are no guilds with users, create a new guild and replace it with the `users` map
 		if len(p.Config.(config).GuildUsers) == 0 {
 			guilds := make(map[string]map[string]User, 0)
 			guilds[r.E.GuildID.String()] = users
@@ -125,12 +167,12 @@ func MsgThresholdMsgResponse(r bot.Response) {
 			p.Config = cfg
 		}
 
-		// Save users map in the config
+		// Save `users` map in the config
 		p.Config.(config).GuildUsers[r.E.GuildID.String()] = users
 	}
 }
 
-func MsgThresholdCfgCommand(c bot.Command) error {
+func MessageRolesConfigCommand(c bot.Command) error {
 	if err := cmd.HasPermission("moderate", c); err != nil {
 		return err
 	}
@@ -140,80 +182,147 @@ func MsgThresholdCfgCommand(c bot.Command) error {
 
 	arg, _ := cmd.ParseStringArg(c.Args, 1, true)
 
-	thresholds := ThresholdRole{Role: 0, Threshold: 15}
+	roles := make([]Role, 0)
 
 	if p.Config != nil {
-		if guildThreshold, ok := p.Config.(config).GuildThresholds[c.E.GuildID.String()]; ok {
-			thresholds = guildThreshold
+		if guildRoles, ok := p.Config.(config).GuildRoles[c.E.GuildID.String()]; ok {
+			roles = guildRoles
 		}
 	}
 
 	var err error = nil
 
 	switch arg {
-	case "threshold":
-		if threshold, argErr := cmd.ParseInt64Arg(c.Args, 2); argErr != nil {
-			_, err = cmd.SendEmbed(c.E, "Message Threshold", fmt.Sprintf("Currently set to %v", thresholds.Threshold), bot.DefaultColor)
-		} else {
-			thresholds.Threshold = threshold
-			_, err = cmd.SendEmbed(c.E, "Message Threshold", fmt.Sprintf("Set to %v", thresholds.Threshold), bot.SuccessColor)
-		}
 	case "role":
-		if role, argErr := cmd.ParseInt64Arg(c.Args, 2); argErr != nil {
-			if thresholds.Role == 0 {
-				_, err = cmd.SendEmbed(c.E, "Message Threshold Role", "Role not currently set! Use the `role [role id]` subcommand to set it.", bot.WarnColor)
-			} else {
-				_, err = cmd.SendEmbed(c.E, "Message Threshold Role", fmt.Sprintf("Currently set to <@&%v>", thresholds.Role), bot.DefaultColor)
-			}
-		} else {
-			thresholds.Role = role
-			_, err = cmd.SendEmbed(c.E, "Message Threshold Role", fmt.Sprintf("Set to <@&%v>", thresholds.Role), bot.SuccessColor)
+		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+		threshold, argErr2 := cmd.ParseInt64Arg(c.Args, 3)
+
+		// For the future: some people might expect that setting a threshold to 0 will "auto-role" people, when in
+		// reality it will only apply once the user sends any messages. This is probably fine for now.
+		if threshold < 0 {
+			threshold = 0
 		}
-	case "exclude":
-		arg, _ = cmd.ParseStringArg(c.Args, 2, true)
-		channel, argErr := cmd.ParseChannelArg(c.Args, 3)
 
-		switch arg {
-		case "add":
-			if argErr != nil {
-				return argErr
+		if argErr1 != nil {
+			return argErr1
+		}
+		if argErr2 != nil {
+			return argErr2
+		}
+
+		found := false
+		for n, r := range roles {
+			if r.ID == role {
+				r.Threshold = threshold
+				roles[n] = r
+				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Changed threshold for <@&%v> to %v!", r.ID, r.Threshold), bot.SuccessColor)
+
+				found = true
+				break
 			}
+		}
 
-			if !util.SliceContains(thresholds.ExcludeChannels, channel) {
-				thresholds.ExcludeChannels = append(thresholds.ExcludeChannels, channel)
+		if !found {
+			newRole := Role{Threshold: threshold, ID: role}
+			roles = append(roles, newRole)
+
+			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Created role <@&%v> with threshold %v!", role, threshold), bot.SuccessColor)
+		}
+	case "whitelist":
+		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+		channel, argErr2 := cmd.ParseChannelArg(c.Args, 3)
+
+		if argErr1 != nil {
+			return argErr1
+		}
+		if argErr2 != nil {
+			return argErr2
+		}
+
+		found := false
+		for n, r := range roles {
+			if r.ID == role {
+				if util.SliceContains(r.Whitelist, channel) {
+					r.Whitelist = util.SliceRemove(r.Whitelist, channel)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s whitelist", channel, r.ID), bot.ErrorColor)
+				} else {
+					r.Whitelist = append(r.Whitelist, channel)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s whitelist", channel, r.ID), bot.SuccessColor)
+				}
+
+				roles[n] = r
+				found = true
+				break
 			}
+		}
 
-			_, err = cmd.SendEmbed(c.E, "Message Threshold Exclude Channels", fmt.Sprintf("✅ Added <#%v> to excluded channels!", channel), bot.SuccessColor)
-		case "remove":
-			if argErr != nil {
-				return argErr
+		if !found {
+			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
+		}
+	case "blacklist":
+		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+		channel, argErr2 := cmd.ParseChannelArg(c.Args, 3)
+
+		if argErr1 != nil {
+			return argErr1
+		}
+		if argErr2 != nil {
+			return argErr2
+		}
+
+		found := false
+		for n, r := range roles {
+			if r.ID == role {
+				if util.SliceContains(r.Blacklist, channel) {
+					r.Blacklist = util.SliceRemove(r.Blacklist, channel)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s blacklist", channel, r.ID), bot.ErrorColor)
+				} else {
+					r.Blacklist = append(r.Blacklist, channel)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor)
+				}
+
+				roles[n] = r
+				found = true
+				break
 			}
+		}
 
-			thresholds.ExcludeChannels = util.SliceRemove(thresholds.ExcludeChannels, channel)
+		if !found {
+			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
+		}
+	case "list":
+		if len(roles) == 0 {
+			_, err = cmd.SendEmbed(c.E, p.Name, "No message roles setup!", bot.WarnColor)
+		} else {
+			lines := make([]string, 0)
+			for _, role := range roles {
+				a1 := ""
+				a2 := ""
+				if len(role.Whitelist) > 0 {
+					a1 = "\n✅ Whitelist: " + util.JoinInt64Slice(role.Whitelist, ", ", "<#", ">")
+				}
+				if len(role.Blacklist) > 0 {
+					a2 = "\n⛔ Blacklist: " + util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">")
+				}
 
-			_, err = cmd.SendEmbed(c.E, "Message Threshold Exclude Channels", fmt.Sprintf("⛔ Removed <#%v> from excluded channels!", channel), bot.ErrorColor)
-		default:
-			formattedChannels := util.JoinInt64Slice(thresholds.ExcludeChannels, "\n", "⛔ <#", ">")
-			if len(thresholds.ExcludeChannels) == 0 {
-				formattedChannels = "No excluded channels!"
+				lines = append(lines, fmt.Sprintf("<@&%v> (%v messages)%s%s", role.Threshold, role.ID, a1, a2))
 			}
-
-			_, err = cmd.SendEmbed(c.E, "Message Threshold Exclude Channels", fmt.Sprintf("Excluded channels:\n\n%s", formattedChannels), bot.DefaultColor)
+			_, err = cmd.SendEmbed(c.E, p.Name, strings.Join(lines, "\n"), bot.DefaultColor)
 		}
 	default:
 		_, err = cmd.SendEmbed(c.E,
-			"Configure Message Threshold Roles",
-			"Available arguments are:\n- `threshold <threshold>`\n- `role [role id]`\n- `exclude add|remove <channel>`",
+			"Configure Message Roles",
+			"Available arguments are:\n- `role [role id] [threshold]`\n- `whitelist [role id] [channel]`\n- `blacklist [role id] [channel]`\n- `list`",
 			bot.DefaultColor)
 	}
 
 	if p.Config == nil {
-		guilds := make(map[string]ThresholdRole, 0)
-		guilds[c.E.GuildID.String()] = thresholds
-		cfg := config{GuildThresholds: guilds}
+		guilds := make(map[string][]Role, 0)
+		guilds[c.E.GuildID.String()] = roles
+		cfg := config{GuildRoles: guilds}
 		p.Config = cfg
 	} else {
-		p.Config.(config).GuildThresholds[c.E.GuildID.String()] = thresholds
+		p.Config.(config).GuildRoles[c.E.GuildID.String()] = roles
 	}
 
 	return err
