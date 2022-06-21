@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	defaultPlugins = "base base-extra base-fun leave-join-msg msg-threshold-role role-menu spotifytoyoutube " +
+	defaultPlugins = "base base-extra base-fun leave-join-msg message-roles role-menu spotifytoyoutube " +
 		"starboard remindme sys-stats suggest-topic tenor-delete"
 	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
 	pluginList   = flag.String("plugins", defaultPlugins, "List of plugins to load")
