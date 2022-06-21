@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
@@ -29,11 +30,12 @@ type MsgConfig struct {
 }
 
 type Message struct {
-	Enabled         bool   `json:"enabled,omitempty"`
-	Channel         int64  `json:"channel,omitempty"`
-	Content         string `json:"content,omitempty"`
-	CollapseMessage bool   `json:"collapse_message,omitempty"`
-	LastMessage     int64  `json:"last_message,omitempty"`
+	Enabled         bool           `json:"enabled,omitempty"`
+	Channel         int64          `json:"channel,omitempty"`
+	Content         string         `json:"content,omitempty"`
+	Embed           *discord.Embed `json:"embed,omitempty"`
+	CollapseMessage bool           `json:"collapse_message,omitempty"`
+	LastMessage     int64          `json:"last_message,omitempty"`
 }
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -76,7 +78,7 @@ func LeaveJoinAddHandler(i interface{}) {
 	if cfg, ok := p.Config.(config).Guilds[e.GuildID.String()]; ok && cfg.JoinMessage.Enabled {
 		message := strings.ReplaceAll(cfg.JoinMessage.Content, "USER_ID", e.User.ID.String())
 
-		if msg, err := cmd.SendCustomMessage(discord.ChannelID(cfg.JoinMessage.Channel), message); err != nil {
+		if msg, err := cmd.SendMessageEmbedSafe(discord.ChannelID(cfg.JoinMessage.Channel), message, cfg.JoinMessage.Embed); err != nil {
 			log.Printf("error sending join message: %v\n", err)
 		} else {
 			if cfg.JoinMessage.CollapseMessage && cfg.JoinMessage.LastMessage != 0 {
@@ -102,7 +104,7 @@ func LeaveJoinRemoveHandler(i interface{}) {
 	if cfg, ok := p.Config.(config).Guilds[e.GuildID.String()]; ok && cfg.LeaveMessage.Enabled {
 		message := strings.ReplaceAll(cfg.LeaveMessage.Content, "USER_ID", e.User.ID.String())
 
-		if msg, err := cmd.SendCustomMessage(discord.ChannelID(cfg.LeaveMessage.Channel), message); err != nil {
+		if msg, err := cmd.SendMessageEmbedSafe(discord.ChannelID(cfg.LeaveMessage.Channel), message, cfg.LeaveMessage.Embed); err != nil {
 			log.Printf("error sending leave message: %v\n", err)
 		} else {
 			if cfg.LeaveMessage.CollapseMessage && cfg.LeaveMessage.LastMessage != 0 {
@@ -141,7 +143,7 @@ func LeaveJoinMsgCfgCommand(c bot.Command) error {
 	argCollapse, argCollapseErr := cmd.ParseBoolArg(c.Args, 3)
 
 	defaultResponse := func() error {
-		_, err := cmd.SendEmbed(c.E, "Leave & Join Message", "Available arguments are:\n- `join|leave channel|message|enabled|collapse <channel|message|enabled bool|collapse bool>`", bot.DefaultColor)
+		_, err := cmd.SendEmbed(c.E, "Leave & Join Message", "Available arguments are:\n- `join|leave channel|message|embed|enabled|collapse <channel|message|embed json|enabled bool|collapse bool>`", bot.DefaultColor)
 		return err
 	}
 
@@ -165,6 +167,28 @@ func LeaveJoinMsgCfgCommand(c bot.Command) error {
 			} else {
 				msg.Content = strings.Join(arg3, " ")
 				_, err = cmd.SendEmbed(c.E, s+" Message Content", fmt.Sprintf("Set %s Message content to \n```\n%s\n```", s, msg.Content), bot.SuccessColor)
+			}
+		case "embed":
+			if argErr != nil || len(arg3) == 0 {
+				embed := cmd.MakeEmbed(s+" Message Embed", fmt.Sprintf("%s Message embed is set to:", s), bot.DefaultColor)
+
+				if msg.Embed != nil {
+					log.Println("here1")
+					_, err = bot.Client.SendMessage(c.E.ChannelID, "", embed, *msg.Embed)
+				} else {
+					log.Println("here2")
+					_, err = bot.Client.SendMessage(c.E.ChannelID, "", embed)
+				}
+			} else {
+				if err == nil {
+					var embed discord.Embed
+					err = json.Unmarshal([]byte(strings.Join(arg3, " ")), &embed)
+
+					if err == nil {
+						msg.Embed = &embed
+						_, err = bot.Client.SendMessage(c.E.ChannelID, "", cmd.MakeEmbed(s+" Message Embed", fmt.Sprintf("Set %s Message embed to:", s), bot.SuccessColor), embed)
+					}
+				}
 			}
 		case "enabled":
 			if argEnabledErr != nil {
@@ -199,6 +223,7 @@ func LeaveJoinMsgCfgCommand(c bot.Command) error {
 		default:
 			err = defaultResponse()
 		}
+
 		return msg
 	}
 
