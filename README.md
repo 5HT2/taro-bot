@@ -1,5 +1,6 @@
 # taro-bot
 
+[![](https://img.shields.io/badge/discord%20bot-invite!-5865F2?logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=893216230410952785&permissions=278404582464&scope=bot)<br>
 A Discord bot built in Go and Arikawa.
 
 **Notable features:**
