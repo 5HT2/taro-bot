@@ -196,25 +196,26 @@ func ProfilePicCommand(c bot.Command) error {
 		}
 	}
 
-	hash := ""
+	url := ""
 	name := c.E.Member.Nick
 	if self {
-		hash = c.E.Author.Avatar
+		url = c.E.Author.AvatarURLWithType(discord.AutoImage)
 	} else {
 		user, err := bot.Client.User(discord.UserID(id))
 		if err != nil {
 			return err
 		}
-		hash = user.Avatar
+		url = user.AvatarURLWithType(discord.AutoImage)
 		name = user.Username
 	}
 
-	url := fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png?size=2048", id, hash)
+	url += "?size=2048"
+
 	e := discord.Embed{
 		Title: name,
 		URL:   url,
 		Image: &discord.EmbedImage{URL: url},
-		Color: discord.NullColor,
+		Color: bot.WhiteColor,
 	}
 	_, err := cmd.SendCustomEmbed(c.E.ChannelID, e)
 	return err
