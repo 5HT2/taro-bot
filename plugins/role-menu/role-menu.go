@@ -46,7 +46,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnName:      "RoleMenuCommand",
 			Name:        "rolemenu",
 			Aliases:     []string{"rmcfg"},
-			Description: "Create a role Menu",
+			Description: "Create a role menu",
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
