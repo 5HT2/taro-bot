@@ -28,6 +28,7 @@ var (
 	ErrorColor   discord.Color = 0xde413c
 	WarnColor    discord.Color = 0xde953c
 	DefaultColor discord.Color = 0x493cde
+	WhiteColor   discord.Color = 0xfefefe
 )
 
 func getTimeZone() *time.Location {
