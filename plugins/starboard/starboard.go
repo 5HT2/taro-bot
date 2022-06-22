@@ -32,9 +32,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Commands: []bot.CommandInfo{{
 			Fn:          StarboardConfigCommand,
 			FnName:      "StarboardConfigCommand",
-			Name:        "configurestarboard",
+			Name:        "starboardconfig",
 			Description: "Configure Starboard",
-			Aliases:     []string{"starboardcfg", "cfgstarboard", "scfg"},
+			Aliases:     []string{"starboardcfg", "scfg"},
 			GuildOnly:   true,
 		}},
 		Responses: []bot.ResponseInfo{},
