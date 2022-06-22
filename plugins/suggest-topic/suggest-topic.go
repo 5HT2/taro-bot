@@ -21,9 +21,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Commands: []bot.CommandInfo{{
 			Fn:          TopicConfigCommand,
 			FnName:      "TopicConfigCommand",
-			Name:        "configuretopic",
+			Name:        "topicconfig",
 			Description: "Configure allowed topic channels",
-			Aliases:     []string{"topiccfg", "cfgtopic"},
+			Aliases:     []string{"topiccfg"},
 			GuildOnly:   true,
 		}, {
 			Fn:          TopicCommand,
