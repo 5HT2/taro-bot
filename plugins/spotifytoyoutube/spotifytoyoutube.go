@@ -43,7 +43,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 
 	spotifyUrl := spotifyRegex.FindStringSubmatch(r.E.Content)
 	if len(spotifyUrl) == 0 {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't find Spotify link in message", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Couldn't find Spotify link in message", bot.ErrorColor)
 		return
 	}
 
@@ -52,17 +52,17 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 
 	content, resp, err := util.RequestUrl(spotifyUrl[0], http.MethodGet)
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
 	}
 	if resp.StatusCode != http.StatusOK {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: Spotify returned a `"+strconv.Itoa(resp.StatusCode)+"` status code, expected `200`", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Spotify returned a `"+strconv.Itoa(resp.StatusCode)+"` status code, expected `200`", bot.ErrorColor)
 		return
 	}
 
 	node, err := util.ExtractNode(string(content), func(node *html.Node) bool { return node.Data == "title" && node.FirstChild.Data != "Spotify" })
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
 	}
 
@@ -72,14 +72,14 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 
 	res := spotifyTitleRegex.FindStringSubmatch(text.String())
 	if len(res) == 0 {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't parse Spotify song title", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Couldn't parse Spotify song title", bot.ErrorColor)
 		return
 	}
 
 	log.Printf("SpotifyToYoutube: res: [%s]\n", strings.Join(res, ", "))
 
 	if len(res) != 4 {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: `res` is not 4: `["+strings.Join(res, ", ")+"]`", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: `res` is not 4: `["+strings.Join(res, ", ")+"]`", bot.ErrorColor)
 		return
 	}
 
@@ -93,7 +93,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 
 	instancesStr, err := util.RetryFunc(fn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
 	}
 
@@ -123,7 +123,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		}
 	}
 	if len(searchUrls) == 0 {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: Couldn't find any Invidious instance to search with", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Couldn't find any Invidious instance to search with", bot.ErrorColor)
 		return
 	}
 	log.Printf("SpotifyToYoutube: searchUrls %s\n", searchUrls)
@@ -133,7 +133,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 
 	content = util.RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
 	if content == nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: no non-nil response from `searchUrls`", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: no non-nil response from `searchUrls`", bot.ErrorColor)
 		return
 	}
 
@@ -148,7 +148,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	var searchResults []YoutubeSearchResult
 	err = json.Unmarshal(content, &searchResults)
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: "+err.Error(), bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
 	}
 
@@ -163,7 +163,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	}
 
 	if searchResult == nil {
-		_, _ = cmd.SendEmbed(r.E, "", "Error: No search results found", bot.ErrorColor)
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: No search results found", bot.ErrorColor)
 		return
 	}
 	log.Printf("SpotifyToYoutube: searchResult %s\n", searchResult)
