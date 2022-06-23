@@ -17,12 +17,13 @@ import (
 )
 
 var (
+	p                 *plugins.Plugin
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
-	return &plugins.Plugin{
+	p = &plugins.Plugin{
 		Name:        "Spotify to YouTube",
 		Description: "Turns Spotify links into YouTube links",
 		Version:     "1.0.0",
@@ -33,6 +34,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 1,
 		}},
 	}
+	return p
 }
 
 func SpotifyToYoutubeResponse(r bot.Response) {
