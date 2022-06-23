@@ -141,6 +141,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	//
 
 	type YoutubeSearchResult struct {
+		Type  string `json:"type"`
 		Title string `json:"title"`
 		ID    string `json:"videoId"`
 	}
@@ -151,11 +152,21 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
-	if len(searchResults) == 0 {
+	var searchResult *YoutubeSearchResult = nil
+	// pick first result with Type "video"
+	for _, r := range searchResults {
+		if r.Type != "video" {
+			continue
+		}
+		searchResult = &r
+		break
+	}
+
+	if searchResult == nil {
 		_, _ = cmd.SendEmbed(r.E, "", "Error: No search results found", bot.ErrorColor)
 		return
 	}
-	log.Printf("SpotifyToYoutube: searchResults[0] %s\n", searchResults[0])
+	log.Printf("SpotifyToYoutube: searchResult %s\n", searchResult)
 
-	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResults[0].ID)
+	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResult.ID)
 }
