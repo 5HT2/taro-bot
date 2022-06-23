@@ -304,7 +304,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 
 				lines = append(lines, fmt.Sprintf("<@&%v> (%v messages)%s%s", role.ID, role.Threshold, a1, a2))
 			}
-			_, err = cmd.SendEmbed(c.E, p.Name, strings.Join(lines, "\n"), bot.DefaultColor)
+			_, err = cmd.SendEmbed(c.E, p.Name, strings.Join(lines, "\n\n"), bot.DefaultColor)
 		}
 	default:
 		_, err = cmd.SendEmbed(c.E,
