@@ -1,9 +1,9 @@
 # taro-bot
 
 [![](https://img.shields.io/badge/discord%20bot-invite!-5865F2?logo=discord&logoColor=white)](https://discord.com/oauth2/authorize?client_id=893216230410952785&permissions=278404582464&scope=bot)
+[![CodeFactor](https://img.shields.io/codefactor/grade/github/5HT2/taro-bot?logo=codefactor&logoColor=white)](https://www.codefactor.io/repository/github/5HT2/taro-bot)
 [![CodeQL](https://github.com/5HT2/taro-bot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/5HT2/taro-bot/actions/workflows/codeql-analysis.yml)
 [![docker-build](https://github.com/5HT2/taro-bot/actions/workflows/docker-build.yml/badge.svg)](https://github.com/5HT2/taro-bot/actions/workflows/docker-build.yml)
-[![CodeFactor](https://img.shields.io/codefactor/grade/github/5HT2/taro-bot?logo=codefactor&logoColor=white)](https://www.codefactor.io/repository/github/5HT2/taro-bot)
 
 A Discord bot built in Go and Arikawa.
 
