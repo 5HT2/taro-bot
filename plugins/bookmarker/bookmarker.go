@@ -24,7 +24,7 @@ var (
 )
 
 type config struct {
-	EnabledGuilds map[string]bool // [guild id]bool
+	EnabledGuilds map[string]bool `json:"enabled_guilds,omitempty"` // [guild id]bool
 }
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
