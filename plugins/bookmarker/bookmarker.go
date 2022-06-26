@@ -150,7 +150,7 @@ func ReactionHandler(i interface{}) {
 
 		embed := discord.Embed{
 			Description: description,
-			Author:      cmd.CreateEmbedAuthor(*e.Member),
+			Author:      cmd.CreateEmbedAuthorUser(msg.Author),
 			Timestamp:   msg.Timestamp,
 			Fields:      []discord.EmbedField{field},
 			Footer:      &footer,
