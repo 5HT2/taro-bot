@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
-	"github.com/diamondburned/arikawa/v3/discord"
+	discord "github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"strconv"
@@ -99,7 +99,14 @@ func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 
 	return &discord.EmbedAuthor{
 		Name: name,
-		Icon: fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=2048", member.User.ID.String(), member.User.Avatar),
+		Icon: fmt.Sprintf("%s?size=2048", member.User.AvatarURL()),
+	}
+}
+
+func CreateEmbedAuthorUser(user discord.User) *discord.EmbedAuthor {
+	return &discord.EmbedAuthor{
+		Name: user.Tag(),
+		Icon: fmt.Sprintf("%s?size=2048", user.AvatarURL()),
 	}
 }
 
