@@ -42,8 +42,8 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
-			Fn:     ReactionHandler,
-			FnName: "ReactionHandler",
+			Fn:     BookmarkReactionHandler,
+			FnName: "BookmarkReactionHandler",
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
@@ -101,7 +101,7 @@ func BookmarkConfigCommand(c bot.Command) error {
 	return err
 }
 
-func ReactionHandler(i interface{}) {
+func BookmarkReactionHandler(i interface{}) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	defer util.LogPanic()
