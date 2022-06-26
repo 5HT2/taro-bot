@@ -71,6 +71,26 @@ func SendMessageEmbedSafe(c discord.ChannelID, content string, embed *discord.Em
 	return bot.Client.SendMessage(c, content)
 }
 
+func SendDirectMessageEmbedSafe(id discord.UserID, content string, embed *discord.Embed) (*discord.Message, error) {
+	channel, err := bot.Client.CreatePrivateChannel(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return SendMessageEmbedSafe(channel.ID, content, embed)
+}
+
+func SendDirectMessage(userID discord.UserID, contents string) (*discord.Message, error) {
+	channel, err := bot.Client.CreatePrivateChannel(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := SendCustomMessage(channel.ID, contents)
+
+	return message, err
+}
+
 func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 	name := member.Nick
 	if len(name) == 0 {
