@@ -6,27 +6,8 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"golang.org/x/net/html"
 	"image/color"
-	"path/filepath"
 	"strings"
 )
-
-var (
-	ImageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
-)
-
-func FileExtMatches(s []string, file string) bool {
-	found := false
-	file = strings.ToLower(file)
-
-	for _, e := range s {
-		if filepath.Ext(file) == e {
-			found = true
-			break
-		}
-	}
-
-	return found
-}
 
 type extractNodeCondition func(*html.Node) bool
 
