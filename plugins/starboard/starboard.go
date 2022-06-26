@@ -16,6 +16,7 @@ import (
 )
 
 var (
+	escapedStar = "%E2%AD%90"
 	stars3Emoji = "⭐"
 	stars5Emoji = "🌟"
 	stars6Emoji = "💫"
@@ -140,7 +141,7 @@ func StarboardReactionHandler(i interface{}) {
 		}
 
 		// Not a star
-		if e.Emoji.APIString().PathString() != util.EscapedStar {
+		if e.Emoji.APIString().PathString() != escapedStar {
 			return g, "StarboardReactionHandler: check reaction emoji"
 		}
 
@@ -223,7 +224,7 @@ func StarboardReactionHandler(i interface{}) {
 
 		// Update our reactions in case any are missing from the API
 		for _, reaction := range msg.Reactions {
-			if reaction.Emoji.APIString().PathString() == util.EscapedStar {
+			if reaction.Emoji.APIString().PathString() == escapedStar {
 				userReactions, err := bot.Client.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
 				if err != nil {
 					log.Printf("Failed to get userReactions: %s\n", err)
