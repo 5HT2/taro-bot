@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
@@ -100,4 +101,29 @@ func MakeEmbed(title string, description string, color discord.Color) discord.Em
 		Description: description,
 		Color:       color,
 	}
+}
+
+func GetEmbedAttachmentAndContent(msg discord.Message) (string, *discord.EmbedImage) {
+	// Try to find a URL in the message content
+	description := msg.Content
+	url := UrlRegex.MatchString(msg.Content)
+
+	// Set the embed image to the URL and try to find the first attached image in the message attachments
+	var image *discord.EmbedImage = nil
+	for _, attachment := range msg.Attachments {
+		if strings.HasPrefix(attachment.ContentType, "image/") {
+			image = &discord.EmbedImage{URL: attachment.URL}
+			url = false // Don't remove URL in embed if we found an image attachment (eg, twitter link + image attachment)
+			break
+		}
+	}
+
+	// If we found only a URL (no other text) in the message content, and the found URL has an image extension, and we didn't find an attached image
+	// Set the description to nothing and set the image to the found URL
+	if url && FileExtMatches(ImageExtensions, msg.Content) {
+		description = ""
+		image = &discord.EmbedImage{URL: msg.Content}
+	}
+
+	return description, image
 }
