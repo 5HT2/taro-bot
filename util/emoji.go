@@ -9,7 +9,6 @@ import (
 
 var (
 	escapedCheckmark = "%E2%9C%85"
-	EscapedStar      = "%E2%AD%90"
 	checkmarkEmoji   = discord.APIEmoji(escapedCheckmark)
 )
 
