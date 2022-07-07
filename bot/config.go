@@ -72,11 +72,10 @@ type Config struct {
 
 type GuildConfig struct {
 	ID                   int64             `json:"id"`
-	ArchiveRole          int64             `json:"archive_role,omitempty"`     // TODO: Migrate
-	ArchiveCategory      int64             `json:"archive_category,omitempty"` // TODO: Migrate
 	Prefix               string            `json:"prefix,omitempty"`
-	LogChannel           string            `json:"log_channel,omitempty"`
 	Permissions          PermissionGroups  `json:"permissions,omitempty"`
+	ArchiveRole          int64             `json:"archive_role,omitempty"`           // TODO: Migrate
+	ArchiveCategory      int64             `json:"archive_category,omitempty"`       // TODO: Migrate
 	EnabledTopicChannels []int64           `json:"enabled_topic_channels,omitempty"` // TODO: Migrate
 	ActiveTopicVotes     []ActiveTopicVote `json:"active_topic_votes,omitempty"`     // TODO: Migrate
 	TopicVoteThreshold   int64             `json:"topic_vote_threshold,omitempty"`   // TODO: Migrate
