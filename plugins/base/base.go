@@ -115,7 +115,7 @@ func PrefixCommand(c bot.Command) error {
 	})
 
 	embed := discord.Embed{
-		Description: "Set prefix to `" + arg + "`.",
+		Description: "Set prefix to `" + arg + "`",
 		Footer:      &discord.EmbedFooter{Text: "At any time you can ping the bot with the word \"prefix\" to get the current prefix"},
 		Color:       bot.SuccessColor,
 	}
