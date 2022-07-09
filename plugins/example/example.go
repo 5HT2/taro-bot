@@ -72,8 +72,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
-	// When loading a config, you should cast to the correct type, to force a panic if the config is malformed
-	p.Config = p.LoadConfig().(config)
+	// When loading a config, you should cast not cast it, as it will be nil by default.
+	// Instead, check if it is nil before doing .(config) in order to use it.
+	p.Config = p.LoadConfig()
 	return p
 }
 

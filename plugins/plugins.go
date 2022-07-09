@@ -208,6 +208,14 @@ func RegisterHandlers() {
 			fn = func(e *gateway.MessageReactionRemoveEvent) {
 				handler.Fn(e)
 			}
+		case reflect.TypeOf(func(e *gateway.GuildMemberAddEvent) {}):
+			fn = func(e *gateway.GuildMemberAddEvent) {
+				handler.Fn(e)
+			}
+		case reflect.TypeOf(func(e *gateway.GuildMemberRemoveEvent) {}):
+			fn = func(e *gateway.GuildMemberRemoveEvent) {
+				handler.Fn(e)
+			}
 		default:
 			log.Printf("failed to register handler (%s): type %v not recognized\n", handler.FnName, handler.FnType)
 			continue

@@ -11,11 +11,11 @@ import (
 	"log"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 )
 
 var (
+	escapedStar = "%E2%AD%90"
 	stars3Emoji = "⭐"
 	stars5Emoji = "🌟"
 	stars6Emoji = "💫"
@@ -32,9 +32,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Commands: []bot.CommandInfo{{
 			Fn:          StarboardConfigCommand,
 			FnName:      "StarboardConfigCommand",
-			Name:        "configurestarboard",
+			Name:        "starboardconfig",
 			Description: "Configure Starboard",
-			Aliases:     []string{"starboardcfg", "cfgstarboard", "scfg"},
+			Aliases:     []string{"starboardcfg", "scfg"},
 			GuildOnly:   true,
 		}},
 		Responses: []bot.ResponseInfo{},
@@ -140,7 +140,7 @@ func StarboardReactionHandler(i interface{}) {
 		}
 
 		// Not a star
-		if e.Emoji.APIString().PathString() != util.EscapedStar {
+		if e.Emoji.APIString().PathString() != escapedStar {
 			return g, "StarboardReactionHandler: check reaction emoji"
 		}
 
@@ -223,7 +223,7 @@ func StarboardReactionHandler(i interface{}) {
 
 		// Update our reactions in case any are missing from the API
 		for _, reaction := range msg.Reactions {
-			if reaction.Emoji.APIString().PathString() == util.EscapedStar {
+			if reaction.Emoji.APIString().PathString() == escapedStar {
 				userReactions, err := bot.Client.Reactions(msg.ChannelID, msg.ID, reaction.Emoji.APIString(), 0)
 				if err != nil {
 					log.Printf("Failed to get userReactions: %s\n", err)
@@ -256,28 +256,8 @@ func StarboardReactionHandler(i interface{}) {
 		if err != nil {
 			log.Printf("Couldn't get pMsg %v\n", err)
 
+			//
 			// Construct new starboard post if it couldn't retrieve an existing one
-
-			// Try to find a URL in the message content
-			description := msg.Content
-			url := cmd.UrlRegex.MatchString(msg.Content)
-
-			// Set the embed image to the URL and try to find the first attached image in the message attachments
-			var image *discord.EmbedImage = nil
-			for _, attachment := range msg.Attachments {
-				if strings.HasPrefix(attachment.ContentType, "image/") {
-					image = &discord.EmbedImage{URL: attachment.URL}
-					url = false // Don't remove URL in embed if we found an image attachment (eg, twitter link + image attachment)
-					break
-				}
-			}
-
-			// If we found only a URL (no other text) in the message content, and the found URL has an image extension, and we didn't find an attached image
-			// Set the description to nothing and set the image to the found URL
-			if url && util.FileExtMatches(util.ImageExtensions, msg.Content) {
-				description = ""
-				image = &discord.EmbedImage{URL: msg.Content}
-			}
 
 			member, err := bot.Client.Member(e.GuildID, discord.UserID(sMsg.Author))
 			if err != nil {
@@ -285,8 +265,9 @@ func StarboardReactionHandler(i interface{}) {
 				return g, "StarboardReactionHandler: get sMsg.Author"
 			}
 
+			description, image := cmd.GetEmbedAttachmentAndContent(*msg)
 			field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true)}
-			footer := discord.EmbedFooter{Text: strconv.FormatInt(sMsg.Author, 10)}
+			footer := discord.EmbedFooter{Text: fmt.Sprintf("%v", sMsg.Author)}
 			embed := discord.Embed{
 				Description: description,
 				Author:      cmd.CreateEmbedAuthor(*member),

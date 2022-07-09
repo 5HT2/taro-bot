@@ -6,29 +6,10 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"golang.org/x/net/html"
 	"image/color"
-	"path/filepath"
 	"strings"
 )
 
-var (
-	ImageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
-)
-
-func FileExtMatches(s []string, file string) bool {
-	found := false
-	file = strings.ToLower(file)
-
-	for _, e := range s {
-		if filepath.Ext(file) == e {
-			found = true
-			break
-		}
-	}
-
-	return found
-}
-
-type extractNodeCondition func(string) bool
+type extractNodeCondition func(*html.Node) bool
 
 // ExtractNode will select the first node to match extractNodeCondition, for example
 // res, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
@@ -38,7 +19,7 @@ func ExtractNode(content string, fn extractNodeCondition) (*html.Node, error) {
 	var crawler func(*html.Node)
 
 	crawler = func(node *html.Node) {
-		if node.Type == html.ElementNode && fn(node.Data) {
+		if node.Type == html.ElementNode && fn(node) {
 			n = node
 			return
 		}

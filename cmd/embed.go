@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
-	"github.com/diamondburned/arikawa/v3/discord"
+	discord "github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"strconv"
+	"strings"
 )
 
 func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
@@ -62,6 +63,34 @@ func SendMessage(e *gateway.MessageCreateEvent, content string) (*discord.Messag
 	return msg, err
 }
 
+func SendMessageEmbedSafe(c discord.ChannelID, content string, embed *discord.Embed) (*discord.Message, error) {
+	if embed != nil {
+		return bot.Client.SendMessage(c, content, *embed)
+	}
+
+	return bot.Client.SendMessage(c, content)
+}
+
+func SendDirectMessageEmbedSafe(id discord.UserID, content string, embed *discord.Embed) (*discord.Message, error) {
+	channel, err := bot.Client.CreatePrivateChannel(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return SendMessageEmbedSafe(channel.ID, content, embed)
+}
+
+func SendDirectMessage(userID discord.UserID, contents string) (*discord.Message, error) {
+	channel, err := bot.Client.CreatePrivateChannel(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := SendCustomMessage(channel.ID, contents)
+
+	return message, err
+}
+
 func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 	name := member.Nick
 	if len(name) == 0 {
@@ -70,7 +99,14 @@ func CreateEmbedAuthor(member discord.Member) *discord.EmbedAuthor {
 
 	return &discord.EmbedAuthor{
 		Name: name,
-		Icon: fmt.Sprintf("https://cdn.discordapp.com/avatars/%s/%s.png?size=2048", member.User.ID.String(), member.User.Avatar),
+		Icon: fmt.Sprintf("%s?size=2048", member.User.AvatarURL()),
+	}
+}
+
+func CreateEmbedAuthorUser(user discord.User) *discord.EmbedAuthor {
+	return &discord.EmbedAuthor{
+		Name: user.Tag(),
+		Icon: fmt.Sprintf("%s?size=2048", user.AvatarURL()),
 	}
 }
 
@@ -92,4 +128,29 @@ func MakeEmbed(title string, description string, color discord.Color) discord.Em
 		Description: description,
 		Color:       color,
 	}
+}
+
+func GetEmbedAttachmentAndContent(msg discord.Message) (string, *discord.EmbedImage) {
+	// Try to find a URL in the message content
+	description := msg.Content
+	url := UrlRegex.MatchString(msg.Content)
+
+	// Set the embed image to the URL and try to find the first attached image in the message attachments
+	var image *discord.EmbedImage = nil
+	for _, attachment := range msg.Attachments {
+		if strings.HasPrefix(attachment.ContentType, "image/") {
+			image = &discord.EmbedImage{URL: attachment.URL}
+			url = false // Don't remove URL in embed if we found an image attachment (eg, twitter link + image attachment)
+			break
+		}
+	}
+
+	// If we found only a URL (no other text) in the message content, and the found URL has an image extension, and we didn't find an attached image
+	// Set the description to nothing and set the image to the found URL
+	if url && FileExtMatches(ImageExtensions, msg.Content) {
+		description = ""
+		image = &discord.EmbedImage{URL: msg.Content}
+	}
+
+	return description, image
 }

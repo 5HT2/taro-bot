@@ -46,7 +46,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnName:      "RoleMenuCommand",
 			Name:        "rolemenu",
 			Aliases:     []string{"rmcfg"},
-			Description: "Create a role Menu",
+			Description: "Create a role menu",
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
@@ -117,9 +117,7 @@ func RoleMenuCommand(c bot.Command) error {
 
 			menus := make(map[string]map[string]Menu, 0)
 			if p.Config != nil {
-				if menu, ok := p.Config.(config).Menus[c.E.GuildID.String()]; ok {
-					menus[c.E.GuildID.String()] = menu
-				}
+				menus = p.Config.(config).Menus // copy over the menus for other builds and our current guild
 			}
 
 			createdMenu := Menu{Channel: int64(c.E.ChannelID), Roles: roles}

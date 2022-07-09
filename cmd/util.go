@@ -6,7 +6,12 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
+	"path/filepath"
 	"strings"
+)
+
+var (
+	ImageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".gifv"}
 )
 
 // CommandHandler will parse commands and run the appropriate command func
@@ -94,4 +99,18 @@ func getCommandWithName(name string) *bot.CommandInfo {
 		}
 	}
 	return nil
+}
+
+func FileExtMatches(s []string, file string) bool {
+	found := false
+	file = strings.ToLower(file)
+
+	for _, e := range s {
+		if filepath.Ext(file) == e {
+			found = true
+			break
+		}
+	}
+
+	return found
 }
