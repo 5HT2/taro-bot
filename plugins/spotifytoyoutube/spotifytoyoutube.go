@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
 
-	instances InvidiousInstanceResponse
+	instances []InvidiousInstance
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -57,8 +58,6 @@ type InvidiousInstance struct {
 	API    bool   `json:"api"`
 	URI    string `json:"uri"`
 }
-
-type InvidiousInstanceResponse [][]InvidiousInstance
 
 type SearchResult struct {
 	Type  string `json:"type"`
@@ -153,7 +152,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 }
 
 func queryYoutube(query string, firstRun bool) (*SearchResult, error) {
-	if instancesEmpty() {
+	if len(instances) == 0 {
 		updateInstances("queryYoutube called")
 	}
 
@@ -165,11 +164,9 @@ func queryYoutube(query string, firstRun bool) (*SearchResult, error) {
 	searchUrls := make([]string, 0)
 
 	for _, instance := range instances {
-		// instance[0] is the instance URI, instance[1] is the object with said instance's info
-		if instance[1].API == true {
-			searchUrls = append(searchUrls, instance[1].URI+searchQuery) // this will use more memory but reduces code complexity
-		}
+		searchUrls = append(searchUrls, instance.URI+searchQuery) // this will use more memory but reduces code complexity
 	}
+
 	if len(searchUrls) == 0 {
 		updateInstances("queryYoutube searchUrls == 0")
 		if firstRun {
@@ -212,8 +209,8 @@ func queryYoutube(query string, firstRun bool) (*SearchResult, error) {
 	return searchResult, nil
 }
 
-func updateInstances(source string) {
-	log.Printf("updateInstances: updating because: %s\n", source)
+func updateInstances(reason string) {
+	log.Printf("updateInstances: updating because: %s\n", reason)
 
 	getInstancesFn := func() ([]byte, error) {
 		b, _, err := util.RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
@@ -225,18 +222,17 @@ func updateInstances(source string) {
 		log.Printf("updateInstances: %v\n", err)
 	}
 
+	var instanceResponse [][]InvidiousInstance
 	// For some reason this will always error even though it gives the expected result
-	_ = json.Unmarshal(instancesStr, &instances)
-}
+	_ = json.Unmarshal(instancesStr, &instanceResponse)
 
-func instancesEmpty() bool {
-	found := false
-	for _, instance := range instances {
-		log.Printf("instance: %v\n", instance)
+	instances = make([]InvidiousInstance, 0)
+
+	for _, instance := range instanceResponse {
+		// instance[0] is the instance URI
+		// instance[1] is the object with said instance's info
 		if instance[1].API == true {
-			found = true
-			break
+			instances = append(instances, instance[1])
 		}
 	}
-	return !found
 }
