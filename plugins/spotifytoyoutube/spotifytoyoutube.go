@@ -21,6 +21,8 @@ var (
 	p                 *plugins.Plugin
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
+
+	instances InvidiousInstanceResponse
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -40,9 +42,23 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Regexes:  []string{spotifyRegex.String()},
 			MatchMin: 1,
 		}},
+		Jobs: []bot.JobInfo{{
+			Fn:        func() { updateInstances("hourly job") },
+			Tag:       "invidious-instances-update",
+			Scheduler: bot.Scheduler.Every(1).Hour(),
+		}},
 	}
 	return p
 }
+
+type InvidiousInstance struct {
+	Flag   string `json:"flag"`
+	Region string `json:"region"`
+	API    bool   `json:"api"`
+	URI    string `json:"uri"`
+}
+
+type InvidiousInstanceResponse [][]InvidiousInstance
 
 type SearchResult struct {
 	Type  string `json:"type"`
@@ -61,7 +77,7 @@ func YoutubeCommand(c bot.Command) error {
 		return bot.GenericSyntaxError("YoutubeCommand", s, "expected video title")
 	}
 
-	searchResult, err := queryYoutube(s)
+	searchResult, err := queryYoutube(s, true)
 	if err != nil {
 		return err
 	}
@@ -122,7 +138,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	}
 
 	artistAndSong := res[3] + " - " + res[1] // Artist - Song Title
-	searchResult, err := queryYoutube(artistAndSong)
+	searchResult, err := queryYoutube(artistAndSong, true)
 	if err != nil {
 		_, _ = cmd.SendEmbed(r.E, p.Name, "Error:\n"+err.Error(), bot.ErrorColor)
 		return
@@ -136,31 +152,10 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResult.ID)
 }
 
-func queryYoutube(query string) (*SearchResult, error) {
-	// Get available instances from invidious
-	//
-
-	getInstancesFn := func() ([]byte, error) {
-		b, _, err := util.RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
-		return b, err
+func queryYoutube(query string, firstRun bool) (*SearchResult, error) {
+	if instancesEmpty() {
+		updateInstances("queryYoutube called")
 	}
-
-	instancesStr, err := util.RetryFunc(getInstancesFn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
-	if err != nil {
-		return nil, err
-	}
-
-	type InvidiousInstance struct {
-		Flag   string `json:"flag"`
-		Region string `json:"region"`
-		API    bool   `json:"api"`
-		URI    string `json:"uri"`
-	}
-
-	type InvidiousInstanceResponse [][]InvidiousInstance
-	var instances InvidiousInstanceResponse
-	// For some reason this will always error even though it gives the expected result
-	_ = json.Unmarshal(instancesStr, &instances)
 
 	// Make list of instances to query
 	//
@@ -176,6 +171,10 @@ func queryYoutube(query string) (*SearchResult, error) {
 		}
 	}
 	if len(searchUrls) == 0 {
+		updateInstances("queryYoutube searchUrls == 0")
+		if firstRun {
+			return queryYoutube(query, false)
+		}
 		return nil, bot.GenericError("queryYoutube", "Searching query", "No Invidious instances found")
 	}
 
@@ -193,7 +192,7 @@ func queryYoutube(query string) (*SearchResult, error) {
 	//
 
 	var searchResults []SearchResult
-	err = json.Unmarshal(content, &searchResults)
+	err := json.Unmarshal(content, &searchResults)
 	if err != nil {
 		return nil, err
 	}
@@ -211,4 +210,33 @@ func queryYoutube(query string) (*SearchResult, error) {
 	log.Printf("queryYoutube: searchResult %s\n", searchResult)
 
 	return searchResult, nil
+}
+
+func updateInstances(source string) {
+	log.Printf("updateInstances: updating because: %s\n", source)
+
+	getInstancesFn := func() ([]byte, error) {
+		b, _, err := util.RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
+		return b, err
+	}
+
+	instancesStr, err := util.RetryFunc(getInstancesFn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
+	if err != nil {
+		log.Printf("updateInstances: %v\n", err)
+	}
+
+	// For some reason this will always error even though it gives the expected result
+	_ = json.Unmarshal(instancesStr, &instances)
+}
+
+func instancesEmpty() bool {
+	found := false
+	for _, instance := range instances {
+		log.Printf("instance: %v\n", instance)
+		if instance[1].API == true {
+			found = true
+			break
+		}
+	}
+	return !found
 }
