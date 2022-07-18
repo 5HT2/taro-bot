@@ -28,7 +28,13 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		Name:        "Spotify to YouTube",
 		Description: "Turns Spotify links into YouTube links",
 		Version:     "1.0.0",
-		Commands:    []bot.CommandInfo{},
+		Commands: []bot.CommandInfo{{
+			Fn:          YoutubeCommand,
+			FnName:      "YoutubeCommand",
+			Name:        "youtube",
+			Aliases:     []string{"yt"},
+			Description: "Search YouTube for a video!",
+		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       SpotifyToYoutubeResponse,
 			Regexes:  []string{spotifyRegex.String()},
@@ -46,6 +52,27 @@ type SearchResult struct {
 
 func (r SearchResult) String() string {
 	return fmt.Sprintf("[%s, %s, %s]", r.Type, r.ID, r.Title)
+}
+
+func YoutubeCommand(c bot.Command) error {
+	args, _ := cmd.ParseStringSliceArg(c.Args, 1, -1)
+	s := strings.Join(args, " ")
+	if len(s) == 0 {
+		return bot.GenericSyntaxError("YoutubeCommand", s, "expected video title")
+	}
+
+	searchResult, err := queryYoutube(s)
+	if err != nil {
+		return err
+	}
+
+	if searchResult == nil {
+		_, err = cmd.SendEmbed(c.E, p.Name, "Error: No search results found", bot.ErrorColor)
+		return err
+	}
+
+	_, err = cmd.SendMessage(c.E, "https://youtu.be/"+searchResult.ID)
+	return err
 }
 
 func SpotifyToYoutubeResponse(r bot.Response) {
