@@ -37,6 +37,11 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "youtube",
 			Aliases:     []string{"yt"},
 			Description: "Search YouTube for a video!",
+		}, {
+			Fn:          YoutubeTestCommand,
+			FnName:      "YoutubeTestCommand",
+			Name:        "youtubetest",
+			Description: "Benchmark how long it takes to query Youtube.",
 		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       SpotifyToYoutubeResponse,
@@ -67,6 +72,18 @@ type SearchResult struct {
 
 func (r SearchResult) String() string {
 	return fmt.Sprintf("[%s, %s, %s]", r.Type, r.ID, r.Title)
+}
+
+func YoutubeTestCommand(c bot.Command) error {
+	_, err := queryYoutube("test", true)
+	if err != nil {
+		return err
+	}
+
+	diff := time.Now().UnixMilli() - c.E.Timestamp.Time().UnixMilli()
+	_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Took %vms to query youtube video!", diff), bot.SuccessColor)
+
+	return err
 }
 
 func YoutubeCommand(c bot.Command) error {
