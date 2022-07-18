@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
@@ -35,6 +36,16 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 	}
 	return p
+}
+
+type SearchResult struct {
+	Type  string `json:"type"`
+	ID    string `json:"videoId"`
+	Title string `json:"title"`
+}
+
+func (r SearchResult) String() string {
+	return fmt.Sprintf("[%s, %s, %s]", r.Type, r.ID, r.Title)
 }
 
 func SpotifyToYoutubeResponse(r bot.Response) {
@@ -83,18 +94,33 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
+	artistAndSong := res[3] + " - " + res[1] // Artist - Song Title
+	searchResult, err := queryYoutube(artistAndSong)
+	if err != nil {
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error:\n"+err.Error(), bot.ErrorColor)
+		return
+	}
+
+	if searchResult == nil {
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: No search results found", bot.ErrorColor)
+		return
+	}
+
+	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResult.ID)
+}
+
+func queryYoutube(query string) (*SearchResult, error) {
 	// Get available instances from invidious
 	//
 
-	fn := func() ([]byte, error) {
+	getInstancesFn := func() ([]byte, error) {
 		b, _, err := util.RequestUrl("https://api.invidious.io/instances.json?sort_by=users,health", http.MethodGet)
 		return b, err
 	}
 
-	instancesStr, err := util.RetryFunc(fn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
+	instancesStr, err := util.RetryFunc(getInstancesFn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
-		return
+		return nil, err
 	}
 
 	type InvidiousInstance struct {
@@ -112,8 +138,8 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	// Make list of instances to query
 	//
 
-	artistAndSong := strings.ReplaceAll(res[3]+" - "+res[1], "\"", "") // Remove quotes
-	searchQuery := "/api/v1/search?q=" + url.PathEscape(artistAndSong) // Artist - Song Title
+	query = url.PathEscape(strings.ReplaceAll(query, "\"", "")) // remove quotes and path escape
+	searchQuery := "/api/v1/search?q=" + query
 	searchUrls := make([]string, 0)
 
 	for _, instance := range instances {
@@ -123,36 +149,29 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		}
 	}
 	if len(searchUrls) == 0 {
-		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Couldn't find any Invidious instance to search with", bot.ErrorColor)
-		return
+		return nil, bot.GenericError("queryYoutube", "Searching query", "No Invidious instances found")
 	}
-	log.Printf("SpotifyToYoutube: searchUrls %s\n", searchUrls)
+
+	log.Printf("queryYoutube: searchUrls %s\n", searchUrls)
 
 	// Query all available search URLs
 	//
 
-	content = util.RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
+	content := util.RequestUrlRetry(searchUrls, http.MethodGet, http.StatusOK)
 	if content == nil {
-		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: no non-nil response from `searchUrls`", bot.ErrorColor)
-		return
+		return nil, bot.GenericError("queryYoutube", "Searching `searchUrls`", "nil response received")
 	}
 
 	// Parse returned YouTube result
 	//
 
-	type YoutubeSearchResult struct {
-		Type  string `json:"type"`
-		Title string `json:"title"`
-		ID    string `json:"videoId"`
-	}
-	var searchResults []YoutubeSearchResult
+	var searchResults []SearchResult
 	err = json.Unmarshal(content, &searchResults)
 	if err != nil {
-		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
-		return
+		return nil, err
 	}
 
-	var searchResult *YoutubeSearchResult = nil
+	var searchResult *SearchResult = nil
 	// pick first result with Type "video"
 	for _, r := range searchResults {
 		if r.Type != "video" {
@@ -162,11 +181,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		break
 	}
 
-	if searchResult == nil {
-		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: No search results found", bot.ErrorColor)
-		return
-	}
-	log.Printf("SpotifyToYoutube: searchResult %s\n", searchResult)
+	log.Printf("queryYoutube: searchResult %s\n", searchResult)
 
-	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResult.ID)
+	return searchResult, nil
 }
