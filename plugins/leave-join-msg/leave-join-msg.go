@@ -104,6 +104,7 @@ func LeaveJoinRemoveHandler(i interface{}) {
 
 	if cfg, ok := p.Config.(config).Guilds[e.GuildID.String()]; ok && cfg.LeaveMessage.Enabled {
 		message := strings.ReplaceAll(cfg.LeaveMessage.Content, "USER_ID", e.User.ID.String())
+		message = strings.ReplaceAll(message, "USER_TAG", e.User.Tag())
 
 		if msg, err := cmd.SendMessageEmbedSafe(discord.ChannelID(cfg.LeaveMessage.Channel), message, cfg.LeaveMessage.Embed); err != nil {
 			log.Printf("error sending leave message: %v\n", err)
