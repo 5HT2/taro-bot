@@ -188,7 +188,7 @@ func ParseStringArg(a []string, pos int, toLower bool) (string, *bot.Error) {
 	return s, nil
 }
 
-// ParseStringSliceArg will return the strings in a range, or an nil and an error
+// ParseStringSliceArg will return the strings in a range, or a nil and an error
 func ParseStringSliceArg(a []string, pos1 int, pos2 int) ([]string, *bot.Error) {
 	if pos2 == -1 {
 		pos2 = len(a)
