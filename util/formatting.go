@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"strconv"
@@ -23,6 +24,34 @@ func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string 
 // GetUserMention will return a formatted user mention from an id
 func GetUserMention(id int64) string {
 	return "<@!" + strconv.FormatInt(id, 10) + ">"
+}
+
+// FormattedTime will turn seconds into a pretty time representation
+func FormattedTime(secondsIn int64) string {
+	joinIntAndStr := func(int int64, str string) string {
+		plural := "s"
+		if int == 1 {
+			plural = ""
+		}
+		return fmt.Sprintf("%s %s%s", FormattedNum(int), str, plural)
+	}
+
+	hours := secondsIn / 3600
+	minutes := (secondsIn / 60) - (60 * hours)
+	seconds := secondsIn % 60
+
+	units := make([]string, 0)
+	if hours != 0 {
+		units = append(units, joinIntAndStr(hours, "hour"))
+	}
+	if minutes != 0 {
+		units = append(units, joinIntAndStr(minutes, "minute"))
+	}
+	if seconds != 0 || (hours == 0 && minutes == 0) {
+		units = append(units, joinIntAndStr(seconds, "second"))
+	}
+
+	return strings.Join(units, ", ")
 }
 
 // FormattedNum will insert commas as necessary in large numbers
