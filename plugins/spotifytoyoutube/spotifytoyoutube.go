@@ -20,7 +20,7 @@ import (
 
 var (
 	p                 *plugins.Plugin
-	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z0-9][^\s]{2,}`)
+	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z\d]\S{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
 
 	instances []InvidiousInstance
