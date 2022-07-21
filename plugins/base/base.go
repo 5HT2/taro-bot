@@ -28,6 +28,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Description: "Print a list of available commands",
 			Aliases:     []string{"h"},
 		}, {
+			Fn:          OperatorConfigCommand,
+			FnName:      "OperatorConfigCommand",
+			Name:        "operatorconfig",
+			Description: "Allows the bot operator to configure bot-level settings",
+			Aliases:     []string{"opcfg"},
+		}, {
 			Fn:          PingCommand,
 			FnName:      "PingCommand",
 			Name:        "ping",
@@ -45,6 +51,81 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 2,
 		}},
 	}
+}
+
+func OperatorConfigCommand(c bot.Command) error {
+	arg1, _ := cmd.ParseStringArg(c.Args, 1, true)
+	args, _ := cmd.ParseStringSliceArg(c.Args, 2, -1)
+	argInt, _ := cmd.ParseInt64Arg(c.Args, 2)
+	joinedArgs := strings.Join(args, " ")
+
+	t := "Operator Config "
+	var err error
+
+	var opID int64 = 0
+	bot.C.Run(func(c *bot.Config) {
+		opID = c.OperatorID
+	})
+
+	if c.E.Author.ID == 0 || int64(c.E.Author.ID) != opID {
+		return bot.GenericError("OperatorConfigCommand", "running command", "user is not the bot operator")
+	}
+
+	switch arg1 {
+	case "activity_name":
+		bot.C.Run(func(co *bot.Config) {
+			if len(args) == 0 {
+				_, err = cmd.SendEmbed(c.E, t+"`activity_name`", fmt.Sprintf("The current `activity_name` is\n```\n%s\n```", co.ActivityName), bot.DefaultColor)
+			} else {
+				co.ActivityName = joinedArgs
+				_, err = cmd.SendEmbed(c.E, t+"`activity_name`", fmt.Sprintf("Set `activity_name` to\n```\n%s\n```", co.ActivityName), bot.SuccessColor)
+			}
+		})
+	case "activity_url":
+		bot.C.Run(func(co *bot.Config) {
+			if len(args) == 0 {
+				_, err = cmd.SendEmbed(c.E, t+"`activity_url`", fmt.Sprintf("The current `activity_url` is\n```\n%s\n```", co.ActivityUrl), bot.DefaultColor)
+			} else {
+				co.ActivityUrl = joinedArgs
+				_, err = cmd.SendEmbed(c.E, t+"`activity_url`", fmt.Sprintf("Set `activity_url` to\n```\n%s\n```", co.ActivityUrl), bot.SuccessColor)
+			}
+		})
+	case "activity_type":
+		bot.C.Run(func(co *bot.Config) {
+			if argInt == -1 {
+				_, err = cmd.SendEmbed(c.E, t+"`activity_type`", fmt.Sprintf("The current `activity_type` is `%v`", co.ActivityType), bot.DefaultColor)
+			} else {
+				co.ActivityType = uint8(argInt)
+				_, err = cmd.SendEmbed(c.E, t+"`activity_type`", fmt.Sprintf("Set `activity_type` to `%v`", co.ActivityType), bot.SuccessColor)
+			}
+		})
+	case "operator_channel":
+		bot.C.Run(func(co *bot.Config) {
+			if argInt == -1 {
+				_, err = cmd.SendEmbed(c.E, t+"`operator_channel`", fmt.Sprintf("The current `operator_channel` is `%v`", co.OperatorChannel), bot.DefaultColor)
+			} else {
+				co.OperatorChannel = argInt
+				_, err = cmd.SendEmbed(c.E, t+"`operator_channel`", fmt.Sprintf("Set `operator_channel` to `%v`", co.OperatorChannel), bot.SuccessColor)
+			}
+		})
+	case "operator_id":
+		bot.C.Run(func(co *bot.Config) {
+			if argInt == -1 {
+				_, err = cmd.SendEmbed(c.E, t+"`operator_id`", fmt.Sprintf("The current `operator_id` is `%v`", co.OperatorID), bot.DefaultColor)
+			} else {
+				co.OperatorID = argInt
+				_, err = cmd.SendEmbed(c.E, t+"`operator_id`", fmt.Sprintf("Set `operator_id` to `%v`", co.OperatorID), bot.SuccessColor)
+			}
+		})
+	default:
+		_, err = cmd.SendEmbed(c.E,
+			"Operator Config",
+			"Available arguments are:\n- `activity_name [activity name]`\n- `activity_url [activity url]`\n- `activity_type [activity type]`\n- `operator_channel [operator channel id]`\n- `operator_id [operator id]`",
+			bot.DefaultColor)
+	}
+
+	bot.LoadActivityStatus() // Apply changes to activity
+	return err
 }
 
 func HelpCommand(c bot.Command) error {
