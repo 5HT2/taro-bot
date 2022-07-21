@@ -237,19 +237,21 @@ func updateInstances(reason string) {
 	instancesStr, err := util.RetryFunc(getInstancesFn, 2, 300) // This will take a max of ~16 seconds to execute, with a 5s timeout
 	if err != nil {
 		log.Printf("updateInstances: %v\n", err)
-	}
+	} else {
+		// We don't want to replace the cache if it errored
 
-	var instanceResponse [][]InvidiousInstance
-	// For some reason this will always error even though it gives the expected result
-	_ = json.Unmarshal(instancesStr, &instanceResponse)
+		var instanceResponse [][]InvidiousInstance
+		// For some reason this will always error even though it gives the expected result
+		_ = json.Unmarshal(instancesStr, &instanceResponse)
 
-	instances = make([]InvidiousInstance, 0)
+		instances = make([]InvidiousInstance, 0)
 
-	for _, instance := range instanceResponse {
-		// instance[0] is the instance URI
-		// instance[1] is the object with said instance's info
-		if instance[1].API == true {
-			instances = append(instances, instance[1])
+		for _, instance := range instanceResponse {
+			// instance[0] is the instance URI
+			// instance[1] is the object with said instance's info
+			if instance[1].API == true {
+				instances = append(instances, instance[1])
+			}
 		}
 	}
 }
