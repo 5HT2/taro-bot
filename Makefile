@@ -18,6 +18,8 @@ deps:
 	go get -u github.com/mackerelio/go-osstat
 	go get -u github.com/forPelevin/gomoji
 	go get -u golang.org/x/net
+	go get -u golang.org/x/text/language
+	go get -u golang.org/x/text/message
 	go mod tidy
 
 clean:
