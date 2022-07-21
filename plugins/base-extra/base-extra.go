@@ -48,7 +48,7 @@ func ChannelCommand(c bot.Command) error {
 	defaultResponse := func() error {
 		_, err := cmd.SendEmbed(c.E,
 			"Channel",
-			"Available arguments are:\n- `archive`\n- `archive role|category [role id|category id]`\n- `starboard regular|nsfw [channel]`\n- `starboard threshold [threshold]`",
+			"Available arguments are:\n- `archive`\n- `archive role|category [role id|category id]`",
 			bot.DefaultColor)
 		return err
 	}
