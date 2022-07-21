@@ -8,6 +8,7 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"log"
 	"strings"
 )
 
@@ -43,77 +44,128 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 
 func ChannelCommand(c bot.Command) error {
 	arg1, _ := cmd.ParseStringArg(c.Args, 1, true)
+	arg2, _ := cmd.ParseStringArg(c.Args, 2, true)
+
+	defaultResponse := func() error {
+		_, err := cmd.SendEmbed(c.E,
+			"Channel",
+			"Available arguments are:\n- `archive`\n- `archive role|category [role id|category id]`\n- `starboard regular|nsfw [channel]`\n- `starboard threshold [threshold]`",
+			bot.DefaultColor)
+		return err
+	}
 
 	switch arg1 {
 	case "archive":
 		err := cmd.HasPermission("channels", c)
 		if err == nil {
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				if g.ArchiveRole == 0 {
-					err = bot.GenericError(c.FnName, "getting archive role", "`archive_role` not set in guild config")
-				}
-				if g.ArchiveCategory == 0 {
-					err = bot.GenericError(c.FnName, "getting archive category", "`archive_category` not set in guild config")
-				}
-				return g, "ChannelCommand: check archive permission"
-			})
+			switch arg2 {
+			case "role":
+				var errCtx error
+				role, err := cmd.ParseInt64Arg(c.Args, 3)
+				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 
-			if err != nil {
-				return err
-			}
-
-			channel, err := bot.Client.Channel(c.E.ChannelID)
-			if err != nil {
-				return err
-			}
-
-			overwrites := make([]discord.Overwrite, 0)
-			var data api.ModifyChannelData
-
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				// Copy everything except the archive and @everyone roles to overwrites
-				for _, overwrite := range channel.Overwrites {
-					id := int64(overwrite.ID)
-					if id != int64(c.E.GuildID) && id != g.ArchiveRole {
-						overwrites = append(overwrites, overwrite)
-						break
+					if err != nil {
+						set := fmt.Sprintf("currently set to <@&%v>!", g.ArchiveRole)
+						setColor := bot.DefaultColor
+						if g.ArchiveRole == 0 {
+							set = "not set."
+							setColor = bot.WarnColor
+						}
+						_, errCtx = cmd.SendEmbed(c.E, "Channel Archive Role", set, setColor)
+					} else {
+						g.ArchiveRole = role
+						_, errCtx = cmd.SendEmbed(c.E, "Channel Archive Role", fmt.Sprintf("Set to <@&%v>!", role), bot.SuccessColor)
 					}
+					return g, "ChannelCommand: set guild role"
+				})
+				return errCtx
+			case "category":
+				var errCtx error
+				category, err := cmd.ParseInt64Arg(c.Args, 3)
+				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					if err != nil {
+						set := fmt.Sprintf("currently set to <#%v>!", g.ArchiveCategory)
+						setColor := bot.DefaultColor
+						if g.ArchiveCategory == 0 {
+							set = "not set."
+							setColor = bot.WarnColor
+						}
+						_, errCtx = cmd.SendEmbed(c.E, "Channel Archive Category", set, setColor)
+					} else {
+						g.ArchiveCategory = category
+						_, errCtx = cmd.SendEmbed(c.E, "Channel Archive Category", fmt.Sprintf("Set to <#%v>!", category), bot.SuccessColor)
+					}
+					return g, "ChannelCommand: set guild role"
+				})
+				return errCtx
+			case "":
+				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					if g.ArchiveCategory == 0 {
+						err = bot.GenericError(c.FnName, "getting archive category", "`archive_category` not set, use `archive category [category id]`")
+					}
+					if g.ArchiveRole == 0 {
+						err = bot.GenericError(c.FnName, "getting archive role", "`archive_role` not set, use `archive role [role id]`")
+					}
+					return g, "ChannelCommand: check archive permission"
+				})
+
+				if err != nil {
+					return err
 				}
 
-				overwrites = append(
-					overwrites,
-					discord.Overwrite{
-						ID:   discord.Snowflake(c.E.GuildID),
-						Type: discord.OverwriteRole,
-						Deny: discord.PermissionViewChannel,
-					},
-					discord.Overwrite{
-						ID:    discord.Snowflake(g.ArchiveRole),
-						Type:  discord.OverwriteRole,
-						Allow: discord.PermissionViewChannel,
-					},
-				)
-				data = api.ModifyChannelData{Overwrites: &overwrites, CategoryID: discord.ChannelID(g.ArchiveCategory)}
+				channel, err := bot.Client.Channel(c.E.ChannelID)
+				if err != nil {
+					return err
+				}
 
-				return g, "ChannelCommand: create overwrites data"
-			})
+				overwrites := make([]discord.Overwrite, 0)
+				var data api.ModifyChannelData
 
-			err = bot.Client.ModifyChannel(c.E.ChannelID, data)
-			if err != nil {
-				return err
-			} else {
-				_, err = cmd.SendEmbed(c.E, "Channels", "Successfully archived channel", bot.SuccessColor)
-				return err
+				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+					// Copy everything except the archive and @everyone roles to overwrites
+					for _, overwrite := range channel.Overwrites {
+						id := int64(overwrite.ID)
+						if id != int64(c.E.GuildID) && id != g.ArchiveRole {
+							overwrites = append(overwrites, overwrite)
+							break
+						}
+					}
+
+					overwrites = append(
+						overwrites,
+						discord.Overwrite{
+							ID:   discord.Snowflake(c.E.GuildID),
+							Type: discord.OverwriteRole,
+							Deny: discord.PermissionViewChannel,
+						},
+						discord.Overwrite{
+							ID:    discord.Snowflake(g.ArchiveRole),
+							Type:  discord.OverwriteRole,
+							Allow: discord.PermissionViewChannel,
+						},
+					)
+					data = api.ModifyChannelData{Overwrites: &overwrites, CategoryID: discord.ChannelID(g.ArchiveCategory)}
+
+					return g, "ChannelCommand: create overwrites data"
+				})
+
+				err = bot.Client.ModifyChannel(c.E.ChannelID, data)
+				if err != nil {
+					return err
+				} else {
+					_, err = cmd.SendEmbed(c.E, "Channel Archive", "Successfully archived channel", bot.SuccessColor)
+					return err
+				}
+			default:
+				log.Printf("here1 \"%s\"\n\n", arg2)
+				return defaultResponse()
 			}
 		} else {
 			return err
 		}
 	default:
-		_, err := cmd.SendEmbed(c.E,
-			"Channel",
-			"Available arguments are:\n- `archive`\n- `starboard regular|nsfw [channel]`\n- `starboard threshold [threshold]`",
-			bot.DefaultColor)
-		return err
+		log.Println("here2")
+		return defaultResponse()
 	}
 }
 
