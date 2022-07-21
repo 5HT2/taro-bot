@@ -8,6 +8,7 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"strings"
 )
 
@@ -48,7 +49,7 @@ func ChannelCommand(c bot.Command) error {
 	defaultResponse := func() error {
 		_, err := cmd.SendEmbed(c.E,
 			"Channel",
-			"Available arguments are:\n- `archive`\n- `archive role|category [role id|category id]`",
+			"Available arguments are:\n- `archive`\n- `archive role|category [role id|category id]`\n- `slow [seconds]`",
 			bot.DefaultColor)
 		return err
 	}
@@ -159,6 +160,38 @@ func ChannelCommand(c bot.Command) error {
 				return defaultResponse()
 			}
 		} else {
+			return err
+		}
+	case "slow":
+		seconds, _ := cmd.ParseInt64Arg(c.Args, 2)
+		channelID := c.E.ChannelID
+
+		if channel, err := cmd.ParseChannelArg(c.Args, 2); err == nil {
+			channelID = discord.ChannelID(channel)
+			seconds, _ = cmd.ParseInt64Arg(c.Args, 3)
+		}
+
+		if seconds < 0 { // normalize to 0-21600
+			seconds = 0
+		} else if seconds > 21600 {
+			seconds = 21600
+		}
+
+		data := api.ModifyChannelData{UserRateLimit: option.NewNullableUint(uint(seconds))}
+		if err := bot.Client.ModifyChannel(channelID, data); err != nil {
+			return err
+		} else {
+			message := fmt.Sprintf("Set slowmode to %v!", util.FormattedTime(seconds))
+			if seconds == 0 {
+				message = "Cleared slowmode!"
+			}
+			if channelID != c.E.ChannelID {
+				message = fmt.Sprintf("Set slowmode in <#%v> to %v!", channelID, util.FormattedTime(seconds))
+				if seconds == 0 {
+					message = fmt.Sprintf("Cleared slowmode in <#%v>!", channelID)
+				}
+			}
+			_, err = cmd.SendEmbed(c.E, "Channel Slow", message, bot.SuccessColor)
 			return err
 		}
 	default:
