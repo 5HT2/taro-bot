@@ -91,6 +91,13 @@ func (p *Plugin) SaveConfig() {
 	}
 }
 
+// SaveConfig will save all plugin configs
+func SaveConfig() {
+	for _, p := range plugins {
+		p.SaveConfig()
+	}
+}
+
 // SetupConfigSaving will run each plugin's SaveConfig every 5 minutes with a ticker
 func SetupConfigSaving() {
 	ticker := time.NewTicker(5 * time.Minute)
@@ -98,9 +105,7 @@ func SetupConfigSaving() {
 		for {
 			select {
 			case <-ticker.C:
-				for _, p := range plugins {
-					p.SaveConfig()
-				}
+				SaveConfig()
 			}
 		}
 	}()
