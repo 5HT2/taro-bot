@@ -8,7 +8,6 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"log"
 	"strings"
 )
 
@@ -157,14 +156,12 @@ func ChannelCommand(c bot.Command) error {
 					return err
 				}
 			default:
-				log.Printf("here1 \"%s\"\n\n", arg2)
 				return defaultResponse()
 			}
 		} else {
 			return err
 		}
 	default:
-		log.Println("here2")
 		return defaultResponse()
 	}
 }
