@@ -95,6 +95,9 @@ func main() {
 	// Call plugins after logging in with the bot, but before doing anything else at all
 	go plugins.RegisterAll(*pluginDir, *pluginList)
 
+	// Set up the bots status
+	go bot.LoadActivityStatus(ctx)
+
 	// Now we can start the routine-based tasks
 	go bot.SetupConfigSaving()
 	go bot.Scheduler.StartAsync()

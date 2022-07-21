@@ -1,10 +1,14 @@
 package bot
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -65,6 +69,9 @@ type Config struct {
 	Mutex           sync.Mutex       `json:"-"` // not saved in DB
 	PrefixCache     map[int64]string `json:"-"` // not saved in DB // [guild id]prefix
 	BotToken        string           `json:"bot_token"`
+	ActivityName    string           `json:"activity_name"` // See LoadActivityStatus
+	ActivityUrl     string           `json:"activity_url"`  // See LoadActivityStatus
+	ActivityType    uint8            `json:"activity_type"` // See LoadActivityStatus
 	OperatorChannel int64            `json:"operator_channel,omitempty"`
 	OperatorID      int64            `json:"operator_id,omitempty"`
 	GuildConfigs    []GuildConfig    `json:"guild_configs,omitempty"`
@@ -134,5 +141,30 @@ func SaveConfig() {
 		log.Printf("failed to write config: %v\n", err)
 	} else {
 		log.Printf("successfully saved taro config\n")
+	}
+}
+
+// LoadActivityStatus will load the activity information from the config.
+// Using USER_ID, USER_TAG and USER_USERNAME as replacements for the discord.Activity name are all supported.
+// Setting URL is only useful for a Twitch or YouTube discord.StreamingActivity.
+// The activity type uint8 is derived from its position in the list, eg, 0 == discord.GameActivity and 2 == discord.ListeningActivity.
+func LoadActivityStatus(ctx context.Context) {
+	name := ""
+	url := ""
+	var activityType uint8 = 0
+
+	C.Run(func(c *Config) {
+		name = c.ActivityName
+		url = c.ActivityUrl
+		activityType = c.ActivityType
+	})
+	name = strings.ReplaceAll(name, "USER_ID", fmt.Sprintf("%v", User.ID))
+	name = strings.ReplaceAll(name, "USER_TAG", fmt.Sprintf("%v", User.Tag()))
+	name = strings.ReplaceAll(name, "USER_USERNAME", fmt.Sprintf("%v", User.Username))
+
+	if err := Client.Gateway().Send(ctx, &gateway.UpdatePresenceCommand{
+		Activities: []discord.Activity{{Name: name, URL: url, Type: discord.ActivityType(activityType)}},
+	}); err != nil {
+		log.Printf("error loading activity status: %v\n", err)
 	}
 }
