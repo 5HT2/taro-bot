@@ -13,9 +13,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/state"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -64,7 +66,14 @@ func main() {
 	if err := c.Open(context.Background()); err != nil {
 		log.Fatalln("Failed to connect:", err)
 	}
-	defer c.Close()
+
+	// Cancel context when SIGINT / SIGKILL / SIGTERM. SIGTERM is used by `docker stop`
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+	defer cancel()
+
+	if err := c.Open(ctx); err != nil {
+		log.Println("cannot open:", err)
+	}
 
 	u, err := c.Me()
 	if err != nil {
@@ -92,8 +101,18 @@ func main() {
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
-	// Block forever.
-	select {}
+	<-ctx.Done() // block until Ctrl+C / SIGINT / SIGTERM
+
+	log.Println("received signal, shutting down")
+
+	bot.SaveConfig()
+	plugins.SaveConfig()
+
+	if err := c.Close(); err != nil {
+		log.Println("cannot close:", err)
+	}
+
+	log.Println("closed connection")
 }
 
 func checkExited() {
