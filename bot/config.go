@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -148,7 +147,7 @@ func SaveConfig() {
 // Using USER_ID, USER_TAG and USER_USERNAME as replacements for the discord.Activity name are all supported.
 // Setting URL is only useful for a Twitch or YouTube discord.StreamingActivity.
 // The activity type uint8 is derived from its position in the list, eg, 0 == discord.GameActivity and 2 == discord.ListeningActivity.
-func LoadActivityStatus(ctx context.Context) {
+func LoadActivityStatus() {
 	name := ""
 	url := ""
 	var activityType uint8 = 0
@@ -162,7 +161,7 @@ func LoadActivityStatus(ctx context.Context) {
 	name = strings.ReplaceAll(name, "USER_TAG", fmt.Sprintf("%v", User.Tag()))
 	name = strings.ReplaceAll(name, "USER_USERNAME", fmt.Sprintf("%v", User.Username))
 
-	if err := Client.Gateway().Send(ctx, &gateway.UpdatePresenceCommand{
+	if err := Client.Gateway().Send(Ctx, &gateway.UpdatePresenceCommand{
 		Activities: []discord.Activity{{Name: name, URL: url, Type: discord.ActivityType(activityType)}},
 	}); err != nil {
 		log.Printf("error loading activity status: %v\n", err)

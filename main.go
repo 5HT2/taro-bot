@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"flag"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
@@ -63,12 +62,12 @@ func main() {
 		go cmd.UpdateMemberCache(e)
 	})
 
-	if err := c.Open(context.Background()); err != nil {
+	if err := c.Open(bot.Ctx); err != nil {
 		log.Fatalln("Failed to connect:", err)
 	}
 
 	// Cancel context when SIGINT / SIGKILL / SIGTERM. SIGTERM is used by `docker stop`
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(bot.Ctx, os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer cancel()
 
 	if err := c.Open(ctx); err != nil {
@@ -96,7 +95,7 @@ func main() {
 	go plugins.RegisterAll(*pluginDir, *pluginList)
 
 	// Set up the bots status
-	go bot.LoadActivityStatus(ctx)
+	go bot.LoadActivityStatus()
 
 	// Now we can start the routine-based tasks
 	go bot.SetupConfigSaving()

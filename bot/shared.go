@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/state"
 	"github.com/go-co-op/gocron"
@@ -20,6 +21,7 @@ var (
 
 	HttpClient     = http.Client{Timeout: 5 * time.Second}
 	Client         state.State
+	Ctx            = context.Background()
 	User           *discord.User
 	PermissionsHex = 278404582480 // this is currently only used in base.go, but it is in shared.go because it is bot-level and should be set by the person maintaining the bot code
 	Scheduler      = gocron.NewScheduler(getTimeZone())
