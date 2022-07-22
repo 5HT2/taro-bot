@@ -37,8 +37,9 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          BookmarkConfigCommand,
 			FnName:      "BookmarkConfigCommand",
 			Name:        "bookmarkconfig",
+			Description: "Enable or disable bookmarking messages",
 			Aliases:     []string{"bcfg"},
-			Description: "Bookmarker config",
+			GuildOnly:   true,
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
