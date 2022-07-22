@@ -212,7 +212,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			if r.ID == role {
 				r.Threshold = threshold
 				roles[n] = r
-				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Changed threshold for <@&%v> to %v!", r.ID, r.Threshold), bot.SuccessColor)
+				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Changed threshold for <@&%v> to %s!", r.ID, util.FormattedNum(r.Threshold)), bot.SuccessColor)
 
 				found = true
 				break
@@ -223,7 +223,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			newRole := Role{Threshold: threshold, ID: role}
 			roles = append(roles, newRole)
 
-			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Created role <@&%v> with threshold %v!", role, threshold), bot.SuccessColor)
+			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Created role <@&%v> with threshold %s!", role, util.FormattedNum(threshold)), bot.SuccessColor)
 		}
 	case "whitelist":
 		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
