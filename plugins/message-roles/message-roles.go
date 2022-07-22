@@ -50,6 +50,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "messagerolesconfig",
 			Aliases:     []string{"mrcfg"},
 			Description: "Edit message roles config",
+			GuildOnly:   true,
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Responses: []bot.ResponseInfo{{
