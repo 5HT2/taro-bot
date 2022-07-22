@@ -49,6 +49,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "leavejoinconfig",
 			Aliases:     []string{"ljcfg"},
 			Description: "Edit leave & join msg config",
+			GuildOnly:   true,
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Handlers: []bot.HandlerInfo{{
