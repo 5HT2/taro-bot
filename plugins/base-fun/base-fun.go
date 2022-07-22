@@ -23,11 +23,6 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "frog",
 			Description: "\\*hands you a random frog pic\\*",
 		}, {
-			Fn:          KirbyCommand,
-			FnName:      "KirbyCommand",
-			Name:        "kirby",
-			Description: "kirby feet",
-		}, {
 			Fn:          StealEmojiCommand,
 			FnName:      "StealEmojiCommand",
 			Name:        "stealemoji",
@@ -67,15 +62,6 @@ func FrogCommand(c bot.Command) error {
 
 	_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
 	return err
-}
-
-func KirbyCommand(c bot.Command) error {
-	content, _ := cmd.ParseAllArgs(c.Args)
-	_, _ = cmd.SendMessage(c.E, "<:kirbyfeet:893291555744542730>")
-	if len(content) > 0 {
-		_, _ = cmd.SendMessage(c.E, content)
-	}
-	return nil
 }
 
 func StealEmojiCommand(c bot.Command) error {
