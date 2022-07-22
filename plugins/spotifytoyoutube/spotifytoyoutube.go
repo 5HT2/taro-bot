@@ -41,6 +41,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          YoutubeTestCommand,
 			FnName:      "YoutubeTestCommand",
 			Name:        "youtubetest",
+			Aliases:     []string{"ytt"},
 			Description: "Benchmark how long it takes to query Youtube.",
 		}},
 		Responses: []bot.ResponseInfo{{
