@@ -260,33 +260,96 @@ func MessageRolesConfigCommand(c bot.Command) error {
 	case "blacklist":
 		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
 		channel, argErr2 := cmd.ParseChannelArg(c.Args, 3)
+		user0, argErr3 := cmd.ParseInt64Arg(c.Args, 3)
+		user1, argErr4 := cmd.ParseUserArg(c.Args, 3)
+
+		blacklistChannel := func() {
+			found := false
+			for n, r := range roles {
+				if r.ID == role {
+					if util.SliceContains(r.Blacklist, channel) {
+						r.Blacklist = util.SliceRemove(r.Blacklist, channel)
+						_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s blacklist", channel, r.ID), bot.ErrorColor)
+					} else {
+						r.Blacklist = append(r.Blacklist, channel)
+						_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor)
+					}
+
+					roles[n] = r
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
+			}
+		}
+
+		blacklistUser := func() error {
+			user := user0       // try arg 3 as int64
+			if argErr3 != nil { // arg 3 wasn't int64, try user mention
+				user = user1
+			}
+			if argErr4 != nil { // arg3 wasn't user mention, exit
+				return argErr4
+			}
+
+			if discordUser, err := bot.Client.User(discord.UserID(user)); err != nil {
+				return err
+			} else {
+				roleStr := fmt.Sprintf("%v", role)
+
+				// Check if the guild has an existing config
+				if cfg, ok := p.Config.(config).GuildUsers[c.E.GuildID.String()]; ok {
+					user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
+
+					// If the guild has an existing config, does this user exist in it yet?
+					if guildUser, ok := cfg[discordUser.ID.String()]; ok {
+						user = guildUser
+					}
+
+					// User not in this guild's config, add them to it.
+					user.GivenRoles[roleStr] = true
+
+					// Update the config
+					p.Config.(config).GuildUsers[c.E.GuildID.String()][discordUser.ID.String()] = user
+				} else {
+					// Make a new user, populate it
+					user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
+					user.GivenRoles[roleStr] = true
+
+					// Users map not found, create it
+					users := make(map[string]User)
+					users[discordUser.ID.String()] = user
+
+					// If there are no guilds with users, create a new guild and replace it with the `users` map
+					if len(p.Config.(config).GuildUsers) == 0 {
+						guilds := make(map[string]map[string]User, 0)
+						guilds[c.E.GuildID.String()] = users
+
+						cfg := p.Config.(config)
+						cfg.GuildUsers = guilds
+
+						p.Config = cfg
+					}
+
+					// Save `users` map in the config
+					p.Config.(config).GuildUsers[c.E.GuildID.String()] = users
+				}
+
+				_, err := cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Succesfully blacklisted <@%v> from getting <@&%v>!", user, role), bot.SuccessColor)
+				return err
+			}
+		}
 
 		if argErr1 != nil {
 			return argErr1
 		}
-		if argErr2 != nil {
-			return argErr2
-		}
-
-		found := false
-		for n, r := range roles {
-			if r.ID == role {
-				if util.SliceContains(r.Blacklist, channel) {
-					r.Blacklist = util.SliceRemove(r.Blacklist, channel)
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s blacklist", channel, r.ID), bot.ErrorColor)
-				} else {
-					r.Blacklist = append(r.Blacklist, channel)
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor)
-				}
-
-				roles[n] = r
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
+		if argErr2 == nil { // parsed a channel mention successfully
+			blacklistChannel()
+		} else { // didn't parse a channel, blacklistUser will check if the new arg is a user or not
+			return blacklistUser()
 		}
 	case "list":
 		if len(roles) == 0 {
@@ -310,7 +373,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 	default:
 		_, err = cmd.SendEmbed(c.E,
 			"Configure Message Roles",
-			"Available arguments are:\n- `role [role id] [threshold]`\n- `whitelist [role id] [channel]`\n- `blacklist [role id] [channel]`\n- `list`",
+			"Available arguments are:\n- `role [role id] [threshold]`\n- `whitelist [role id] [channel]`\n- `blacklist [role id] [channel]`\n- `blacklist [role id] [user]`\n- `list`",
 			bot.DefaultColor)
 	}
 
