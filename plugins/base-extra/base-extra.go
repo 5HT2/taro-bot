@@ -279,7 +279,13 @@ func ProfilePicCommand(c bot.Command) error {
 	}
 
 	url := ""
-	name := c.E.Member.Nick
+	name := c.E.Author.Username
+
+	// if command is being run inside a DM
+	if c.E.Member != nil {
+		name = c.E.Member.Nick
+	}
+
 	if self {
 		url = c.E.Author.AvatarURLWithType(discord.AutoImage)
 	} else {
