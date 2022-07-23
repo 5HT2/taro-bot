@@ -6,7 +6,6 @@ import (
 	discord "github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
-	"strconv"
 	"strings"
 )
 
@@ -110,11 +109,23 @@ func CreateEmbedAuthorUser(user discord.User) *discord.EmbedAuthor {
 	}
 }
 
-func CreateMessageLink(guild int64, message *discord.Message, jump bool) string {
-	guildID := strconv.FormatInt(guild, 10)
-	channel := strconv.FormatInt(int64(message.ChannelID), 10)
-	messageID := strconv.FormatInt(int64(message.ID), 10)
-	link := "https://discord.com/channels/" + guildID + "/" + channel + "/" + messageID
+func CreateMessageLink(guild int64, message *discord.Message, jump, dm bool) string {
+	link := fmt.Sprintf("https://discord.com/channels/%v/%v/%v", guild, message.ChannelID, message.ID)
+	if dm {
+		link = fmt.Sprintf("https://discord.com/channels/@me/%v/%v", message.ChannelID, message.ID)
+	}
+
+	if jump {
+		return "[Jump!](" + link + ")"
+	}
+	return link
+}
+
+func CreateMessageLinkInt64(guild, message, channel int64, jump, dm bool) string {
+	link := fmt.Sprintf("https://discord.com/channels/%v/%v/%v", guild, channel, message)
+	if dm {
+		link = fmt.Sprintf("https://discord.com/channels/@me/%v/%v", channel, message)
+	}
 
 	if jump {
 		return "[Jump!](" + link + ")"

@@ -157,7 +157,7 @@ func StarboardReactionHandler(i interface{}) {
 		newPost := true
 		cID := int64(channel.ID)
 
-		log.Printf("Checking channel for starboard message %s\n", cmd.CreateMessageLink(int64(e.GuildID), msg, false))
+		log.Printf("Checking channel for starboard message %s\n", cmd.CreateMessageLink(int64(e.GuildID), msg, false, false))
 
 		// If user reacts to a post in a starboard channel
 		if cID == g.Starboard.Channel || cID == g.Starboard.NsfwChannel {
@@ -266,7 +266,7 @@ func StarboardReactionHandler(i interface{}) {
 			}
 
 			description, image := cmd.GetEmbedAttachmentAndContent(*msg)
-			field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true)}
+			field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true, false)}
 			footer := discord.EmbedFooter{Text: fmt.Sprintf("%v", sMsg.Author)}
 			embed := discord.Embed{
 				Description: description,

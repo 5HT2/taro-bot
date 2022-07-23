@@ -144,7 +144,7 @@ func BookmarkReactionHandler(i interface{}) {
 		}
 
 		content := fmt.Sprintf("🔖 from <#%v>", e.ChannelID)
-		field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true)}
+		field := discord.EmbedField{Name: "Source", Value: cmd.CreateMessageLink(int64(e.GuildID), msg, true, false)}
 		footer := discord.EmbedFooter{Text: fmt.Sprintf("%v", msg.Author.ID)}
 
 		description, image := cmd.GetEmbedAttachmentAndContent(*msg)

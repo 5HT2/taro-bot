@@ -64,7 +64,7 @@ func extractCommand(message discord.Message) (string, []string) {
 		// This is most likely when the bot has joined a new guild without accessing GuildContext
 		if !ok {
 			log.Printf("expected prefix to be in prefix cache: %s (%s)\n",
-				message.GuildID, CreateMessageLink(int64(message.GuildID), &message, false))
+				message.GuildID, CreateMessageLink(int64(message.GuildID), &message, false, false))
 
 			bot.GuildContext(message.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
 				g.Prefix = bot.DefaultPrefix
