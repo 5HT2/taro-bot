@@ -17,8 +17,6 @@ var (
 	p     *plugins.Plugin
 	mutex sync.Mutex
 
-	embedColor discord.Color = 0x0099FF
-
 	enabledFooter   = discord.EmbedFooter{Text: "Messages will be DMed to you when you react with a 🔖."}
 	escapedBookmark = "%F0%9F%94%96"
 )
@@ -156,7 +154,7 @@ func BookmarkReactionHandler(i interface{}) {
 			Fields:      []discord.EmbedField{field},
 			Footer:      &footer,
 			Image:       image,
-			Color:       embedColor,
+			Color:       bot.BlueColor,
 		}
 
 		_, err = cmd.SendDirectMessageEmbedSafe(e.UserID, content, &embed)
