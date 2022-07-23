@@ -180,6 +180,18 @@ func RegisterJob(job bot.JobInfo) {
 	}
 }
 
+// RegisterJobConcurrent registers a job with RegisterJob concurrently, and optionally adds the job to bot.Jobs to be tracked.
+func RegisterJobConcurrent(job bot.JobInfo, addGlobally bool) {
+	bot.Mutex.Lock()
+	defer bot.Mutex.Unlock()
+
+	if addGlobally {
+		bot.Jobs = append(bot.Jobs, job)
+	}
+
+	RegisterJob(job)
+}
+
 // ClearHandlers will go through bot.Handlers and handle the de-registration of them
 func ClearHandlers() {
 	for _, handler := range bot.Handlers {
