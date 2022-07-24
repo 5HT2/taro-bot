@@ -158,7 +158,7 @@ func createJob(r Reminder) bot.JobInfo {
 		}
 
 		// Remove after attempting to send reminder
-		if p.Config != nil {
+		if p.Config != nil && p.Config.(config).Reminders != nil {
 			delete(p.Config.(config).Reminders, strconv.FormatInt(r.ID, 10))
 		}
 	}
