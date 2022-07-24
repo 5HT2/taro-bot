@@ -74,15 +74,12 @@ type Response struct {
 //
 // JobInfo is used by features in order to easily return a job, and allow the bot to handle the errors
 type JobInfo struct {
-	Fn             func()
-	Tag            string
-	Scheduler      *gocron.Scheduler
-	CheckCondition bool
-	Condition      bool
+	Fn   func() (*gocron.Job, error)
+	Name string
 }
 
 func (i JobInfo) String() string {
-	return fmt.Sprintf("[%p, %v, %v]", i.Fn, i.Tag, i.Scheduler)
+	return fmt.Sprintf("[%s, %p]", i.Name, i.Fn)
 }
 
 //
