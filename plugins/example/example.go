@@ -7,6 +7,7 @@ import (
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/gateway"
+	"github.com/go-co-op/gocron"
 	"log"
 	"math/rand"
 	"reflect"
@@ -53,16 +54,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		// Jobs are called when they are scheduled. This job is scheduled for every minute.
 		// Other examples include `bot.Scheduler.Every(1).Day().At("04:00")` (running a job every day at 4am)
 		// as well as `bot.Scheduler.Cron("15 4 * * SUN")` (running a job every sunday at 4:15am, see https://crontab.guru/ for more).
-		// The Tag is used to identify the job when de-registering, and should be unique. The name itself doesn't actually matter as long as it is unique.
-		// If CheckCondition is false (as is the default, when not set), Condition will not be checked.
-		// If CheckCondition is set to true explicitly, the job will only be REGISTERED if Condition is also true.
-		// Using CheckCondition and Condition can be used to make a job only register if the bot ID matches something, and so on.
-		// Condition only affects job registration, and is not checked when running a job.
-		// Jobs must be reloaded by reloading the plugin if you want them to check if Condition has been updated (eg, if using variables outside the plugin).
+		// The Name is used to identify the job when registering, and should be unique. The name itself doesn't actually matter as long as it is unique.
 		Jobs: []bot.JobInfo{{
-			Fn:        EveryMinuteJob,
-			Tag:       "example-plugin-every-minute",
-			Scheduler: bot.Scheduler.Every(1).Minute(),
+			Fn: func() (*gocron.Job, error) {
+				return bot.Scheduler.Every(1).Minute().Do(EveryMinuteJob)
+			},
+			Name: "example-plugin-every-minute",
 		}},
 		// Handlers are functions that are registered to discord's event gateway. The documentation can be found at https://discord.com/developers/docs/topics/gateway
 		// FnType is used to ensure type safety and simplify registration syntax.
