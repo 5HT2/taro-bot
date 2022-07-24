@@ -152,12 +152,9 @@ func Load(dir, pluginList string) {
 	}
 }
 
-// ClearJobs will go through bot.Jobs and handle the de-registration of them
+// ClearJobs will clear all registered jobs
 func ClearJobs() {
-	for _, job := range bot.Jobs {
-		_ = job.Scheduler.RemoveByTag(job.Tag)
-	}
-
+	bot.Scheduler.Clear()
 	bot.Jobs = make([]bot.JobInfo, 0)
 }
 
@@ -170,13 +167,10 @@ func RegisterJobs() {
 
 // RegisterJob registers a job for use with gocron. Ensure you add the job to bot.Jobs for de-registration with ClearJobs.
 func RegisterJob(job bot.JobInfo) {
-	// Run job if it doesn't have checking enabled, or if the condition is true
-	if !job.CheckCondition || job.Condition {
-		if rJob, err := job.Scheduler.Tag(job.Tag).Do(job.Fn); err != nil {
-			log.Printf("failed to register job (%s): %v\n", job.Tag, err)
-		} else {
-			log.Printf("registered job: %v\n", rJob)
-		}
+	if rJob, err := job.Fn(); err != nil {
+		log.Printf("failed to register job (%s): %v\n", job.Name, err)
+	} else {
+		log.Printf("registered job (%s): %v\n", job.Name, rJob)
 	}
 }
 
