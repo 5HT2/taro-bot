@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var (
@@ -222,6 +223,25 @@ func ParseBoolArg(a []string, pos int) (bool, *bot.Error) {
 	default:
 		return false, bot.GenericSyntaxError("ParseBoolArg", s, "expected boolean")
 	}
+}
+
+func ParseDurationArg(a []string, pos int) (time.Duration, *bot.Error) {
+	s, argErr := checkArgExists(a, pos, "ParseDurationArg")
+	if argErr != nil {
+		return time.Duration(0), argErr
+	}
+
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err == nil { // if we parse an int64, treat it as a future unix second
+		return time.Duration((i - time.Now().Unix()) * 1000000000), nil
+	}
+
+	t, err := time.ParseDuration(s)
+	if err != nil {
+		return time.Duration(0), bot.GenericSyntaxError("ParseDurationArg", s, err.Error())
+	}
+
+	return t, nil
 }
 
 // validateChannelArg will return a valid channel mention, or nil and an error if it is invalid
