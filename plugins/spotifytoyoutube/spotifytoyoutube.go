@@ -8,6 +8,7 @@ import (
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
+	"github.com/go-co-op/gocron"
 	"golang.org/x/net/html"
 	"log"
 	"net/http"
@@ -50,9 +51,10 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 1,
 		}},
 		Jobs: []bot.JobInfo{{
-			Fn:        func() { updateInstances("hourly job") },
-			Tag:       "invidious-instances-update",
-			Scheduler: bot.Scheduler.Every(1).Hour(),
+			Fn: func() (*gocron.Job, error) {
+				return bot.Scheduler.Every(1).Hour().Do(updateInstances, "hourly job")
+			},
+			Name: "invidious-instances-update",
 		}},
 	}
 	return p
