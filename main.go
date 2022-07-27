@@ -132,6 +132,9 @@ func checkGuildCounts(s *state.State) {
 		if guildMembers, err := s.Members(guild.ID); err == nil {
 			numMembers := len(guildMembers)
 			members += numMembers
+			for _, member := range guildMembers {
+				log.Printf("DEBUGGING: %v\n", member)
+			}
 			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(numMembers, "member")))
 		}
 	}
