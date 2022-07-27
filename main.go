@@ -104,6 +104,8 @@ func main() {
 
 	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
 
+	go checkGuildCounts(s)
+
 	<-ctx.Done() // block until Ctrl+C / SIGINT / SIGTERM
 
 	log.Println("received signal, shutting down")
@@ -116,6 +118,29 @@ func main() {
 	}
 
 	log.Println("closed connection")
+}
+
+func checkGuildCounts(s *state.State) {
+	guilds, err := s.Guilds()
+	if err != nil {
+		log.Printf("checkGuildCounts: %v\n", err)
+	}
+
+	fmtGuilds := make([]string, 0)
+	members := make([]discord.Member, 0)
+	for _, guild := range guilds {
+		if guildMembers, err := s.Members(guild.ID); err == nil {
+			members = append(members, guildMembers...)
+			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(len(members), "member")))
+		}
+	}
+
+	log.Printf(
+		"Currently serving %s on %s\n%s",
+		util.JoinIntAndStr(len(members), "user"),
+		util.JoinIntAndStr(len(guilds), "guild"),
+		strings.Join(fmtGuilds, "\n"),
+	)
 }
 
 func checkExited() {
