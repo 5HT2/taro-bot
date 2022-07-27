@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
@@ -40,29 +41,29 @@ func main() {
 		log.Fatalln("No bot_token given")
 	}
 
-	c := state.NewWithIntents("Bot "+token,
+	s := state.NewWithIntents("Bot "+token,
 		gateway.IntentGuildMessages,
 		gateway.IntentGuildEmojis,
 		gateway.IntentGuildMessageReactions,
 		gateway.IntentDirectMessages,
 		gateway.IntentGuildMembers,
 	)
-	bot.Client = *c
+	bot.Client = *s
 
-	if c == nil {
+	if s == nil {
 		log.Fatalln("Session failed: is nil")
 	}
 
 	// Add handlers
-	c.AddHandler(func(e *gateway.MessageCreateEvent) {
+	s.AddHandler(func(e *gateway.MessageCreateEvent) {
 		go cmd.CommandHandler(e)
 		go cmd.ResponseHandler(e)
 	})
-	c.AddHandler(func(e *gateway.GuildMemberUpdateEvent) {
+	s.AddHandler(func(e *gateway.GuildMemberUpdateEvent) {
 		go cmd.UpdateMemberCache(e)
 	})
 
-	if err := c.Open(bot.Ctx); err != nil {
+	if err := s.Open(bot.Ctx); err != nil {
 		log.Fatalln("Failed to connect:", err)
 	}
 
@@ -70,11 +71,11 @@ func main() {
 	ctx, cancel := signal.NotifyContext(bot.Ctx, os.Interrupt, os.Kill, syscall.SIGTERM)
 	defer cancel()
 
-	if err := c.Open(ctx); err != nil {
+	if err := s.Open(ctx); err != nil {
 		log.Println("cannot open:", err)
 	}
 
-	u, err := c.Me()
+	u, err := s.Me()
 	if err != nil {
 		log.Fatalln("Failed to get bot user:", err)
 	}
@@ -110,7 +111,7 @@ func main() {
 	bot.SaveConfig()
 	plugins.SaveConfig()
 
-	if err := c.Close(); err != nil {
+	if err := s.Close(); err != nil {
 		log.Println("cannot close:", err)
 	}
 
