@@ -130,8 +130,9 @@ func checkGuildCounts(s *state.State) {
 	members := 0
 	for _, guild := range guilds {
 		if guildMembers, err := s.Members(guild.ID); err == nil {
-			members += len(guildMembers)
-			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(members, "member")))
+			numMembers := len(guildMembers)
+			members += numMembers
+			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(numMembers, "member")))
 		}
 	}
 
