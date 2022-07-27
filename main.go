@@ -127,17 +127,17 @@ func checkGuildCounts(s *state.State) {
 	}
 
 	fmtGuilds := make([]string, 0)
-	members := make([]discord.Member, 0)
+	members := 0
 	for _, guild := range guilds {
 		if guildMembers, err := s.Members(guild.ID); err == nil {
-			members = append(members, guildMembers...)
-			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(len(members), "member")))
+			members += len(guildMembers)
+			fmtGuilds = append(fmtGuilds, fmt.Sprintf("- %v - %s - (%s)", guild.ID, guild.Name, util.JoinIntAndStr(members, "member")))
 		}
 	}
 
 	log.Printf(
 		"Currently serving %s on %s\n%s",
-		util.JoinIntAndStr(len(members), "user"),
+		util.JoinIntAndStr(members, "user"),
 		util.JoinIntAndStr(len(guilds), "guild"),
 		strings.Join(fmtGuilds, "\n"),
 	)
