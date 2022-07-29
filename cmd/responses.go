@@ -1,5 +1,6 @@
 package cmd
 
+import "C"
 import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
@@ -13,21 +14,27 @@ import (
 func ResponseHandler(e *gateway.MessageCreateEvent) {
 	defer util.LogPanic()
 
-	// TODO: Per-guild responses and configuration
-	// TODO: compiling and caching support could be added here to improve speed
-	for _, response := range bot.Responses {
-		if findResponse(e, response) {
-			sendResponse(e, response)
-		}
-	}
-}
-
-func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	// Don't respond to bot messages.
 	if e.Author.Bot {
 		return
 	}
 
+	// TODO: Per-guild responses and configuration
+	// TODO: compiling and caching support could be added here to improve speed
+	go func() {
+		for _, response := range bot.Responses {
+			runResponse(e, response)
+		}
+	}()
+}
+
+func runResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
+	if findResponse(e, response) {
+		sendResponse(e, response)
+	}
+}
+
+func sendResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {
 	// If there is a channel whitelist, and it doesn't contain the original message's channel ID, return
 	if len(response.LockChannels) > 0 && !util.SliceContains(response.LockChannels, int64(e.ChannelID)) {
 		return
