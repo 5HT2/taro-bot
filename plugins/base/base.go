@@ -81,6 +81,7 @@ func OperatorConfigCommand(c bot.Command) error {
 				_, err = cmd.SendEmbed(c.E, t+"`activity_name`", fmt.Sprintf("Set `activity_name` to\n```\n%s\n```", co.ActivityName), bot.SuccessColor)
 			}
 		})
+		bot.LoadActivityStatus()
 	case "activity_url":
 		bot.C.Run(func(co *bot.Config) {
 			if len(args) == 0 {
@@ -90,6 +91,7 @@ func OperatorConfigCommand(c bot.Command) error {
 				_, err = cmd.SendEmbed(c.E, t+"`activity_url`", fmt.Sprintf("Set `activity_url` to\n```\n%s\n```", co.ActivityUrl), bot.SuccessColor)
 			}
 		})
+		bot.LoadActivityStatus()
 	case "activity_type":
 		bot.C.Run(func(co *bot.Config) {
 			if argInt == -1 {
@@ -99,6 +101,7 @@ func OperatorConfigCommand(c bot.Command) error {
 				_, err = cmd.SendEmbed(c.E, t+"`activity_type`", fmt.Sprintf("Set `activity_type` to `%v`", co.ActivityType), bot.SuccessColor)
 			}
 		})
+		bot.LoadActivityStatus()
 	case "operator_channel":
 		bot.C.Run(func(co *bot.Config) {
 			if argInt == -1 {
@@ -124,7 +127,6 @@ func OperatorConfigCommand(c bot.Command) error {
 			bot.DefaultColor)
 	}
 
-	bot.LoadActivityStatus() // Apply changes to activity
 	return err
 }
 
