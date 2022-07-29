@@ -31,7 +31,7 @@ func GuildContext(c discord.GuildID, g guildOperation) {
 
 	C.Run(func(c *Config) {
 		// Try to find an existing config, and if so, replace it with the result of executed guildOperation
-		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable
+		// TODO: This isn't scalable with lots of Guilds, so a map would be preferable. See #6
 		for n, guild := range c.GuildConfigs {
 			if guild.ID == id {
 				// Correct guild found, execute guildOperation
