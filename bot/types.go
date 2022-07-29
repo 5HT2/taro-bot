@@ -55,11 +55,11 @@ func (i CommandInfo) MarkdownString() string {
 // Fn is the function that is executed to complete the Response.
 // The Regexes are used to call the response via Discord.
 type ResponseInfo struct {
-	Fn           func(Response)
-	Regexes      []string
-	MatchMin     int
-	LockChannels []int64
-	LockUsers    []int64
+	Fn           func(Response) `json:"fn"`
+	Regexes      []string       `json:"regexes"`
+	MatchMin     int            `json:"match_min"`
+	LockChannels []int64        `json:"lock_channels,omitempty"`
+	LockUsers    []int64        `json:"lock_users,omitempty"`
 }
 
 func (i ResponseInfo) String() string {
