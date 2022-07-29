@@ -22,8 +22,8 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          TopicConfigCommand,
 			FnName:      "TopicConfigCommand",
 			Name:        "topicconfig",
-			Description: "Configure allowed topic channels",
 			Aliases:     []string{"topiccfg"},
+			Description: "Configure allowed topic channels",
 			GuildOnly:   true,
 		}, {
 			Fn:          TopicCommand,
