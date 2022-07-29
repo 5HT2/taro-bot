@@ -80,6 +80,7 @@ type GuildConfig struct {
 	ID                   int64             `json:"id"`
 	Prefix               string            `json:"prefix,omitempty"`
 	Permissions          PermissionGroups  `json:"permissions,omitempty"`
+	Responses            []ResponseInfo    `json:"responses,omitempty"`
 	ArchiveRole          int64             `json:"archive_role,omitempty"`           // TODO: Migrate
 	ArchiveCategory      int64             `json:"archive_category,omitempty"`       // TODO: Migrate
 	EnabledTopicChannels []int64           `json:"enabled_topic_channels,omitempty"` // TODO: Migrate

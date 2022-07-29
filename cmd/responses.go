@@ -26,6 +26,25 @@ func ResponseHandler(e *gateway.MessageCreateEvent) {
 			runResponse(e, response)
 		}
 	}()
+
+	go func() {
+		responses := make([]bot.ResponseInfo, 0)
+
+		// TODO: Replace this once #6 is closed.
+		C.Run(func(c *bot.Config) {
+			id := int64(e.GuildID)
+			for _, guild := range c.GuildConfigs {
+				if guild.ID == id {
+					responses = guild.Responses
+					break
+				}
+			}
+		})
+
+		for _, response := range responses {
+			runResponse(e, response)
+		}
+	}()
 }
 
 func runResponse(e *gateway.MessageCreateEvent, response bot.ResponseInfo) {

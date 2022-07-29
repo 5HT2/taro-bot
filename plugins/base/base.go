@@ -44,6 +44,13 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "prefix",
 			Description: "Set the bot prefix for your guild",
 			GuildOnly:   true,
+		}, {
+			Fn:          ResponseConfigCommand,
+			FnName:      "ResponseConfigCommand",
+			Name:        "responseconfig",
+			Aliases:     []string{"rcfg"},
+			Description: "Manage responses for your guild",
+			GuildOnly:   true,
 		}},
 		Responses: []bot.ResponseInfo{{
 			Fn:       PrefixResponse,
@@ -51,6 +58,11 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 2,
 		}},
 	}
+}
+
+func ResponseConfigCommand(c bot.Command) error {
+
+	return nil
 }
 
 func OperatorConfigCommand(c bot.Command) error {
