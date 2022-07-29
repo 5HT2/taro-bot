@@ -36,8 +36,8 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          ErrorCommand,
 			FnName:      "ErrorCommand",
 			Name:        "error",
-			Description: "This command will only return errors",
 			Aliases:     []string{"err", "e"},
+			Description: "This command will only return errors",
 		}},
 		// This is used to ensure type safety when loading the Config
 		// If you forget to declare this and use p.LoadConfig(), you will get a safe panic when loading
