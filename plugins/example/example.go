@@ -68,11 +68,18 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnName: "ReactionHandler",
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
+		// ShutdownFn optionally allows you to register a function that will run when the bot has been killed / stopped.
+		ShutdownFn: Shutdown,
 	}
 	// When loading a config, you should cast not cast it, as it will be nil by default.
 	// Instead, check if it is nil before doing .(config) in order to use it.
 	p.Config = p.LoadConfig()
 	return p
+}
+
+// Shutdown will run when the bot is killed / stopped, and says goodbye to the console.
+func Shutdown() {
+	log.Println("goodbye from the example plugin!")
 }
 
 // ExampleCommand (.example) is a basic example of returning just a message with a command.
