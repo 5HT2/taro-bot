@@ -135,30 +135,39 @@ func Load(dir, pluginList string) {
 	log.Printf("plugin list: [%s]\n", strings.Join(plugins, ", "))
 
 	for _, entry := range d {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") && util.SliceContains(plugins, entry.Name()) {
-			pluginPath := filepath.Join(dir, entry.Name())
-			log.Printf("plugin found: %s\n", entry.Name())
+		func() {
+			defer util.LogPanic() // plugins can panic when returning their PluginInit
 
-			p, err := plugin.Open(pluginPath)
-			if err != nil {
-				log.Printf("plugin load failed: couldn't open plugin: %s (%s)\n", entry.Name(), err)
-				continue
-			}
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".so") && util.SliceContains(plugins, entry.Name()) {
+				pluginPath := filepath.Join(dir, entry.Name())
+				log.Printf("plugin found: %s\n", entry.Name())
 
-			fn, err := p.Lookup("InitPlugin")
-			if err != nil {
-				log.Printf("plugin load failed: couldn't lookup symbols: %s (%s)\n", entry.Name(), err)
-				continue
-			}
+				p, err := plugin.Open(pluginPath)
+				if err != nil {
+					log.Printf("plugin load failed: couldn't open plugin: %s (%s)\n", entry.Name(), err)
+					return
+				}
 
-			initFn := fn.(func(manager *PluginInit) *Plugin)
-			if p := initFn(pluginInit); p != nil {
-				p.Register()
-				log.Printf("plugin registered: %s\n", p)
-			} else {
-				log.Printf("plugin load failed: %s (nil)\n", entry.Name())
+				fn, err := p.Lookup("InitPlugin")
+				if err != nil {
+					log.Printf("plugin load failed: couldn't lookup symbols: %s (%s)\n", entry.Name(), err)
+					return
+				}
+
+				if fn == nil {
+					log.Printf("plugin load failed: fn nil\n")
+					return
+				}
+
+				initFn := fn.(func(manager *PluginInit) *Plugin)
+				if p := initFn(pluginInit); p != nil {
+					p.Register()
+					log.Printf("plugin registered: %s\n", p)
+				} else {
+					log.Printf("plugin load failed: %s (nil)\n", entry.Name())
+				}
 			}
-		}
+		}()
 	}
 }
 
