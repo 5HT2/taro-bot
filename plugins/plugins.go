@@ -36,6 +36,7 @@ type Plugin struct {
 	Responses   []bot.ResponseInfo // Responses to register, could be none
 	Jobs        []bot.JobInfo      // Jobs to register, could be none
 	Handlers    []bot.HandlerInfo  // Handlers to register, could be none
+	ShutdownFn  func()             // ShutdownFn is a function to be called when the bot shuts down
 }
 
 func (p Plugin) String() string {
@@ -87,6 +88,15 @@ func (p *Plugin) SaveConfig() {
 			log.Printf("plugin config writing failed (%s): %s\n", p.Name, err)
 		} else {
 			log.Printf("saved config for %s\n", p.Name)
+		}
+	}
+}
+
+// Shutdown will run the shutdown function for all plugins
+func Shutdown() {
+	for _, p := range plugins {
+		if p.ShutdownFn != nil {
+			p.ShutdownFn()
 		}
 	}
 }

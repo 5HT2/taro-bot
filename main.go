@@ -112,6 +112,7 @@ func main() {
 
 	bot.SaveConfig()
 	plugins.SaveConfig()
+	plugins.Shutdown()
 
 	if err := s.Close(); err != nil {
 		log.Println("cannot close:", err)
