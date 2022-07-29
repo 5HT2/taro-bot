@@ -25,14 +25,14 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          HelpCommand,
 			FnName:      "HelpCommand",
 			Name:        "help",
-			Description: "Print a list of available commands",
 			Aliases:     []string{"h"},
+			Description: "Print a list of available commands",
 		}, {
 			Fn:          OperatorConfigCommand,
 			FnName:      "OperatorConfigCommand",
 			Name:        "operatorconfig",
-			Description: "Allows the bot operator to configure bot-level settings",
 			Aliases:     []string{"opcfg"},
+			Description: "Allows the bot operator to configure bot-level settings",
 		}, {
 			Fn:          PingCommand,
 			FnName:      "PingCommand",
