@@ -6,7 +6,7 @@ This README describes how to use plugins. See the [README](../README.md) in the 
 2. [Compiling a plugin](#compiling-a-plugin)
 3. [Hot-reloading plugins](#hot-reloading-plugins)
 4. [Creating a plugin](#creating-a-plugin)
-5. [Dockerfile](#dockerfile)
+5. [Docker](#docker)
 
 ## Default plugins
 
@@ -34,7 +34,7 @@ You can compile a single plugin on your own using
 go build -o "bin/" -buildmode=plugin "plugins/my-plugin/"
 ```
 
-If you want your plugin to be loaded, you must add it to the default plugins list in `main.go`, or in the `-plugins` flag.
+If you want your plugin to be loaded, you must add it to the `DefaultPlugins` list in `bot/config.go`, or the `config/plugins.json` file (described in the main README).
 
 ## Hot-reloading plugins
 
@@ -50,8 +50,6 @@ The actual [`plugins.go`](https://github.com/5HT2/taro-bot/blob/master/plugins/p
 
 An example plugin's `example.go` can be found [in the `plugins` folder](https://github.com/5HT2/taro-bot/blob/master/plugins/example/example.go).
 
-## Dockerfile
+## Docker
 
-Currently, the Dockerfile will compile all plugins in `plugins/` and load the default plugins list.
-In the future, a way to retroactively download and add plugins will be added, see [#21](https://github.com/5HT2/taro-bot/issues/21).
-For now, modify `plugin-name.go` to load your plugin by default.
+You can modify the plugins to be loaded via Docker with the `config/plugins.json` file, as described in the main README.
