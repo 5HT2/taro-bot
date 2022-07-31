@@ -36,7 +36,7 @@ type RoleConfig struct {
 	RoleID int64  `json:"id"`
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Role Menu",
 		Description: "Create menus to assign roles with reactions!",
@@ -60,6 +60,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(event *gateway.MessageReactionRemoveEvent) {}),
 		}},
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
 }
