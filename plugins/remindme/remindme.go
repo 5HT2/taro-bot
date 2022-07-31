@@ -39,7 +39,7 @@ func (r Reminder) String() string {
 	return fmt.Sprintf("[%v, %v, %v, %v, %v, %v, %v, \"%s\"]", r.ID, r.Time.Unix(), r.Channel, r.Guild, r.User.ID, r.Timestamp, r.DM, r.Contents)
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Remind Me",
 		Description: "Set a reminder for yourself at a later date!",
@@ -53,6 +53,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	p.Jobs = generateJobs() // even if the plugin is reloaded, InitPlugin should re-add the reminders with this
 	return p
