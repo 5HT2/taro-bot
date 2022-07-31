@@ -10,11 +10,9 @@ This README describes how to use plugins. See the [README](../README.md) in the 
 
 ## Default plugins
 
-Plugins that are loaded by default when running the bot are registered with the `-plugins` flag, and the `plugin-name.go` file maintains a list of plugins which are included by "default" with the bot.
+Various plugins are loaded by default when using the bot, stored in the `DefaultPlugins` variable in `bot/config.go`.
 
-Using this flag you are able to:
-- Disable all plugins (use `-plugins=""`)
-- Selectively load plugins on bot startup (use `-plugins="base my-plugin"`, and so on)
+You can configure the plugins that are loaded by modifying the `config/plugins.json` file, as described in the main README.
 
 You are also able to change the directory that the bot looks for plugins in, which is `-pluginDir="bin"` by default. Changing this flag will not compile your plugins for you, the Makefile will check `plugins/` for compiling, and output them to `bin/`.
 
@@ -34,7 +32,7 @@ You can compile a single plugin on your own using
 go build -o "bin/" -buildmode=plugin "plugins/my-plugin/"
 ```
 
-If you want your plugin to be loaded, you must add it to the `DefaultPlugins` list in `bot/config.go`, or the `config/plugins.json` file (described in the main README).
+If you want your plugin to be loaded, you must add it to the `DefaultPlugins` list in `bot/config.go`, or the `config/plugins.json` file.
 
 ## Hot-reloading plugins
 
