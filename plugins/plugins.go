@@ -12,18 +12,17 @@ import (
 	"path/filepath"
 	"plugin"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 )
 
 var (
-	pathValidation = regexp.MustCompile(`[^a-z\d.]`)
-	fileMode       = os.FileMode(0755)
-	plugins        = make([]*Plugin, 0)
+	fileMode = os.FileMode(0755)
+	plugins  = make([]*Plugin, 0)
 )
 
 type PluginInit struct {
+	ConfigDir string
 }
 
 type Plugin struct {
@@ -31,6 +30,7 @@ type Plugin struct {
 	Description string             // Description of what the plugin does
 	Version     string             // Version in semver, e.g.., 1.1.0
 	Config      interface{}        // Config is the Plugin's config, can be nil
+	ConfigDir   string             // ConfigDir is the name of the config directory
 	ConfigType  reflect.Type       // ConfigType is the type to validate parse the config with
 	Commands    []bot.CommandInfo  // Commands to register, could be none
 	Responses   []bot.ResponseInfo // Responses to register, could be none
@@ -40,7 +40,7 @@ type Plugin struct {
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.ConfigType, p.Commands, p.Responses, p.Handlers, p.Jobs)
+	return fmt.Sprintf("[%s, %s, %s, %s, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.ConfigDir, p.ConfigType, p.Commands, p.Responses, p.Handlers, p.Jobs)
 }
 
 // Register will register a plugin's commands, responses and jobs to the bot
@@ -56,13 +56,17 @@ func (p *Plugin) Register() {
 func (p *Plugin) LoadConfig() (i interface{}) {
 	defer util.LogPanic() // This code is unsafe, we should log if it panics
 
+	if p.ConfigDir == "" {
+		log.Fatalln("plugin config load failed: p.ConfigDir is unset!")
+	}
+
 	bytes, err := os.ReadFile(getConfigPath(p))
 	if err != nil {
 		log.Printf("plugin config reading failed (%s): %s\n", p.Name, err)
 		return i
 	}
 
-	obj, err := util.NewInterface(p.ConfigType, bytes)
+	obj, err := util.NewInterface(p.ConfigType, bytes) // unsafe
 	if err != nil {
 		log.Printf("plugin config unmarshalling failed (%s): %s\n", p.Name, err)
 		return i
@@ -73,13 +77,13 @@ func (p *Plugin) LoadConfig() (i interface{}) {
 }
 
 func (p *Plugin) SaveConfig() {
-	if p.Config == nil || p.ConfigType == nil {
+	if p.Config == nil || p.ConfigType == nil || p.ConfigDir == "" {
 		log.Printf("skipping saving %s\n", p.Name)
 		return
 	}
 
 	// This is faster than checking if it exists
-	_ = os.Mkdir("config/"+getConfigDir(p), fileMode)
+	_ = os.Mkdir("config/"+p.ConfigDir, fileMode)
 
 	if bytes, err := json.MarshalIndent(p.Config, "", "    "); err != nil {
 		log.Printf("plugin config marshalling failed (%s): %s\n", p.Name, err)
@@ -121,16 +125,15 @@ func SetupConfigSaving() {
 	}()
 }
 
-// Load will load all the plugins from dir specified in pluginList
-func Load(dir, pluginList string) {
+// Load will load all the plugins
+func Load(dir string) {
 	d, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Printf("plugin loading failed: couldn't load dir: %s\n", err)
 		return
 	}
 
-	plugins := parsePluginsList(pluginList)
-	pluginInit := &PluginInit{}
+	plugins := parsePluginsList()
 
 	log.Printf("plugin list: [%s]\n", strings.Join(plugins, ", "))
 
@@ -159,7 +162,14 @@ func Load(dir, pluginList string) {
 					return
 				}
 
+				// Pass the ConfigDir to the PluginInit, so plugins can access it while loading their initial config.
+				// This requires an extra step on the user's part when writing a plugin, but the plugin loading will fail
+				// and let the user know if they forgot to do so. This isn't ideal, but it allows the renaming of plugin
+				// names, without breaking the config or relying on parsing to be consistent.
+				pluginInit := &PluginInit{ConfigDir: strings.TrimSuffix(entry.Name(), ".so")}
+				// Create the init function to execute, to attempt plugin registration.
 				initFn := fn.(func(manager *PluginInit) *Plugin)
+
 				if p := initFn(pluginInit); p != nil {
 					p.Register()
 					log.Printf("plugin registered: %s\n", p)
@@ -260,7 +270,7 @@ func RegisterHandlers() {
 }
 
 // RegisterAll will register all bot features, and then load plugins
-func RegisterAll(dir, pluginList string) {
+func RegisterAll(dir string) {
 	bot.Mutex.Lock()
 	defer bot.Mutex.Unlock()
 
@@ -276,7 +286,7 @@ func RegisterAll(dir, pluginList string) {
 
 	// This registers the plugins we have downloaded
 	// This does not build new plugins for us, which instead has to be done separately
-	Load(dir, pluginList)
+	Load(dir)
 
 	// This registers the new jobs that plugins have scheduled, and the handlers that they return
 	RegisterHandlers()
@@ -286,21 +296,27 @@ func RegisterAll(dir, pluginList string) {
 	SetupConfigSaving()
 }
 
-func parsePluginsList(pluginList string) []string {
+func parsePluginsList() []string {
 	plugins := make([]string, 0)
-	for _, s := range strings.Split(pluginList, " ") {
-		p := strings.ToLower(s) + ".so"
-		if !util.SliceContains(plugins, p) {
-			plugins = append(plugins, p)
+
+	if len(bot.P.LoadedPlugins) > 0 {
+		for _, p := range bot.P.LoadedPlugins {
+			p += ".so"
+			if !util.SliceContains(plugins, p) {
+				plugins = append(plugins, p)
+			}
+		}
+	} else {
+		for _, p := range bot.DefaultPlugins {
+			p += ".so"
+			if !util.SliceContains(plugins, p) {
+				plugins = append(plugins, p)
+			}
 		}
 	}
 	return plugins
 }
 
 func getConfigPath(p *Plugin) string {
-	return fmt.Sprintf("config/%s/%s.json", getConfigDir(p), p.Version)
-}
-
-func getConfigDir(p *Plugin) string {
-	return pathValidation.ReplaceAllString(strings.ToLower(p.Name), "")
+	return fmt.Sprintf("config/%s/%s.json", p.ConfigDir, p.Version)
 }

@@ -21,10 +21,7 @@ import (
 )
 
 var (
-	defaultPlugins = "base base-extra base-fun bookmarker leave-join-msg message-roles role-menu spotifytoyoutube " +
-		"starboard remindme sys-stats suggest-topic tenor-delete"
 	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
-	pluginList   = flag.String("plugins", defaultPlugins, "List of plugins to load")
 	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
 	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
 	debugLogFile = "/tmp/taro-bot.log"
@@ -34,8 +31,9 @@ func main() {
 	flag.Parse()
 	log.Printf("Running on Go version: %s\n", runtime.Version())
 
-	// Load config before anything else, as it will be needed
+	// Load configs before anything else, as it will be needed
 	bot.LoadConfig()
+	bot.LoadPluginConfig()
 	var token = bot.C.BotToken
 	if token == "" {
 		log.Fatalln("No bot_token given")
@@ -93,7 +91,7 @@ func main() {
 	util.RegisterHttpBashRequests()
 
 	// Call plugins after logging in with the bot, but before doing anything else at all
-	go plugins.RegisterAll(*pluginDir, *pluginList)
+	go plugins.RegisterAll(*pluginDir)
 
 	// Set up the bots status
 	go bot.LoadActivityStatus()
@@ -111,6 +109,7 @@ func main() {
 	log.Println("received signal, shutting down")
 
 	bot.SaveConfig()
+	bot.SavePluginConfig()
 	plugins.SaveConfig()
 	plugins.Shutdown()
 

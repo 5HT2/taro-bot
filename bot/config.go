@@ -13,9 +13,14 @@ import (
 )
 
 var (
-	C             Config
-	fileMode      = os.FileMode(0700)
-	DefaultPrefix = "."
+	C Config
+	P PluginConfig
+
+	DefaultPrefix  = "."
+	DefaultPlugins = []string{"base", "base-extra", "base-fun", "bookmarker", "leave-join-msg", "message-roles",
+		"role-menu", "spotifytoyoutube", "starboard", "remindme", "sys-stats", "suggest-topic", "tenor-delete"}
+
+	fileMode = os.FileMode(0700)
 )
 
 type configOperation func(*Config)
@@ -89,7 +94,12 @@ type GuildConfig struct {
 	Starboard            StarboardConfig   `json:"starboard_config"`                 // TODO: Migrate
 }
 
-// SetupConfigSaving will run SaveLocalInDatabase every 5 minutes with a ticker
+type PluginConfig struct {
+	Mutex         sync.Mutex `json:"-"`              // not saved in DB
+	LoadedPlugins []string   `json:"loaded_plugins"` // A list of plugins to load, overrides DefaultPlugins
+}
+
+// SetupConfigSaving will run SaveConfig and SavePluginConfig every 5 minutes with a ticker
 func SetupConfigSaving() {
 	ticker := time.NewTicker(5 * time.Minute)
 	go func() {
@@ -97,6 +107,7 @@ func SetupConfigSaving() {
 			select {
 			case <-ticker.C:
 				SaveConfig()
+				SavePluginConfig()
 			}
 		}
 	}()
@@ -139,7 +150,37 @@ func SaveConfig() {
 	if err != nil {
 		log.Printf("failed to write config: %v\n", err)
 	} else {
-		log.Printf("successfully saved taro config\n")
+		log.Printf("saved taro config\n")
+	}
+}
+
+func LoadPluginConfig() {
+	bytes, err := os.ReadFile("config/plugins.json")
+	if err != nil {
+		log.Printf("error loading plugin config: %v\n", err)
+		log.Printf("loading default config/plugins.json\n")
+
+		P = PluginConfig{LoadedPlugins: make([]string, 0)}
+	} else {
+		if err := json.Unmarshal(bytes, &P); err != nil {
+			log.Fatalf("error unmarshalling plugin config: %v\n", err)
+		}
+	}
+}
+
+func SavePluginConfig() {
+	bytes, err := json.MarshalIndent(&P, "", "    ")
+
+	if err != nil {
+		log.Printf("failed to marshal plugin config: %v\n", err)
+		return
+	}
+
+	err = os.WriteFile("config/plugins.json", bytes, fileMode)
+	if err != nil {
+		log.Printf("failed to write plugin config: %v\n", err)
+	} else {
+		log.Printf("saved taro plugin config\n")
 	}
 }
 
