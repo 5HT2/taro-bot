@@ -20,7 +20,7 @@ type config struct {
 }
 
 // InitPlugin is called when a plugin is registered, and is used to register commands, responses, jobs and handlers.
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	// All the `FeatureNameInfo` fields are optional, and can be omitted.
 	p = &plugins.Plugin{
 		Name:        "Example plugin",
@@ -71,6 +71,8 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 		// ShutdownFn optionally allows you to register a function that will run when the bot has been killed / stopped.
 		ShutdownFn: Shutdown,
 	}
+	// This is required to set the config directory initially.
+	p.ConfigDir = i.ConfigDir
 	// When loading a config, you should cast not cast it, as it will be nil by default.
 	// Instead, check if it is nil before doing .(config) in order to use it.
 	p.Config = p.LoadConfig()
