@@ -42,3 +42,12 @@ This is the simplest example of the `config/config.json` file, you only need `bo
     "bot_token": "bot token goes here"
 }
 ```
+
+You can also create a `config/plugins.json`, to select which plugins will be loaded.
+This is optional, and a default (curated) will load if you do not set it.
+
+```json
+{
+    "loaded_plugins": ["example", "leave-join-msg"]
+}
+```
