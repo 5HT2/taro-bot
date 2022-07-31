@@ -39,7 +39,7 @@ type Role struct {
 	Blacklist []int64 `json:"blacklist"`
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Message Roles",
 		Description: "Assign a role once a message threshold has been reached",
@@ -59,6 +59,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 1,
 		}},
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
 }
