@@ -20,7 +20,7 @@ type config struct {
 	Guilds map[string]bool `json:"guilds,omitempty"` // [guild id]enabled
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Tenor Delete",
 		Description: "Automatically delete tenor gifs",
@@ -39,6 +39,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			MatchMin: 1,
 		}},
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
 }
