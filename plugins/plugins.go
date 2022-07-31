@@ -34,13 +34,13 @@ type Plugin struct {
 	ConfigType  reflect.Type       // ConfigType is the type to validate parse the config with
 	Commands    []bot.CommandInfo  // Commands to register, could be none
 	Responses   []bot.ResponseInfo // Responses to register, could be none
-	Jobs        []bot.JobInfo      // Jobs to register, could be none
 	Handlers    []bot.HandlerInfo  // Handlers to register, could be none
+	Jobs        []bot.JobInfo      // Jobs to register, could be none
 	ShutdownFn  func()             // ShutdownFn is a function to be called when the bot shuts down
 }
 
 func (p Plugin) String() string {
-	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.ConfigType, p.Commands, p.Responses, p.Jobs, p.Handlers)
+	return fmt.Sprintf("[%s, %s, %v, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.ConfigType, p.Commands, p.Responses, p.Handlers, p.Jobs)
 }
 
 // Register will register a plugin's commands, responses and jobs to the bot
@@ -49,8 +49,8 @@ func (p *Plugin) Register() {
 
 	bot.Commands = append(bot.Commands, p.Commands...)
 	bot.Responses = append(bot.Responses, p.Responses...)
-	bot.Jobs = append(bot.Jobs, p.Jobs...)             // these need to have RegisterJobs called in order to function
 	bot.Handlers = append(bot.Handlers, p.Handlers...) // these need to have RegisterHandlers called in order to function
+	bot.Jobs = append(bot.Jobs, p.Jobs...)             // these need to have RegisterJobs called in order to function
 }
 
 func (p *Plugin) LoadConfig() (i interface{}) {
@@ -271,16 +271,16 @@ func RegisterAll(dir, pluginList string) {
 	bot.Responses = make([]bot.ResponseInfo, 0)
 
 	// We want to do this before registering plugins
-	ClearJobs()
 	ClearHandlers()
+	ClearJobs()
 
 	// This registers the plugins we have downloaded
 	// This does not build new plugins for us, which instead has to be done separately
 	Load(dir, pluginList)
 
 	// This registers the new jobs that plugins have scheduled, and the handlers that they return
-	RegisterJobs()
 	RegisterHandlers()
+	RegisterJobs()
 
 	// This enables config saving for all loaded plugins
 	SetupConfigSaving()
@@ -302,5 +302,5 @@ func getConfigPath(p *Plugin) string {
 }
 
 func getConfigDir(p *Plugin) string {
-	return pathValidation.ReplaceAllString(strings.ToLower(p.Name), "-")
+	return pathValidation.ReplaceAllString(strings.ToLower(p.Name), "")
 }
