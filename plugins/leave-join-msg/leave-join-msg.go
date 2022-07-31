@@ -38,7 +38,7 @@ type Message struct {
 	LastMessage     int64          `json:"last_message,omitempty"`
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	p = &plugins.Plugin{
 		Name:        "Leave & Join Msg",
 		Description: "Send a message when a user leaves or joins. `USER_ID` and `USER_TAG` are allowed for use in messages",
@@ -62,6 +62,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(event *gateway.GuildMemberRemoveEvent) {}),
 		}},
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
 }
