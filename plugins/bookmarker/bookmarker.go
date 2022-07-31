@@ -25,7 +25,7 @@ type config struct {
 	EnabledGuilds map[string]bool `json:"enabled_guilds,omitempty"` // [guild id]bool
 }
 
-func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
+func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	// All the `FeatureNameInfo` fields are optional, and can be omitted.
 	p = &plugins.Plugin{
 		Name:        "Bookmarker",
@@ -46,6 +46,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
+	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
 }
