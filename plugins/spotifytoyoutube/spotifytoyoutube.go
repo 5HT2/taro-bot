@@ -22,7 +22,7 @@ import (
 var (
 	p                 *plugins.Plugin
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z\d]\S{2,}`)
-	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \| Spotify`)
+	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \\\| Spotify`)
 
 	instances []InvidiousInstance
 )
@@ -143,7 +143,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	util.ExtractNodeText(node, text)
 	log.Printf("SpotifyToYoutube: text: %s\n", text.String())
 
-	res := spotifyTitleRegex.FindStringSubmatch(text.String())
+	res := spotifyTitleRegex.FindStringSubmatch(regexp.QuoteMeta(text.String()))
 	if len(res) == 0 {
 		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: Couldn't parse Spotify song title", bot.ErrorColor)
 		return
