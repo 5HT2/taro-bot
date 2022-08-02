@@ -5,10 +5,9 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
-	"strconv"
 	"strings"
-	"time"
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -161,10 +160,10 @@ func PingCommand(c bot.Command) error {
 		bot.DefaultColor); err != nil {
 		return err
 	} else {
-		curTime := time.Now().UnixMilli()
-		msgTime := msg.Timestamp.Time().UnixMilli()
+		msgTime := c.E.Timestamp.Time().UnixMilli()
+		curTime := msg.Timestamp.Time().UnixMilli()
 
-		embed := cmd.MakeEmbed("Pong!", "Latency is "+strconv.FormatInt(curTime-msgTime, 10)+"ms", bot.SuccessColor)
+		embed := cmd.MakeEmbed("Pong!", fmt.Sprintf("Latency is %sms", util.FormattedNum(curTime-msgTime)), bot.SuccessColor)
 		_, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, "", embed)
 		return err
 	}
