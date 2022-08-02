@@ -49,7 +49,7 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			FnName:      "RemindMeCommand",
 			Name:        "remindme",
 			Aliases:     []string{"remind", "r"},
-			Description: "This command is an example",
+			Description: "Set a reminder for yourself!",
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 	}
