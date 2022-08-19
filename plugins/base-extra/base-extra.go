@@ -6,6 +6,7 @@ import (
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
+	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
@@ -37,6 +38,12 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Name:        "profilepic",
 			Aliases:     []string{"pfp"},
 			Description: "Get the profile picture of someone",
+		}, {
+			Fn:          SudoCommand,
+			FnName:      "SudoCommand",
+			Name:        "sudo",
+			Aliases:     []string{"#", "su"},
+			Description: "Operator-only commands",
 		}},
 		Responses: []bot.ResponseInfo{},
 	}
@@ -307,4 +314,41 @@ func ProfilePicCommand(c bot.Command) error {
 	}
 	_, err := cmd.SendCustomEmbed(c.E.ChannelID, e)
 	return err
+}
+
+func SudoCommand(c bot.Command) error {
+	var opID int64 = 0
+	bot.C.Run(func(c *bot.Config) {
+		opID = c.OperatorID
+	})
+
+	if c.E.Author.ID == 0 || int64(c.E.Author.ID) != opID {
+		return bot.GenericError("SudoCommand", "running command", "user is not the bot operator")
+	}
+
+	arg, _ := cmd.ParseStringArg(c.Args, 1, true)
+
+	switch arg {
+	case "curl":
+		if args, err := cmd.ParseStringSliceArg(c.Args, 2, -1); err != nil {
+			return err
+		} else {
+			if len(args) == 0 {
+				_, err := cmd.SendEmbed(c.E, c.Name+" `curl`", "Expected arguments after `curl`!", bot.ErrorColor)
+				return err
+			}
+			if res, err := httpBashRequests.Run("curl " + strings.Join(args, " ")); err != nil {
+				return err
+			} else {
+				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", res), bot.DefaultColor)
+				return err
+			}
+		}
+	default:
+		_, err := cmd.SendEmbed(c.E,
+			c.Name,
+			"Available arguments are:\n- `curl` <url>",
+			bot.DefaultColor)
+		return err
+	}
 }
