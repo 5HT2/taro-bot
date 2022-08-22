@@ -16,6 +16,11 @@ var (
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
+	cmdName, cmdArgs := extractCommand(e.Message)
+	CommandHandlerWithCommand(e, cmdName, cmdArgs)
+}
+
+func CommandHandlerWithCommand(e *gateway.MessageCreateEvent, cmdName string, cmdArgs []string) {
 	defer util.LogPanic()
 
 	// Don't respond to bot messages.
@@ -23,7 +28,6 @@ func CommandHandler(e *gateway.MessageCreateEvent) {
 		return
 	}
 
-	cmdName, cmdArgs := extractCommand(e.Message)
 	if len(cmdName) == 0 {
 		return
 	}
