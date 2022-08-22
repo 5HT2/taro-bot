@@ -328,7 +328,54 @@ func SudoCommand(c bot.Command) error {
 
 	arg, _ := cmd.ParseStringArg(c.Args, 1, true)
 
+	// Look for a command alias
+	var alias []string
+	bot.C.Run(func(cf *bot.Config) {
+		if a, ok := cf.OperatorAliases[arg]; ok {
+			alias = a
+		}
+	})
+
+	// TODO: Test privileges, alias, args.
+	// Found an alias, execute it as a command and return. This does not allow privilege escalation because c.E is still passed.
+	if len(alias) > 0 {
+		args, _ := cmd.ParseStringSliceArg(c.Args, 2, -1)
+		if len(args) > 0 { // Allow adding additional args.
+			alias = append(alias, args...)
+		}
+
+		cmd.CommandHandlerWithCommand(c.E, alias[0], alias)
+		return nil
+	}
+
+	// We didn't find an alias, so instead check the regular command args.
 	switch arg {
+	case "alias":
+		aliasName, argErr := cmd.ParseStringArg(c.Args, 2, true)
+		if argErr != nil {
+			return argErr
+		}
+
+		args, _ := cmd.ParseStringSliceArg(c.Args, 3, -1)
+		var err error
+
+		bot.C.Run(func(cf *bot.Config) {
+			if cf.OperatorAliases == nil {
+				cf.OperatorAliases = make(map[string][]string, 0)
+			}
+
+			if len(args) == 0 {
+				if alias, ok := cf.OperatorAliases[aliasName]; !ok {
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Could not find any alias with the name `%s`!", aliasName), bot.ErrorColor)
+				} else {
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Alias for `%s` is set to ```\n%s\n```", aliasName, strings.Join(alias, " ")), bot.SuccessColor)
+				}
+			} else {
+				cf.OperatorAliases[aliasName] = args
+				_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Set alias for `%s` to ```\n%s\n```", aliasName, strings.Join(args, " ")), bot.SuccessColor)
+			}
+		})
+		return err
 	case "curl":
 		if args, err := cmd.ParseStringSliceArg(c.Args, 2, -1); err != nil {
 			return err
@@ -347,7 +394,7 @@ func SudoCommand(c bot.Command) error {
 	default:
 		_, err := cmd.SendEmbed(c.E,
 			c.Name,
-			"Available arguments are:\n- `curl` <url>",
+			"Available arguments are:\n- `curl [url]`\n- `alias <name> <command>`",
 			bot.DefaultColor)
 		return err
 	}

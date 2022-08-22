@@ -70,15 +70,16 @@ func (c *Config) Run(co configOperation) {
 }
 
 type Config struct {
-	Mutex           sync.Mutex       `json:"-"` // not saved in DB
-	PrefixCache     map[int64]string `json:"-"` // not saved in DB // [guild id]prefix
-	BotToken        string           `json:"bot_token"`
-	ActivityName    string           `json:"activity_name,omitempty"` // See LoadActivityStatus
-	ActivityUrl     string           `json:"activity_url,omitempty"`  // See LoadActivityStatus
-	ActivityType    uint8            `json:"activity_type,omitempty"` // See LoadActivityStatus
-	OperatorChannel int64            `json:"operator_channel,omitempty"`
-	OperatorID      int64            `json:"operator_id,omitempty"`
-	GuildConfigs    []GuildConfig    `json:"guild_configs,omitempty"`
+	Mutex           sync.Mutex          `json:"-"` // not saved in DB
+	PrefixCache     map[int64]string    `json:"-"` // not saved in DB // [guild id]prefix
+	BotToken        string              `json:"bot_token"`
+	ActivityName    string              `json:"activity_name,omitempty"` // See LoadActivityStatus
+	ActivityUrl     string              `json:"activity_url,omitempty"`  // See LoadActivityStatus
+	ActivityType    uint8               `json:"activity_type,omitempty"` // See LoadActivityStatus
+	OperatorChannel int64               `json:"operator_channel,omitempty"`
+	OperatorID      int64               `json:"operator_id,omitempty"`
+	OperatorAliases map[string][]string `json:"operator_aliases,omitempty"`
+	GuildConfigs    []GuildConfig       `json:"guild_configs,omitempty"`
 }
 
 type GuildConfig struct {
