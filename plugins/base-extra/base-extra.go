@@ -387,7 +387,7 @@ func SudoCommand(c bot.Command) error {
 			if res, err := httpBashRequests.Run("curl " + strings.Join(args, " ")); err != nil {
 				return err
 			} else {
-				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", res[:2040]), bot.DefaultColor)
+				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
 				return err
 			}
 		}
