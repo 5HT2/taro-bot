@@ -12,6 +12,36 @@ var (
 	printer = message.NewPrinter(language.English)
 )
 
+// TailLinesLimit will take the last amount of lines that fit into the X char limit
+func TailLinesLimit(s string, limit int) string {
+	lines := strings.Split(s, "\n")
+
+	// We don't have any lines to work with - just do a raw char limit
+	if len(lines) <= 1 {
+		return s[:limit]
+	}
+
+	// Reverse the order of the lines, we want to Tail them
+	SliceReverse(lines)
+
+	reached := 0
+	tailedLines := make([]string, 0)
+	for _, line := range lines {
+		if len(line)+reached <= limit {
+			reached += len(line)
+			reached += 1 // for newline
+			tailedLines = append(tailedLines, line)
+		} else {
+			break
+		}
+	}
+
+	// Undo the reverse sort
+	SliceReverse(tailedLines)
+
+	return strings.Join(tailedLines, "\n")
+}
+
 // JoinInt64Slice will join i with sep
 func JoinInt64Slice(i []int64, sep string, prefix string, suffix string) string {
 	elems := make([]string, 0)
