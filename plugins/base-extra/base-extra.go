@@ -236,7 +236,7 @@ func PermissionCommand(c bot.Command) error {
 		}
 	case "op":
 		id := int64(c.E.Author.ID)
-		if id != bot.C.OperatorID && !cmd.HasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
+		if !util.SliceContains(bot.C.OperatorIDs, id) && !cmd.HasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
 			return bot.GenericError("PermissionCommand", "granting operator access", "user is not the bot operator!")
 		}
 
@@ -317,12 +317,12 @@ func ProfilePicCommand(c bot.Command) error {
 }
 
 func SudoCommand(c bot.Command) error {
-	var opID int64 = 0
+	opIDs := make([]int64, 0)
 	bot.C.Run(func(c *bot.Config) {
-		opID = c.OperatorID
+		opIDs = c.OperatorIDs
 	})
 
-	if c.E.Author.ID == 0 || int64(c.E.Author.ID) != opID {
+	if c.E.Author.ID == 0 || !util.SliceContains(opIDs, int64(c.E.Author.ID)) {
 		return bot.GenericError("SudoCommand", "running command", "user is not the bot operator")
 	}
 

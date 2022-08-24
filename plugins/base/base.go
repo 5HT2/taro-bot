@@ -7,6 +7,7 @@ import (
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
+	"strconv"
 	"strings"
 )
 
@@ -61,12 +62,12 @@ func OperatorConfigCommand(c bot.Command) error {
 	t := "Operator Config "
 	var err error
 
-	var opID int64 = 0
+	opIDs := make([]int64, 0)
 	bot.C.Run(func(c *bot.Config) {
-		opID = c.OperatorID
+		opIDs = c.OperatorIDs
 	})
 
-	if c.E.Author.ID == 0 || int64(c.E.Author.ID) != opID {
+	if c.E.Author.ID == 0 || !util.SliceContains(opIDs, int64(c.E.Author.ID)) {
 		return bot.GenericError("OperatorConfigCommand", "running command", "user is not the bot operator")
 	}
 
@@ -110,19 +111,25 @@ func OperatorConfigCommand(c bot.Command) error {
 				_, err = cmd.SendEmbed(c.E, t+"`operator_channel`", fmt.Sprintf("Set `operator_channel` to `%v`", co.OperatorChannel), bot.SuccessColor)
 			}
 		})
-	case "operator_id":
+	case "operator_ids":
 		bot.C.Run(func(co *bot.Config) {
-			if argInt == -1 {
-				_, err = cmd.SendEmbed(c.E, t+"`operator_id`", fmt.Sprintf("The current `operator_id` is `%v`", co.OperatorID), bot.DefaultColor)
+			if len(args) == 0 {
+				_, err = cmd.SendEmbed(c.E, t+"`operator_ids`", fmt.Sprintf("The current `operator_ids` is `%v`", co.OperatorIDs), bot.DefaultColor)
 			} else {
-				co.OperatorID = argInt
-				_, err = cmd.SendEmbed(c.E, t+"`operator_id`", fmt.Sprintf("Set `operator_id` to `%v`", co.OperatorID), bot.SuccessColor)
+				ids := make([]int64, 0)
+				for _, arg := range args {
+					if id, err := strconv.ParseInt(arg, 10, 64); err == nil {
+						ids = append(ids, id)
+					}
+				}
+				co.OperatorIDs = ids
+				_, err = cmd.SendEmbed(c.E, t+"`operator_ids`", fmt.Sprintf("Set `operator_ids` to `%v`", co.OperatorIDs), bot.SuccessColor)
 			}
 		})
 	default:
 		_, err = cmd.SendEmbed(c.E,
 			"Operator Config",
-			"Available arguments are:\n- `activity_name [activity name]`\n- `activity_url [activity url]`\n- `activity_type [activity type]`\n- `operator_channel [operator channel id]`\n- `operator_id [operator id]`",
+			"Available arguments are:\n- `activity_name [activity name]`\n- `activity_url [activity url]`\n- `activity_type [activity type]`\n- `operator_channel [operator channel id]`\n- `operator_ids [operator ids]`",
 			bot.DefaultColor)
 	}
 

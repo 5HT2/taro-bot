@@ -146,8 +146,8 @@ func checkGuildCounts(s *state.State) {
 
 func checkExited() {
 	log.Printf("Last exit code was %v\n", *lastExitCode)
-	if bot.C.OperatorChannel == 0 || bot.C.OperatorID == 0 {
-		log.Printf("Not uploading logs, OperatorChannel or OperatorID were not set\n")
+	if bot.C.OperatorChannel == 0 || len(bot.C.OperatorIDs) == 0 {
+		log.Printf("Not uploading logs, OperatorChannel or OperatorIDs were not set\n")
 		return
 	}
 
@@ -168,11 +168,11 @@ func checkExited() {
 	}
 
 	if *debugLog {
-		log.Printf("%v\n", bot.C.OperatorID)
+		log.Printf("%v\n", bot.C.OperatorIDs)
 	}
 
 	// Format stacktrace
-	stack := "<@" + strconv.FormatInt(bot.C.OperatorID, 10) + ">\n```\n" + strings.Join(lines, "\n")
+	stack := "<@" + strconv.FormatInt(bot.C.OperatorIDs[0], 10) + ">\n```\n" + strings.Join(lines, "\n")
 	if len(stack) > 1996 {
 		stack = stack[:1996]
 	}

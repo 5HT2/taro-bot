@@ -77,7 +77,7 @@ type Config struct {
 	ActivityUrl     string              `json:"activity_url,omitempty"`  // See LoadActivityStatus
 	ActivityType    uint8               `json:"activity_type,omitempty"` // See LoadActivityStatus
 	OperatorChannel int64               `json:"operator_channel,omitempty"`
-	OperatorID      int64               `json:"operator_id,omitempty"`
+	OperatorIDs     []int64             `json:"operator_ids,omitempty"`
 	OperatorAliases map[string][]string `json:"operator_aliases,omitempty"`
 	GuildConfigs    []GuildConfig       `json:"guild_configs,omitempty"`
 }
