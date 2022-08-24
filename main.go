@@ -1,30 +1,25 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
 	"github.com/5HT2/taro-bot/util"
-	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 )
 
 var (
-	pluginDir    = flag.String("plugindir", "bin", "Default dir to search for plugins")
-	lastExitCode = flag.Int64("exited", 0, "Called by Dockerfile")
-	debugLog     = flag.Bool("debug", false, "Debug messages and faster config saving")
-	debugLogFile = "/tmp/taro-bot.log"
+	pluginDir = flag.String("plugindir", "bin", "Default dir to search for plugins")
+	debugLog  = flag.Bool("debug", false, "Debug messages and faster config saving")
 )
 
 func main() {
@@ -79,13 +74,6 @@ func main() {
 	}
 	bot.User = u
 
-	// program has been called with -exited, upload the logs and don't run the bot
-	if lastExitCode != nil && *lastExitCode > 0 {
-		checkExited()
-		os.Exit(int(*lastExitCode))
-		return
-	}
-
 	// We want http bash requests immediately accessible just in case something needs them.
 	// Though, this shouldn't really ever happen, it doesn't hurt.
 	util.RegisterHttpBashRequests()
@@ -100,7 +88,7 @@ func main() {
 	go bot.SetupConfigSaving()
 	go bot.Scheduler.StartAsync()
 
-	log.Printf("Started as %v (%s#%s)\n", u.ID, u.Username, u.Discriminator)
+	log.Printf("Started as %v (%s#%s). Debugging is set to `%v`.\n", u.ID, u.Username, u.Discriminator, *debugLog)
 
 	go checkGuildCounts(s)
 
@@ -142,43 +130,4 @@ func checkGuildCounts(s *state.State) {
 		util.JoinIntAndStr(len(guilds), "guild"),
 		strings.Join(fmtGuilds, "\n"),
 	)
-}
-
-func checkExited() {
-	log.Printf("Last exit code was %v\n", *lastExitCode)
-	if bot.C.OperatorChannel == 0 || len(bot.C.OperatorIDs) == 0 {
-		log.Printf("Not uploading logs, OperatorChannel or OperatorIDs were not set\n")
-		return
-	}
-
-	file, err := os.Open(debugLogFile)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	lines := make([]string, 0)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if *debugLog {
-		log.Printf("%v\n", bot.C.OperatorIDs)
-	}
-
-	// Format stacktrace
-	stack := "<@" + strconv.FormatInt(bot.C.OperatorIDs[0], 10) + ">\n```\n" + strings.Join(lines, "\n")
-	if len(stack) > 1996 {
-		stack = stack[:1996]
-	}
-	stack += "\n```"
-
-	if _, err = bot.Client.SendMessage(discord.ChannelID(bot.C.OperatorChannel), stack); err != nil {
-		log.Fatalln(err)
-	}
 }
