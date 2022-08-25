@@ -344,7 +344,7 @@ func SudoCommand(c bot.Command) error {
 			alias = append(alias, args...)
 		}
 
-		cmd.CommandHandlerWithCommand(c.E, alias[0], alias)
+		cmd.CommandHandlerWithCommand(c.E, alias[0], alias[1:])
 		return nil
 	}
 
