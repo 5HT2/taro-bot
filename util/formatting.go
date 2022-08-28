@@ -18,6 +18,9 @@ func TailLinesLimit(s string, limit int) string {
 
 	// We don't have any lines to work with - just do a raw char limit
 	if len(lines) <= 1 {
+        if limit > len(s) { // Don't slice out of bounds
+            limit = len(s)
+        }
 		return s[:limit]
 	}
 
