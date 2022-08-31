@@ -77,7 +77,11 @@ func StarboardTopPostsCommand(c bot.Command) error {
 
 	posts := make([]bot.StarboardMessage, 0)
 	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		posts = append(posts, g.Starboard.Messages...)
+		for _, p := range g.Starboard.Messages {
+			if p.IsNsfw == nsfw {
+				posts = append(posts, p)
+			}
+		}
 		return g, "StarboardTopPostsCommand: get g.Starboard.Messages"
 	})
 
