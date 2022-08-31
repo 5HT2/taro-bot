@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -36,6 +37,13 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"starboardcfg", "scfg"},
 			Description: "Configure Starboard",
 			GuildOnly:   true,
+		}, {
+			Fn:          StarboardTopPostsCommand,
+			FnName:      "StarboardTopPostsCommand",
+			Name:        "starboardtopposts",
+			Aliases:     []string{"sbtop"},
+			Description: "Get the most starred posts in this guild!",
+			GuildOnly:   true,
 		}},
 		Responses: []bot.ResponseInfo{},
 		Handlers: []bot.HandlerInfo{{
@@ -44,6 +52,76 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
 		}},
 	}
+}
+
+func StarboardTopPostsCommand(c bot.Command) error {
+	nsfwArg, argErr := cmd.ParseStringArg(c.Args, 1, false)
+	nsfw, argErr := cmd.ParseBoolArg(c.Args, 1)
+	if argErr != nil && len(nsfwArg) > 0 {
+		_, err := cmd.SendEmbed(c.E, c.Name,
+			"Available arguments are:\n- `<show nsfw posts bool>`",
+			bot.DefaultColor)
+		return err
+	}
+
+	channel, err := bot.Client.Channel(c.E.ChannelID)
+	if err != nil {
+		return err
+
+	}
+
+	if nsfw && !channel.NSFW {
+		_, err := cmd.SendEmbed(c.E, c.Name, "You can only use the `nsfw` arg in NSFW channels!", bot.ErrorColor)
+		return err
+	}
+
+	posts := make([]bot.StarboardMessage, 0)
+	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		posts = append(posts, g.Starboard.Messages...)
+		return g, "StarboardTopPostsCommand: get g.Starboard.Messages"
+	})
+
+	if len(posts) == 0 {
+		_, err := cmd.SendEmbed(c.E, c.Name, "This server doesn't have any starboard posts. Try again when you have more!", bot.WarnColor)
+		return err
+	}
+
+	// sort by number of stars
+	sort.Slice(posts, func(i, j int) bool {
+		return len(posts[i].Stars) > len(posts[j].Stars)
+	})
+
+	embeds := make([]discord.Embed, 0)
+	limit := 0
+
+	for _, p := range posts {
+		limit++
+		if limit > 5 {
+			break
+		}
+
+		var embedAuthor discord.EmbedAuthor
+		if member, err := bot.Client.Member(c.E.GuildID, discord.UserID(p.Author)); err == nil {
+			embedAuthor = *cmd.CreateEmbedAuthor(*member)
+		} else if user, err := bot.Client.User(discord.UserID(p.Author)); err == nil {
+			embedAuthor = *cmd.CreateEmbedAuthorUser(*user)
+		}
+
+		field := discord.EmbedField{Name: "View Post", Value: cmd.CreateMessageLinkInt64(int64(c.E.GuildID), p.ID, p.CID, true, false)}
+		footer := discord.EmbedFooter{Text: fmt.Sprintf("%v", p.Author)}
+		embed := discord.Embed{
+			Description: getEmojiChannelMention(len(p.Stars), p.CID),
+			Author:      &embedAuthor,
+			Fields:      []discord.EmbedField{field},
+			Footer:      &footer,
+			Color:       starboardColor,
+		}
+
+		embeds = append(embeds, embed)
+	}
+
+	_, err = bot.Client.SendEmbeds(c.E.ChannelID, embeds...)
+	return err
 }
 
 func StarboardConfigCommand(c bot.Command) error {
@@ -249,7 +327,7 @@ func StarboardReactionHandler(i interface{}) {
 			return g, "StarboardReactionHandler: check notEnoughStars"
 		}
 
-		content := getEmoji(stars) + " **" + strconv.Itoa(stars) + "** <#" + strconv.FormatInt(sMsg.CID, 10) + ">"
+		content := getEmojiChannelMention(stars, sMsg.CID)
 
 		// Attempt to get existing message, and make a new one if it isn't there
 		pMsg, err := bot.Client.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
@@ -324,4 +402,8 @@ func getEmoji(stars int) (emoji string) {
 	}
 
 	return emoji
+}
+
+func getEmojiChannelMention(stars int, channel int64) string {
+	return fmt.Sprintf("%s **%v** <#%v>", getEmoji(stars), stars, channel)
 }
