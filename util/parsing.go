@@ -14,7 +14,7 @@ type extractNodeCondition func(*html.Node) bool
 // ExtractNode will select the first node to match extractNodeCondition, for example
 // res, err := ExtractNode(string(content), func(str string) bool { return str == "title" })
 func ExtractNode(content string, fn extractNodeCondition) (*html.Node, error) {
-	doc, _ := html.Parse(strings.NewReader(string(content)))
+	doc, _ := html.Parse(strings.NewReader(content))
 	var n *html.Node
 	var crawler func(*html.Node)
 
