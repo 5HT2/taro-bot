@@ -133,7 +133,9 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
-	node, err := util.ExtractNode(string(content), func(node *html.Node) bool { return node.Data == "title" && node.FirstChild.Data != "Spotify" })
+	node, err := util.ExtractNode(string(content), func(node *html.Node) bool {
+		return node.Data == "title" && node.FirstChild.Data != "more-icon-android" && node.FirstChild.Data != "Spotify"
+	})
 	if err != nil {
 		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
