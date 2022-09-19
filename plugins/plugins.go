@@ -36,6 +36,7 @@ type Plugin struct {
 	Responses   []bot.ResponseInfo // Responses to register, could be none
 	Handlers    []bot.HandlerInfo  // Handlers to register, could be none
 	Jobs        []bot.JobInfo      // Jobs to register, could be none
+	StartupFn   func()             // ShutdownFn is a function to be called when the bot starts up
 	ShutdownFn  func()             // ShutdownFn is a function to be called when the bot shuts down
 }
 
@@ -92,6 +93,15 @@ func (p *Plugin) SaveConfig() {
 			log.Printf("plugin config writing failed (%s): %s\n", p.Name, err)
 		} else {
 			log.Printf("saved config for %s\n", p.Name)
+		}
+	}
+}
+
+// Startup will run the startup function for all plugins
+func Startup() {
+	for _, p := range plugins {
+		if p.StartupFn != nil {
+			p.StartupFn()
 		}
 	}
 }
@@ -294,6 +304,9 @@ func RegisterAll(dir string) {
 
 	// This enables config saving for all loaded plugins
 	SetupConfigSaving()
+
+	// This runs the startup sequence for all loaded plugins that have it
+	Startup()
 }
 
 func parsePluginsList() []string {
