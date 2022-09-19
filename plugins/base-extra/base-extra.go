@@ -36,7 +36,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          ProfilePicCommand,
 			FnName:      "ProfilePicCommand",
 			Name:        "profilepic",
-			Aliases:     []string{"pfp"},
+			Aliases:     []string{"pfp", "avatar"},
 			Description: "Get the profile picture of someone",
 		}, {
 			Fn:          SudoCommand,
