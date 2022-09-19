@@ -77,6 +77,12 @@ func SliceRemove[T comparable](s []T, m T) []T {
 	return ns
 }
 
+// SliceRemoveIndex will remove index i from s
+func SliceRemoveIndex[T comparable](s []T, i int) []T {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
 // SliceReverse will reverse the order of s
 func SliceReverse[S ~[]T, T any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
