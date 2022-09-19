@@ -70,6 +70,7 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 		}},
 		// ShutdownFn optionally allows you to register a function that will run when the bot has been killed / stopped.
 		ShutdownFn: Shutdown,
+		StartupFn:  Startup,
 	}
 	// This is required to set the config directory initially.
 	p.ConfigDir = i.ConfigDir
@@ -77,6 +78,11 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 	// Instead, check if it is nil before doing .(config) in order to use it.
 	p.Config = p.LoadConfig()
 	return p
+}
+
+// Startup will run after all plugins have been loaded and before schedulers are started
+func Startup() {
+	log.Println("hello from the example plugin!")
 }
 
 // Shutdown will run when the bot is killed / stopped, and says goodbye to the console.
