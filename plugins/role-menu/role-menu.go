@@ -12,6 +12,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,16 +23,27 @@ type config struct {
 	Menus map[string]map[string]Menu `json:"menus"` // [guild id][message id]Menu
 }
 
+// Menu stores the information needed to operate a role menu
 type Menu struct {
-	Channel int64           `json:"channel,omitempty"`
-	Roles   map[string]Role `json:"roles"` // [api emoji]Role
+	Channel int64           `json:"channel,omitempty"` // channel id
+	Roles   map[string]Role `json:"roles"`             // [api emoji]Role
 }
 
+// Role is used to assign roles from a Menu
 type Role struct {
 	RoleID int64 `json:"role_id"`
 }
 
+// RoleConfig is used when setting up a role menu and is parsed into a Menu format
 type RoleConfig struct {
+	ID        string           `json:"-"` // MessageID as a string
+	MessageID int64            `json:"message_id,omitempty"`
+	ChannelID int64            `json:"channel_id,omitempty"`
+	Roles     []RoleConfigRole `json:"roles"`
+}
+
+// RoleConfigRole is used when setting up a role menu and is parsed into a Menu and Role format
+type RoleConfigRole struct {
 	Emoji  string `json:"emoji"`
 	RoleID int64  `json:"id"`
 }
@@ -73,29 +85,45 @@ func RoleMenuCommand(c bot.Command) error {
 		return err
 	}
 
-	args, _ := cmd.ParseAllArgs(c.Args)
-	var roleConfigs []RoleConfig
+	firstArg, argErr := cmd.ParseStringArg(c.Args, 1, true)
 
-	if err := json.Unmarshal([]byte(args), &roleConfigs); err != nil {
+	defaultHelp := func() error {
+		_, err := cmd.SendEmbed(c.E, p.Name,
+			"Available arguments are:\n- `create|add|remove [role json]`\n\n`create` a new role menu\n`add` roles\n`remove` existing roles",
+			bot.DefaultColor)
 		return err
 	}
 
-	if msgOriginal, err := cmd.SendEmbed(c.E, "Role Menu", "Creating role menu...", bot.WarnColor); err != nil {
+	if argErr != nil {
+		return defaultHelp()
+	}
+
+	rolesJson, _ := cmd.ParseAllArgs(c.Args[1:])
+	var roleConfig RoleConfig
+	if err := json.Unmarshal([]byte(rolesJson), &roleConfig); err != nil {
 		return err
-	} else {
-		roles := make(map[string]Role, 0)
+	}
 
-		// Parse the command args into an actual config now
-		for _, rc := range roleConfigs {
-			emoji, animated, argErr := cmd.ParseEmojiArg([]string{rc.Emoji}, 1, false)
-			if argErr != nil {
-				return argErr
-			}
+	//
+	// Begin role message parsing section
 
-			parsedEmoji := util.ApiEmojiAsConfig(emoji, animated)
-			roles[parsedEmoji] = Role{rc.RoleID}
+	roles := make(map[string]Role, 0)
+
+	// Parse the command args into an actual config now
+	for _, rc := range roleConfig.Roles {
+		emoji, animated, argErr := cmd.ParseEmojiArg([]string{rc.Emoji}, 1, false)
+		if argErr != nil {
+			return argErr
 		}
 
+		parsedEmoji := util.ApiEmojiAsConfig(emoji, animated)
+		roles[parsedEmoji] = Role{rc.RoleID}
+	}
+
+	//
+	// End role message parsing section
+
+	getLines := func() string {
 		lines := make([]string, 0) // formatted role menu message
 
 		for parsedEmoji, role := range roles {
@@ -107,57 +135,205 @@ func RoleMenuCommand(c bot.Command) error {
 			}
 			lines = append(lines, fmt.Sprintf("%s <@&%v>", parsedEmoji, role.RoleID))
 		}
+		return strings.Join(lines, "\n")
+	}
 
-		if msg, err := bot.Client.SendMessage(c.E.ChannelID, "Creating role menu..."); err != nil {
-			return err
-		} else {
-			// Edit role menu text into existing message
-			msg, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, strings.Join(lines, "\n"))
+	messageIDCheck := func(rc RoleConfig) (RoleConfig, *discord.Message, error) {
+		if rc.MessageID == 0 {
+			msg, _ := cmd.SendEmbed(c.E, p.Name, "`message_id` must be set to add to an existing role menu!", bot.ErrorColor)
+			return rc, msg, bot.GenericError("RoleMenuCommand", "modifying role menu", "`message_id` not set")
+		}
+		if rc.ChannelID == 0 {
+			rc.ChannelID = int64(c.E.ChannelID)
+			msg, err := cmd.SendEmbed(c.E, p.Name, "`channel_id` not set, defaulting to existing channel. Editing menu...", bot.WarnColor)
+			return rc, msg, err
+		}
 
-			//
-			// Save final menu in config
+		msg, err := cmd.SendEmbed(c.E, p.Name, "`message_id` and `channel_id` set, editing menu...", bot.SuccessColor)
+		return rc, msg, err
+	}
 
-			menus := make(map[string]map[string]Menu, 0)
-			if p.Config != nil {
-				menus = p.Config.(config).Menus // copy over the menus for other builds and our current guild
-			}
-
-			createdMenu := Menu{Channel: int64(c.E.ChannelID), Roles: roles}
-
-			if _, ok := menus[c.E.GuildID.String()]; ok {
-				menus[c.E.GuildID.String()][msg.ID.String()] = createdMenu
-			} else {
-				messageMenu := make(map[string]Menu)
-				messageMenu[msg.ID.String()] = createdMenu
-				menus[c.E.GuildID.String()] = messageMenu
-			}
-
-			p.Config = config{Menus: menus}
-
-			// Add reactions to menu
-			for parsedEmoji := range roles {
-				apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
-				if err := bot.Client.React(msg.ChannelID, msg.ID, apiEmoji); err != nil {
-					log.Printf("failed to react when creating role menu: %v\n", err)
+	getMenu := func(c bot.Command, rc RoleConfig) (*Menu, error) {
+		var menu *Menu
+		if p.Config != nil {
+			if guild, ok := p.Config.(config).Menus[c.E.GuildID.String()]; ok {
+				if m, ok := guild[rc.ID]; ok {
+					menu = &m
 				}
-				time.Sleep(750 * time.Millisecond) // We want to wait for the actual rate-limit, but Arikawa does not handle that for you
 			}
+		}
 
-			msg, _ = bot.Client.EditMessage(
-				msgOriginal.ChannelID,
-				msgOriginal.ID,
-				"",
-				discord.Embed{
-					Title:       "Role Menu",
-					Description: "Successfully created role menu!",
-					Color:       bot.SuccessColor,
-				},
-			)
-			time.Sleep(5 * time.Second)
+		if menu == nil {
+			return nil, bot.GenericError("RoleMenuCommand", "getting existing role menu", "none found")
+		}
+		return menu, nil
+	}
 
-			err = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+	setMenu := func(c bot.Command, rc RoleConfig, m Menu) {
+		if p.Config != nil {
+			p.Config.(config).Menus[c.E.GuildID.String()][rc.ID] = m
+		} else {
+			menus := make(map[string]map[string]Menu, 0)
+			msgMenu := make(map[string]Menu)
+			msgMenu[rc.ID] = m
+			menus[c.E.GuildID.String()] = msgMenu
+			p.Config = config{Menus: menus}
+		}
+	}
+
+	switch firstArg {
+	case "add":
+		roleConfig, msg, err := messageIDCheck(roleConfig)
+		if err != nil {
+			if msg != nil { // we're not handling the original message's error in this case, so we should check this
+				time.Sleep(5 * time.Second)
+				_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+			}
 			return err
 		}
+
+		roleConfig.ID = strconv.FormatInt(roleConfig.MessageID, 10)
+
+		existingMenu, err := getMenu(c, roleConfig)
+		if err != nil {
+			return err
+		}
+
+		newRoles := make(map[string]Role)
+
+		// Create new roles to add
+		for _, role := range roleConfig.Roles {
+			newRoles[role.Emoji] = Role{RoleID: role.RoleID}
+		}
+
+		// Add old roles if they haven't been added yet
+		for emoji, role := range existingMenu.Roles {
+			if _, ok := newRoles[emoji]; !ok { // doesn't exist in new roles to add
+				newRoles[emoji] = role
+			} // else // does exist in the new roles, that means our old role ID has been overwritten
+		}
+
+		// Save menu in global config
+		existingMenu.Roles = newRoles
+		setMenu(c, roleConfig, *existingMenu)
+
+		// Edit the menu message
+		roles = newRoles
+
+		if _, err := bot.Client.EditMessage(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), getLines()); err != nil {
+			return err
+		}
+
+		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(5 * time.Second)
+		err = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+		return err
+	case "remove":
+		roleConfig, msg, err := messageIDCheck(roleConfig)
+		if err != nil {
+			if msg != nil { // we're not handling the original message's error in this case, so we should check this
+				time.Sleep(5 * time.Second)
+				_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+			}
+			return err
+		}
+
+		roleConfig.ID = strconv.FormatInt(roleConfig.MessageID, 10)
+
+		existingMenu, err := getMenu(c, roleConfig)
+		if err != nil {
+			return err
+		}
+
+		oldRoles := make(map[string]Role)
+
+		// Only add roles from the existingMenu that aren't in the roleConfig (set by the user in their message)
+		for emoji, role := range existingMenu.Roles {
+			if !util.SliceContains(roleConfig.Roles, RoleConfigRole{RoleID: role.RoleID, Emoji: emoji}) {
+				oldRoles[emoji] = role
+			}
+		}
+
+		// Save menu in global config
+		existingMenu.Roles = oldRoles
+		setMenu(c, roleConfig, *existingMenu)
+
+		// Edit the menu message
+		roles = oldRoles
+
+		if _, err := bot.Client.EditMessage(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), getLines()); err != nil {
+			return err
+		}
+
+		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(5 * time.Second)
+		err = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+		return err
+	case "create":
+		if msgOriginal, err := cmd.SendEmbed(c.E, "Role Menu", "Creating role menu...", bot.WarnColor); err != nil {
+			return err
+		} else {
+			if msg, err := bot.Client.SendMessage(c.E.ChannelID, "Creating role menu..."); err != nil {
+				return err
+			} else {
+				// Edit role menu text into existing message
+				msg, err = bot.Client.EditMessage(msg.ChannelID, msg.ID, getLines())
+
+				//
+				// Save final menu in config
+
+				menus := make(map[string]map[string]Menu, 0)
+				if p.Config != nil {
+					menus = p.Config.(config).Menus // copy over the menus for other builds and our current guild
+				}
+
+				createdMenu := Menu{Channel: int64(c.E.ChannelID), Roles: roles}
+
+				if _, ok := menus[c.E.GuildID.String()]; ok {
+					menus[c.E.GuildID.String()][msg.ID.String()] = createdMenu
+				} else {
+					messageMenu := make(map[string]Menu)
+					messageMenu[msg.ID.String()] = createdMenu
+					menus[c.E.GuildID.String()] = messageMenu
+				}
+
+				p.Config = config{Menus: menus}
+
+				// Add reactions to menu
+				for parsedEmoji := range roles {
+					apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
+					if err := bot.Client.React(msg.ChannelID, msg.ID, apiEmoji); err != nil {
+						log.Printf("failed to react when creating role menu: %v\n", err)
+					}
+					time.Sleep(750 * time.Millisecond) // We want to wait for the actual rate-limit, but Arikawa does not handle that for you
+				}
+
+				msg, _ = bot.Client.EditMessage(
+					msgOriginal.ChannelID,
+					msgOriginal.ID,
+					"",
+					discord.Embed{
+						Title:       "Role Menu",
+						Description: "Successfully created role menu!",
+						Color:       bot.SuccessColor,
+					},
+				)
+				time.Sleep(5 * time.Second)
+
+				err = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+				return err
+			}
+		}
+	default:
+		return defaultHelp()
 	}
 }
 
