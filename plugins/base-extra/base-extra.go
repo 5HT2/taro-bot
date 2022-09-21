@@ -391,6 +391,21 @@ func SudoCommand(c bot.Command) error {
 				return err
 			}
 		}
+	case "./":
+		if args, err := cmd.ParseStringSliceArg(c.Args, 2, -1); err != nil {
+			return err
+		} else {
+			if len(args) == 0 {
+				_, err := cmd.SendEmbed(c.E, c.Name+" `./`", "Expected arguments after `./`!", bot.ErrorColor)
+				return err
+			}
+			if res, err := httpBashRequests.Run("./" + strings.Join(args, " ")); err != nil {
+				return err
+			} else {
+				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
+				return err
+			}
+		}
 	default:
 		_, err := cmd.SendEmbed(c.E,
 			c.Name,
