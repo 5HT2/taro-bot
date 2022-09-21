@@ -384,7 +384,7 @@ func SudoCommand(c bot.Command) error {
 				_, err := cmd.SendEmbed(c.E, c.Name+" `curl`", "Expected arguments after `curl`!", bot.ErrorColor)
 				return err
 			}
-			if res, err := httpBashRequests.Run("curl " + strings.Join(args, " ")); err != nil {
+			if res, err := httpBashRequests.Run("curl " + strings.Join(args, " ") + " 2>&1"); err != nil {
 				return err
 			} else {
 				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
@@ -399,7 +399,7 @@ func SudoCommand(c bot.Command) error {
 				_, err := cmd.SendEmbed(c.E, c.Name+" `./`", "Expected arguments after `./`!", bot.ErrorColor)
 				return err
 			}
-			if res, err := httpBashRequests.Run("./" + strings.Join(args, " ")); err != nil {
+			if res, err := httpBashRequests.Run("./" + strings.Join(args, " ") + " 2>&1"); err != nil {
 				return err
 			} else {
 				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
