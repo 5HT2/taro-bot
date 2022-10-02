@@ -364,15 +364,39 @@ func SudoCommand(c bot.Command) error {
 				cf.OperatorAliases = make(map[string][]string, 0)
 			}
 
-			if len(args) == 0 {
-				if alias, ok := cf.OperatorAliases[aliasName]; !ok {
-					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Could not find any alias with the name `%s`!", aliasName), bot.ErrorColor)
+			switch aliasName {
+			case "-l":
+				if len(cf.OperatorAliases) == 0 {
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -l`", fmt.Sprintf("No aliases are currently set! Use the `%s alias [alias]` command to set an alias.", c.Name), bot.ErrorColor)
 				} else {
-					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Alias for `%s` is set to ```\n%s\n```", aliasName, strings.Join(alias, " ")), bot.SuccessColor)
+					aliases := make([]string, 0)
+					for name, _ := range cf.OperatorAliases {
+						aliases = append(aliases, fmt.Sprintf("- `%s`", name))
+					}
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -l`", fmt.Sprintf("The following aliases are currently set:\n%s\n", strings.Join(aliases, "\n")), bot.DefaultColor)
 				}
-			} else {
-				cf.OperatorAliases[aliasName] = args
-				_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Set alias for `%s` to ```\n%s\n```", aliasName, strings.Join(args, " ")), bot.SuccessColor)
+			case "-r":
+				if len(args) > 0 {
+					if _, ok := cf.OperatorAliases[args[0]]; !ok {
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", fmt.Sprintf("Could not find any alias with the name `%s`!", args[0]), bot.ErrorColor)
+					} else {
+						delete(cf.OperatorAliases, args[0])
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", fmt.Sprintf("Removed alias `%s`!", args[0]), bot.SuccessColor)
+					}
+				} else {
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", "You need to specify which alias to remove!", bot.ErrorColor)
+				}
+			default:
+				if len(args) == 0 {
+					if alias, ok := cf.OperatorAliases[aliasName]; !ok {
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Could not find any alias with the name `%s`!", aliasName), bot.ErrorColor)
+					} else {
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Alias for `%s` is set to ```\n%s\n```", aliasName, strings.Join(alias, " ")), bot.DefaultColor)
+					}
+				} else {
+					cf.OperatorAliases[aliasName] = args
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Set alias for `%s` to ```\n%s\n```", aliasName, strings.Join(args, " ")), bot.SuccessColor)
+				}
 			}
 		})
 		return err
