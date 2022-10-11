@@ -109,15 +109,16 @@ func RoleMenuCommand(c bot.Command) error {
 
 	roles := make(map[string]Role, 0)
 
-	// Parse the command args into an actual config now
-	for _, rc := range roleConfig.Roles {
+	// Parse the command args into an actual config now, and validate them as actual emojis
+	for n, rc := range roleConfig.Roles {
 		emoji, animated, argErr := cmd.ParseEmojiArg([]string{rc.Emoji}, 1, false)
 		if argErr != nil {
 			return argErr
 		}
 
 		parsedEmoji := util.ApiEmojiAsConfig(emoji, animated)
-		roles[parsedEmoji] = Role{rc.RoleID}
+		roles[parsedEmoji] = Role{rc.RoleID}    // use config emoji, roles is used for the menu creation
+		roleConfig.Roles[n].Emoji = parsedEmoji // use config emoji. roleConfig is only used for add and remove later on
 	}
 
 	//
@@ -210,7 +211,7 @@ func RoleMenuCommand(c bot.Command) error {
 		for emoji, role := range existingMenu.Roles {
 			if _, ok := newRoles[emoji]; !ok { // doesn't exist in new roles to add
 				newRoles[emoji] = role
-			} // else // does exist in the new roles, that means our old role ID has been overwritten
+			} // else // does exist in the new roles, that means our old emoji now has a new role ID. the current `role.RoleID` is the old role ID
 		}
 
 		// Save menu in global config
@@ -222,6 +223,18 @@ func RoleMenuCommand(c bot.Command) error {
 
 		if _, err := bot.Client.EditMessage(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), getLines()); err != nil {
 			return err
+		}
+
+		// Add the emojis for the new roles
+		for n, parsedEmoji := range roleConfig.Roles {
+			apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
+			if err := bot.Client.React(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), apiEmoji); err != nil {
+				log.Printf("failed to react when creating role menu: %v\n", err)
+			}
+
+			if n < len(roleConfig.Roles)-1 {
+				time.Sleep(750 * time.Millisecond) // We want to wait for the actual rate-limit, but Arikawa does not handle that for you
+			}
 		}
 
 		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
@@ -267,6 +280,18 @@ func RoleMenuCommand(c bot.Command) error {
 
 		if _, err := bot.Client.EditMessage(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), getLines()); err != nil {
 			return err
+		}
+
+		// Remove the emojis for the removed roles
+		for n, parsedEmoji := range roleConfig.Roles {
+			apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
+			if err := bot.Client.Unreact(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), apiEmoji); err != nil {
+				log.Printf("failed to unreact when creating role menu: %v\n", err)
+			}
+
+			if n < len(roleConfig.Roles)-1 {
+				time.Sleep(750 * time.Millisecond) // We want to wait for the actual rate-limit, but Arikawa does not handle that for you
+			}
 		}
 
 		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
