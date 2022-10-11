@@ -184,12 +184,14 @@ func RoleMenuCommand(c bot.Command) error {
 
 	switch firstArg {
 	case "add":
-		roleConfig, msg, err := messageIDCheck(roleConfig)
-		if err != nil {
-			if msg != nil { // we're not handling the original message's error in this case, so we should check this
+		roleConfig, logMsg, err := messageIDCheck(roleConfig)
+		go func() {
+			if logMsg != nil { // we're not handling the original message's error in this case, so we should check this
 				time.Sleep(5 * time.Second)
-				_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+				_ = bot.Client.DeleteMessage(logMsg.ChannelID, logMsg.ID, "cleaning up log msg")
 			}
+		}()
+		if err != nil {
 			return err
 		}
 
@@ -237,7 +239,7 @@ func RoleMenuCommand(c bot.Command) error {
 			}
 		}
 
-		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
+		msg, err := cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
 		if err != nil {
 			return err
 		}
@@ -246,12 +248,14 @@ func RoleMenuCommand(c bot.Command) error {
 		err = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
 		return err
 	case "remove":
-		roleConfig, msg, err := messageIDCheck(roleConfig)
-		if err != nil {
-			if msg != nil { // we're not handling the original message's error in this case, so we should check this
+		roleConfig, logMsg, err := messageIDCheck(roleConfig)
+		go func() {
+			if logMsg != nil { // we're not handling the original message's error in this case, so we should check this
 				time.Sleep(5 * time.Second)
-				_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+				_ = bot.Client.DeleteMessage(logMsg.ChannelID, logMsg.ID, "cleaning up log msg")
 			}
+		}()
+		if err != nil {
 			return err
 		}
 
@@ -294,7 +298,7 @@ func RoleMenuCommand(c bot.Command) error {
 			}
 		}
 
-		msg, err = cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
+		msg, err := cmd.SendEmbed(c.E, p.Name, "Edited role menu!", bot.SuccessColor)
 		if err != nil {
 			return err
 		}
