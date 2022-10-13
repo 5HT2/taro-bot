@@ -44,7 +44,7 @@ This is the simplest example of the `config/config.json` file, you only need `bo
 ```
 
 You can also create a `config/plugins.json`, to select which plugins will be loaded.
-This is optional, and a default (curated) will load if you do not set it.
+This is optional, and a default (curated) will load if you do not set it, or if you add `"default"` to the list.
 
 ```json
 {
