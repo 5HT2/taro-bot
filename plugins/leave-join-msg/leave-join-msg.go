@@ -122,7 +122,7 @@ func LeaveJoinRemoveHandler(i interface{}) {
 }
 
 func LeaveJoinMsgCfgCommand(c bot.Command) error {
-	if err := cmd.HasPermission("moderate", c); err != nil {
+	if err := cmd.HasPermission(c, cmd.PermModerate); err != nil {
 		return err
 	}
 
