@@ -54,6 +54,10 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 }
 
 func OperatorConfigCommand(c bot.Command) error {
+	if err := cmd.HasPermission(c, cmd.PermOperator); err != nil {
+		return err
+	}
+
 	arg1, _ := cmd.ParseStringArg(c.Args, 1, true)
 	args, _ := cmd.ParseStringSliceArg(c.Args, 2, -1)
 	argInt, _ := cmd.ParseInt64Arg(c.Args, 2)
@@ -61,15 +65,6 @@ func OperatorConfigCommand(c bot.Command) error {
 
 	t := "Operator Config "
 	var err error
-
-	opIDs := make([]int64, 0)
-	bot.C.Run(func(c *bot.Config) {
-		opIDs = c.OperatorIDs
-	})
-
-	if c.E.Author.ID == 0 || !util.SliceContains(opIDs, int64(c.E.Author.ID)) {
-		return bot.GenericError("OperatorConfigCommand", "running command", "user is not the bot operator")
-	}
 
 	switch arg1 {
 	case "activity_name":
