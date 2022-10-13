@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 PLUGINS_FILE="config/plugins.json"
 
@@ -13,13 +13,13 @@ plugin_loaded() {
   jq "select(.loaded_plugins != []).loaded_plugins | index(\"$(basename "$1")\")" "$PLUGINS_FILE"
 }
 
-if [[ -z $(which jq) ]]; then
+if [ -z "$(which jq)" ]; then
   echo "jq is not installed, doing unoptimized build..."
   build_all
-elif [[ ! -f "$PLUGINS_FILE" ]]; then
+elif [ ! -f "$PLUGINS_FILE" ]; then
   echo "$PLUGINS_FILE is missing, doing unoptimized build..."
   build_all
-elif [[ "$(jq ".loaded_plugins == []" "$PLUGINS_FILE")" == "true" ]]; then
+elif [ "$(jq ".loaded_plugins == []" "$PLUGINS_FILE")" = "true" ]; then
   echo "loaded_plugins is not set, building all plugins..."
   build_all
 else
@@ -27,7 +27,7 @@ else
   for d in ./plugins/*/; do
     LOADED="$(plugin_loaded "$d")"
 
-    if [[ -n "$LOADED" ]] && [[ "$LOADED" != "null" ]]; then
+    if [ -n "$LOADED" ] && [ "$LOADED" != "null" ]; then
       echo "building $d"
       go build -o "bin/" -buildmode=plugin "$d"
     fi
