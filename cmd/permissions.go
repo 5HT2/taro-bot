@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
@@ -12,9 +13,34 @@ import (
 )
 
 var (
-	Permissions     = []string{"channels", "permissions", "moderate"}
+	Permissions     = []Permission{PermUndefined, PermChannels, PermPermissions, PermModerate, PermOperator}
 	PermissionCache = permissionCache{}
 )
+
+type Permission int64
+
+const (
+	PermUndefined Permission = iota
+	PermChannels
+	PermPermissions
+	PermModerate
+	PermOperator // "operator" is a special permission, managed by bot.C.OperatorIDs
+)
+
+func (p Permission) String() string {
+	switch p {
+	case PermChannels:
+		return "channels"
+	case PermPermissions:
+		return "permissions"
+	case PermModerate:
+		return "moderate"
+	case PermOperator:
+		return "operator"
+	default:
+		return "undefined"
+	}
+}
 
 type permissionCache struct {
 	guilds []guildAdmins
@@ -35,25 +61,40 @@ type guildUser struct {
 }
 
 // HasPermission will return if the author of a command has said permission
-func HasPermission(permission string, c bot.Command) *bot.Error {
+func HasPermission(c bot.Command, p Permission) *bot.Error {
 	id := int64(c.E.Author.ID)
 
-	if UserHasPermission(permission, c, id) {
-		return nil
-	} else {
-		return bot.GenericError(c.FnName, "running command", util.GetUserMention(id)+" is missing the \""+permission+"\" permission")
+	if id == 0 {
+		return bot.GenericError(c.FnName, "checking permission", "id is `0`")
 	}
+
+	if p == PermOperator {
+		opIDs := make([]int64, 0)
+		bot.C.Run(func(c *bot.Config) {
+			opIDs = c.OperatorIDs
+		})
+
+		if !util.SliceContains(opIDs, int64(c.E.Author.ID)) {
+			return bot.GenericError(c.FnName, "running command", util.GetUserMention(id)+" is not a bot operator")
+		}
+	}
+
+	if !UserHasPermission(c, p, id) {
+		return bot.GenericError(c.FnName, "running command", fmt.Sprintf("%s is missing the \"%s\" permission", util.GetUserMention(id), p))
+	}
+
+	return nil
 }
 
 // UserHasPermission will return if the user with id has said permission
-func UserHasPermission(permission string, c bot.Command, id int64) bool {
+func UserHasPermission(c bot.Command, p Permission, id int64) bool {
 	if HasAdminCached(c.E.GuildID, c.E.Member.RoleIDs, c.E.Author) {
 		return true
 	}
 
 	users := make([]int64, 0)
 	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		users = getPermissionSlice(permission, g)
+		users = getPermissionSlice(p, g)
 		return g, "UserHasPermission: " + c.FnName
 	})
 
@@ -61,33 +102,34 @@ func UserHasPermission(permission string, c bot.Command, id int64) bool {
 }
 
 // GivePermission will return nil if the permission was successfully given to the user with a matching id
-func GivePermission(permission string, id int64, c bot.Command) error {
+func GivePermission(c bot.Command, pStr string, id int64) error {
 	var err error = nil
 
 	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-
-		users := getPermissionSlice(permission, g)
-		mention := util.GetUserMention(id)
+		p := GetPermission(pStr)
+		users := getPermissionSlice(p, g)
 
 		if !util.SliceContains(users, id) {
 			users = append(users, id)
 		} else {
 			err = bot.GenericError("GivePermission",
-				"giving permission to "+mention,
-				"user already has permission \""+permission+"\"")
+				"giving permission to "+util.GetUserMention(id),
+				fmt.Sprintf("user already has permission \"%s\"", p))
 		}
 
-		switch permission {
-		case "channels":
-			g.Permissions.ManageChannels = users
-		case "permissions":
-			g.Permissions.ManagePermissions = users
-		case "moderate":
-			g.Permissions.Moderation = users
-		default:
-			err = bot.GenericError("GivePermission",
-				"giving permission to "+mention,
-				"couldn't find permission type \""+permission+"\"")
+		if err == nil {
+			switch p {
+			case PermChannels:
+				g.Permissions.ManageChannels = users
+			case PermPermissions:
+				g.Permissions.ManagePermissions = users
+			case PermModerate:
+				g.Permissions.Moderation = users
+			default:
+				err = bot.GenericError("GivePermission",
+					"giving permission to "+util.GetUserMention(id),
+					fmt.Sprintf("couldn't find permission type \"%s\"", pStr))
+			}
 		}
 
 		return g, "GivePermission: " + c.FnName
@@ -96,21 +138,32 @@ func GivePermission(permission string, id int64, c bot.Command) error {
 	return err
 }
 
+// GetPermission will return a valid Permission type from a string
+func GetPermission(pStr string) Permission {
+	pStr = strings.ToLower(pStr)
+
+	for _, p := range Permissions {
+		if p.String() == pStr {
+			return p
+		}
+	}
+
+	return PermUndefined
+}
+
 // UpdateMemberCache will forcibly update the member cache
 func UpdateMemberCache(e *gateway.GuildMemberUpdateEvent) {
 	log.Printf("updating member cache\n")
 	hasAdmin(e.GuildID, e.RoleIDs, e.User)
 }
 
-func getPermissionSlice(permission string, guild *bot.GuildConfig) []int64 {
-	permission = strings.ToLower(permission)
-
-	switch permission {
-	case "channels":
+func getPermissionSlice(p Permission, guild *bot.GuildConfig) []int64 {
+	switch p {
+	case PermChannels:
 		return guild.Permissions.ManageChannels
-	case "permissions":
+	case PermPermissions:
 		return guild.Permissions.ManagePermissions
-	case "moderate":
+	case PermModerate:
 		return guild.Permissions.Moderation
 	default:
 		return make([]int64, 0)
