@@ -3,7 +3,7 @@ module github.com/5HT2/taro-bot
 go 1.18
 
 require (
-	github.com/5HT2C/http-bash-requests v0.0.0-20221013072239-053bf658d558
+	github.com/5HT2C/http-bash-requests v0.0.0-20221013080529-c238c85824ba
 	github.com/diamondburned/arikawa/v3 v3.1.0
 	github.com/forPelevin/gomoji v1.1.6
 	github.com/go-co-op/gocron v1.17.0

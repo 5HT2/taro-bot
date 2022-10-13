@@ -1,5 +1,7 @@
 github.com/5HT2C/http-bash-requests v0.0.0-20221013072239-053bf658d558 h1:1HSrtGaIeKWjgx7lMYft83U9YTCDr2LYodalsqmBHvE=
 github.com/5HT2C/http-bash-requests v0.0.0-20221013072239-053bf658d558/go.mod h1:t3wm2V3hWLZ5ycremRIoU4w+9lJ0LiBXNYSl5k1r3kc=
+github.com/5HT2C/http-bash-requests v0.0.0-20221013080529-c238c85824ba h1:Zgeoy7u4Q7lBIS5aXA2q6BdT0E0gktPwzoVWv14/lCs=
+github.com/5HT2C/http-bash-requests v0.0.0-20221013080529-c238c85824ba/go.mod h1:t3wm2V3hWLZ5ycremRIoU4w+9lJ0LiBXNYSl5k1r3kc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/diamondburned/arikawa/v3 v3.1.0 h1:M7ZyjoCM4o1+rzai2NMXjOSukSrPdP6OxV68WKvKZ6E=
 github.com/diamondburned/arikawa/v3 v3.1.0/go.mod h1:5jBSNnp82Z/EhsKa6Wk9FsOqSxfVkNZDTDBPOj47LpY=
