@@ -312,14 +312,18 @@ func RegisterAll(dir string) {
 func parsePluginsList() []string {
 	plugins := make([]string, 0)
 
-	if len(bot.P.LoadedPlugins) > 0 {
-		for _, p := range bot.P.LoadedPlugins {
-			p += ".so"
-			if !util.SliceContains(plugins, p) {
-				plugins = append(plugins, p)
-			}
+	for _, p := range bot.P.LoadedPlugins {
+		if p == "default" {
+			continue
 		}
-	} else {
+
+		p += ".so"
+		if !util.SliceContains(plugins, p) {
+			plugins = append(plugins, p)
+		}
+	}
+
+	if len(bot.P.LoadedPlugins) > 0 || util.SliceContains(bot.P.LoadedPlugins, "default") {
 		for _, p := range bot.DefaultPlugins {
 			p += ".so"
 			if !util.SliceContains(plugins, p) {
