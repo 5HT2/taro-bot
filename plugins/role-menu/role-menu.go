@@ -81,7 +81,7 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 // .rolemenu create {"roles": [{"emoji": "<:astolfo:880936523644669962>", "id": 881205936818122754 }, {"emoji": "<:trans_sunglasses:880628887481102336>", "id": 881206354658885673 }, {"emoji": "<:painedsmug:880628887871160350>", "id": 881206111536025620 }, {"emoji": "<:hewwo:880928545256394792>", "id": 881206521235644447 }]}
 
 func RoleMenuCommand(c bot.Command) error {
-	if err := cmd.HasPermission("moderate", c); err != nil {
+	if err := cmd.HasPermission(c, cmd.PermModerate); err != nil {
 		return err
 	}
 
