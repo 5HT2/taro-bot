@@ -172,7 +172,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 }
 
 func MessageRolesConfigCommand(c bot.Command) error {
-	if err := cmd.HasPermission("moderate", c); err != nil {
+	if err := cmd.HasPermission(c, cmd.PermModerate); err != nil {
 		return err
 	}
 
