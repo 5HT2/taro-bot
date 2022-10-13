@@ -26,10 +26,7 @@ clean:
 	rm -f taro
 
 build-plugins:
-	for d in ./plugins/*/; do \
-  echo "building $$d"; \
-  go build -o "bin/" -buildmode=plugin "$$d"; \
-done; \
+	./scripts/build-plugins.sh
 
 
 docker-build:
