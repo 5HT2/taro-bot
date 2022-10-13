@@ -13,6 +13,8 @@ plugin_loaded() {
   jq "select(.loaded_plugins != []).loaded_plugins | index(\"$(basename "$1")\")" "$PLUGINS_FILE"
 }
 
+DEFAULT_LOADED="$(plugin_loaded "default")"
+
 if [ -z "$(which jq)" ]; then
   echo "jq is not installed, doing unoptimized build..."
   build_all
@@ -21,6 +23,9 @@ elif [ ! -f "$PLUGINS_FILE" ]; then
   build_all
 elif [ "$(jq ".loaded_plugins == []" "$PLUGINS_FILE")" = "true" ]; then
   echo "loaded_plugins is not set, building all plugins..."
+  build_all
+elif [ -n "$DEFAULT_LOADED" ] && [ "$DEFAULT_LOADED" != "null" ]; then
+  echo "loaded_plugins contains \"default\", building all plugins..."
   build_all
 else
   echo "building selected plugins..."
