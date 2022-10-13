@@ -323,7 +323,7 @@ func parsePluginsList() []string {
 		}
 	}
 
-	if len(bot.P.LoadedPlugins) > 0 || util.SliceContains(bot.P.LoadedPlugins, "default") {
+	if len(bot.P.LoadedPlugins) == 0 || util.SliceContains(bot.P.LoadedPlugins, "default") {
 		for _, p := range bot.DefaultPlugins {
 			p += ".so"
 			if !util.SliceContains(plugins, p) {
