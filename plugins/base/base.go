@@ -121,10 +121,20 @@ func OperatorConfigCommand(c bot.Command) error {
 				_, err = cmd.SendEmbed(c.E, t+"`operator_ids`", fmt.Sprintf("Set `operator_ids` to `%v`", co.OperatorIDs), bot.SuccessColor)
 			}
 		})
+	case "reset_prefix":
+		if argInt == -1 || argInt == 0 {
+			_, err = cmd.SendEmbed(c.E, t+"`reset_prefix`", "You have to provide a guild ID to reset its prefix!", bot.ErrorColor)
+		} else {
+			bot.GuildContext(discord.GuildID(argInt), func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+				g.Prefix = bot.DefaultPrefix
+				return g, "OperatorConfigCommand: reset_prefix"
+			})
+			_, err = cmd.SendEmbed(c.E, t+"`reset_prefix`", fmt.Sprintf("Reset prefix for guild `%v`!", argInt), bot.SuccessColor)
+		}
 	default:
 		_, err = cmd.SendEmbed(c.E,
 			"Operator Config",
-			"Available arguments are:\n- `activity_name [activity name]`\n- `activity_url [activity url]`\n- `activity_type [activity type]`\n- `operator_channel [operator channel id]`\n- `operator_ids [operator ids]`",
+			"Available arguments are:\n- `activity_name [activity name]`\n- `activity_url [activity url]`\n- `activity_type [activity type]`\n- `operator_channel [operator channel id]`\n- `operator_ids [operator ids]`\n- `reset_prefix [guild id]`",
 			bot.DefaultColor)
 	}
 
