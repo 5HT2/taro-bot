@@ -81,6 +81,10 @@ func HasPermission(c bot.Command, p Permission) *bot.Error {
 		return nil
 	}
 
+	if !c.E.GuildID.IsValid() {
+		return bot.GenericError(c.FnName, "running command", "command run in a non-guild, permissions are not supported here")
+	}
+
 	if !UserHasPermission(c, p, id) {
 		return bot.GenericError(c.FnName, "running command", fmt.Sprintf("%s is missing the \"%s\" permission", util.GetUserMention(id), p))
 	}
