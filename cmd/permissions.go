@@ -77,6 +77,8 @@ func HasPermission(c bot.Command, p Permission) *bot.Error {
 		if !util.SliceContains(opIDs, int64(c.E.Author.ID)) {
 			return bot.GenericError(c.FnName, "running command", util.GetUserMention(id)+" is not a bot operator")
 		}
+
+		return nil
 	}
 
 	if !UserHasPermission(c, p, id) {
