@@ -125,11 +125,10 @@ func OperatorConfigCommand(c bot.Command) error {
 		if argInt == -1 || argInt == 0 {
 			_, err = cmd.SendEmbed(c.E, t+"`reset_prefix`", "You have to provide a guild ID to reset its prefix!", bot.ErrorColor)
 		} else {
-			bot.GuildContext(discord.GuildID(argInt), func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				g.Prefix = bot.DefaultPrefix
-				return g, "OperatorConfigCommand: reset_prefix"
-			})
-			_, err = cmd.SendEmbed(c.E, t+"`reset_prefix`", fmt.Sprintf("Reset prefix for guild `%v`!", argInt), bot.SuccessColor)
+			_, err = bot.SetPrefix(c.FnName, c.E.GuildID, bot.DefaultPrefix)
+			if err == nil {
+				_, err = cmd.SendEmbed(c.E, t+"`reset_prefix`", fmt.Sprintf("Reset prefix for guild `%v`!", argInt), bot.SuccessColor)
+			}
 		}
 	default:
 		_, err = cmd.SendEmbed(c.E,
@@ -187,33 +186,14 @@ func PrefixCommand(c bot.Command) error {
 		return argErr
 	}
 
-	// Filter spaces
-	arg = strings.ReplaceAll(arg, " ", "")
-	if len(arg) == 0 {
-		return bot.GenericError(c.FnName, "getting prefix", "prefix is empty")
-	}
-
-	// Prefix is okay, set it in the cache
-	//
-
-	bot.C.Run(func(config *bot.Config) {
-		config.PrefixCache[int64(c.E.GuildID)] = arg
-	})
-
-	// Also set it in the guild
-	//
-
-	bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-		g.Prefix = arg
-		return g, "PrefixCommand"
-	})
+	arg, err := bot.SetPrefix(c.FnName, c.E.GuildID, arg)
 
 	embed := discord.Embed{
 		Description: "Set prefix to `" + arg + "`",
 		Footer:      &discord.EmbedFooter{Text: "At any time you can ping the bot with the word \"prefix\" to get the current prefix"},
 		Color:       bot.SuccessColor,
 	}
-	_, err := cmd.SendCustomEmbed(c.E.ChannelID, embed)
+	_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
 	return err
 }
 
