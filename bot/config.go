@@ -209,3 +209,24 @@ func LoadActivityStatus() {
 		log.Printf("error loading activity status: %v\n", err)
 	}
 }
+
+func SetPrefix(fnName string, id discord.GuildID, prefix string) (string, error) {
+	// Filter spaces
+	prefix = strings.ReplaceAll(prefix, " ", "")
+	if len(prefix) == 0 {
+		return "", GenericError(fnName, "getting prefix", "prefix is empty")
+	}
+
+	// Prefix is okay, set it in the cache
+	C.Run(func(config *Config) {
+		config.PrefixCache[int64(id)] = prefix
+	})
+
+	// Also set it in the guild
+	GuildContext(id, func(g *GuildConfig) (*GuildConfig, string) {
+		g.Prefix = prefix
+		return g, fnName
+	})
+
+	return prefix, nil
+}
