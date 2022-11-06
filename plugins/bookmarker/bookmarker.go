@@ -8,7 +8,6 @@ import (
 	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
-	"log"
 	"reflect"
 	"sync"
 )
@@ -120,18 +119,13 @@ func BookmarkReactionHandler(i interface{}) {
 	sendBookmark := false
 
 	if p.Config == nil {
-		log.Println("here")
 		// Enabled by default
 		sendBookmark = true
 	} else {
 		enabled, ok := p.Config.(config).EnabledGuilds[e.GuildID.String()]
-		log.Println("here2")
 
 		// If not in the config (enabled by default) or explicitly enabled
 		if !ok || enabled {
-			log.Printf("here3 %v %v\n", ok, enabled)
-			log.Printf("here4 %v\n", p.Config.(config).EnabledGuilds)
-
 			sendBookmark = true
 		}
 	}
