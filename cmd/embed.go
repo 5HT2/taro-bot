@@ -159,8 +159,13 @@ func GetEmbedAttachmentAndContent(msg discord.Message) (string, *discord.EmbedIm
 	// If we found only a URL (no other text) in the message content, and the found URL has an image extension, and we didn't find an attached image
 	// Set the description to nothing and set the image to the found URL
 	if url && FileExtMatches(ImageExtensions, msg.Content) {
-		description = ""
-		image = &discord.EmbedImage{URL: msg.Content}
+		urlMatch := UrlRegex.FindStringSubmatch(msg.Content)
+
+		if len(urlMatch) > 0 { // extract URL and make sure we have one
+			// remove the URL from the message content, keep other content
+			description = strings.ReplaceAll(msg.Content, urlMatch[0], "")
+			image = &discord.EmbedImage{URL: urlMatch[0]}
+		}
 	}
 
 	return description, image
