@@ -79,11 +79,11 @@ func AutoDeleteCommand(c bot.Command) error {
 				if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
 					cfg.MaxHours = 24
 					cfg.MaxMessages = 1000
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Set AutoDelete in <#%v> to after 24 hours or 1,000 messages!", channel.ID), bot.SuccessColor)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Set AutoDelete in %s to after 24 hours or 1,000 messages!", channel.Mention()), bot.SuccessColor)
 				} else {
 					cfg.MaxHours = 0
 					cfg.MaxMessages = 0
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Disabled Autodelete in <#%v>!", channel.ID), bot.ErrorColor)
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Disabled Autodelete in %s!", channel.Mention()), bot.ErrorColor)
 				}
 			case "hours":
 				fallthrough // TODO
