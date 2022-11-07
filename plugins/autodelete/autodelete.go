@@ -31,6 +31,7 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Fn:          AutoDeleteCommand,
 			FnName:      "AutoDeleteCommand",
 			Name:        "autodelete",
+			Aliases:     []string{"adl"},
 			Description: "Configure AutoDelete",
 		}},
 		Jobs: []bot.JobInfo{{
@@ -65,6 +66,13 @@ func AutoDeleteCommand(c bot.Command) error {
 	}
 
 	if channelArg, err := cmd.ParseChannelArg(c.Args, 2); err != nil {
+		if len(c.Args) < 3 { // Re-call same command with current channel if unspecified, and if we haven't already tried adding a channel arg
+			c.Args = append(c.Args[:2], c.Args[1:]...)
+			c.Args[1] = c.E.ChannelID.Mention()
+			cmd.CommandHandlerWithCommand(c.E, c.Name, c.Args)
+			return nil
+		}
+
 		return err
 	} else {
 		if channel, err := bot.Client.Channel(discord.ChannelID(channelArg)); err != nil {
@@ -94,32 +102,37 @@ func AutoDeleteCommand(c bot.Command) error {
 				saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
 			case "hours":
 				cfg.MaxHours = arg3
-				fallthrough
 			case "messages":
 				cfg.MaxMessages = arg3
-				fallthrough
-			case "hours-messages":
-				if argErr != nil {
-					err = argErr
-				} else {
-					embed := discord.Embed{
-						Title:       p.Name,
-						Description: fmt.Sprintf("Set AutoDelete in %s to after %s hours or %s messages!", channel.Mention(), util.FormattedNum(arg3), util.FormattedNum(cfg.MaxMessages)),
-						Color:       bot.SuccessColor,
-						Footer:      &discord.EmbedFooter{Text: "AutoDelete is enabled!"},
-					}
-
-					if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
-						embed.Color = bot.ErrorColor
-						embed.Footer = &discord.EmbedFooter{Text: "AutoDelete is disabled!"}
-					}
-
-					_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
-
-					saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
-				}
 			default:
 				return defaultHelp()
+			}
+
+			if sub == "hours" || sub == "messages" {
+				if argErr != nil {
+					cfg = getConfig(c.E.GuildID.String(), channel.ID.String())
+				}
+
+				embed := discord.Embed{
+					Title:       p.Name,
+					Description: fmt.Sprintf("to after %s hours or %s messages!", util.FormattedNum(cfg.MaxHours), util.FormattedNum(cfg.MaxMessages)),
+					Color:       bot.SuccessColor,
+					Footer:      &discord.EmbedFooter{Text: "AutoDelete is enabled!"},
+				}
+
+				if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
+					embed.Color = bot.ErrorColor
+					embed.Footer = &discord.EmbedFooter{Text: "AutoDelete is disabled!"}
+				}
+
+				if argErr != nil {
+					embed.Description = fmt.Sprintf("AutoDelete in %s is set ", channel.Mention()) + embed.Description
+				} else {
+					embed.Description = fmt.Sprintf("Set AutoDelete in %s ", channel.Mention()) + embed.Description
+					saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
+				}
+
+				_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
 			}
 
 			return err
@@ -134,12 +147,12 @@ func saveConfig(gID, cID string, cfg ChannelConfig) {
 		p.Config = config{Guilds: map[string]map[string]ChannelConfig{gID: {cID: {}}}}
 	}
 
-	gCfg, ok := p.Config.(*config).Guilds[gID]
+	gCfg, ok := p.Config.(config).Guilds[gID]
 	if !ok {
 		gCfg = map[string]ChannelConfig{cID: cfg}
-		p.Config.(*config).Guilds[gID] = gCfg
+		p.Config.(config).Guilds[gID] = gCfg
 	} else {
-		p.Config.(*config).Guilds[gID][cID] = cfg
+		p.Config.(config).Guilds[gID][cID] = cfg
 	}
 }
 
@@ -148,7 +161,7 @@ func getConfig(gID, cID string) ChannelConfig {
 		p.Config = config{Guilds: map[string]map[string]ChannelConfig{gID: {cID: {}}}}
 	}
 
-	gCfg, ok := p.Config.(*config).Guilds[gID]
+	gCfg, ok := p.Config.(config).Guilds[gID]
 	if !ok {
 		gCfg = map[string]ChannelConfig{cID: {}}
 	}
@@ -157,7 +170,7 @@ func getConfig(gID, cID string) ChannelConfig {
 		cfg = ChannelConfig{}
 	}
 
-	p.Config.(*config).Guilds[gID][cID] = cfg
+	p.Config.(config).Guilds[gID][cID] = cfg
 
 	return cfg
 }
