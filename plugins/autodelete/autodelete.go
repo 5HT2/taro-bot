@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
@@ -62,17 +63,28 @@ func AutoDeleteCommand(c bot.Command) error {
 		return defaultHelp()
 	}
 
-	if cID, err := cmd.ParseChannelArg(c.Args, 2); err != nil {
+	if channelArg, err := cmd.ParseChannelArg(c.Args, 2); err != nil {
 		return err
 	} else {
-		if channel, err := bot.Client.Channel(discord.ChannelID(cID)); err != nil {
+		if channel, err := bot.Client.Channel(discord.ChannelID(channelArg)); err != nil {
 			return err
 		} else if channel.GuildID != c.E.GuildID {
 			return bot.GenericError(c.FnName, "getting channel", "channel not in current guild!")
 		} else {
+			var err error
+			cfg := getConfig(c.E.GuildID.String(), channel.ID.String())
+
 			switch sub {
 			case "toggle":
-				fallthrough // TODO
+				if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
+					cfg.MaxHours = 24
+					cfg.MaxMessages = 1000
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Set AutoDelete in <#%v> to after 24 hours or 1,000 messages!", channel.ID), bot.SuccessColor)
+				} else {
+					cfg.MaxHours = 0
+					cfg.MaxMessages = 0
+					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Disabled Autodelete in <#%v>!", channel.ID), bot.ErrorColor)
+				}
 			case "hours":
 				fallthrough // TODO
 			case "messages":
@@ -80,8 +92,44 @@ func AutoDeleteCommand(c bot.Command) error {
 			default:
 				return defaultHelp()
 			}
+
+			saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
+			return err
 		}
 	}
 }
 
 func purgeMessages() {}
+
+func saveConfig(gID, cID string, cfg ChannelConfig) {
+	if p.Config == nil {
+		p.Config = config{Guilds: map[string]map[string]ChannelConfig{gID: {cID: {}}}}
+	}
+
+	gCfg, ok := p.Config.(*config).Guilds[gID]
+	if !ok {
+		gCfg = map[string]ChannelConfig{cID: cfg}
+		p.Config.(*config).Guilds[gID] = gCfg
+	} else {
+		p.Config.(*config).Guilds[gID][cID] = cfg
+	}
+}
+
+func getConfig(gID, cID string) ChannelConfig {
+	if p.Config == nil {
+		p.Config = config{Guilds: map[string]map[string]ChannelConfig{gID: {cID: {}}}}
+	}
+
+	gCfg, ok := p.Config.(*config).Guilds[gID]
+	if !ok {
+		gCfg = map[string]ChannelConfig{cID: {}}
+	}
+	cfg, ok := gCfg[cID]
+	if !ok {
+		cfg = ChannelConfig{}
+	}
+
+	p.Config.(*config).Guilds[gID][cID] = cfg
+
+	return cfg
+}
