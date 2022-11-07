@@ -12,14 +12,10 @@ import (
 var p *plugins.Plugin
 
 type config struct {
-	Guilds map[discord.GuildID]ChannelConfig `json:"guilds,omitempty"` // [guild id]ChannelConfig
+	Guilds map[string]map[string]ChannelConfig `json:"guilds,omitempty"` // [guild id][channel id]ChannelConfig
 }
 
 type ChannelConfig struct {
-	ChannelData map[int64]ChannelDataConfig `json:"channel,omitempty"` // [channel id]ChannelDataConfig
-}
-
-type ChannelDataConfig struct {
 	MaxMessages int64 `json:"max_messages,omitempty"`
 	MaxHours    int64 `json:"max_time,omitempty"`
 }
