@@ -5,6 +5,7 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/go-co-op/gocron"
 	"reflect"
@@ -73,6 +74,10 @@ func AutoDeleteCommand(c bot.Command) error {
 		} else {
 			var err error
 			cfg := getConfig(c.E.GuildID.String(), channel.ID.String())
+			arg3, argErr := cmd.ParseInt64Arg(c.Args, 3)
+			if arg3 < 0 {
+				arg3 = 0
+			}
 
 			switch sub {
 			case "toggle":
@@ -85,15 +90,38 @@ func AutoDeleteCommand(c bot.Command) error {
 					cfg.MaxMessages = 0
 					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Disabled Autodelete in %s!", channel.Mention()), bot.ErrorColor)
 				}
+
+				saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
 			case "hours":
-				fallthrough // TODO
+				cfg.MaxHours = arg3
+				fallthrough
 			case "messages":
-				fallthrough // TODO
+				cfg.MaxMessages = arg3
+				fallthrough
+			case "hours-messages":
+				if argErr != nil {
+					err = argErr
+				} else {
+					embed := discord.Embed{
+						Title:       p.Name,
+						Description: fmt.Sprintf("Set AutoDelete in %s to after %s hours or %s messages!", channel.Mention(), util.FormattedNum(arg3), util.FormattedNum(cfg.MaxMessages)),
+						Color:       bot.SuccessColor,
+						Footer:      &discord.EmbedFooter{Text: "AutoDelete is enabled!"},
+					}
+
+					if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
+						embed.Color = bot.ErrorColor
+						embed.Footer = &discord.EmbedFooter{Text: "AutoDelete is disabled!"}
+					}
+
+					_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
+
+					saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
+				}
 			default:
 				return defaultHelp()
 			}
 
-			saveConfig(c.E.GuildID.String(), channel.ID.String(), cfg)
 			return err
 		}
 	}
