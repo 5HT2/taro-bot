@@ -383,6 +383,7 @@ func SudoCommand(c bot.Command) error {
 					for name, _ := range cf.OperatorAliases {
 						aliases = append(aliases, fmt.Sprintf("- `%s`", name))
 					}
+					util.SliceSortAlphanumeric(aliases)
 					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -l`", fmt.Sprintf("The following aliases are currently set:\n%s\n", strings.Join(aliases, "\n")), bot.DefaultColor)
 				}
 			case "-r":
