@@ -5,6 +5,8 @@ import (
 	"log"
 	"reflect"
 	"runtime/debug"
+	"sort"
+	"strconv"
 	"time"
 )
 
@@ -88,4 +90,20 @@ func SliceReverse[S ~[]T, T any](s S) {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
+}
+
+// SliceSortAlphanumeric will sort a string slice alphanumerically
+func SliceSortAlphanumeric[S ~[]T, T string](s S) {
+	sort.Slice(s, func(i, j int) bool {
+		// check if we have numbers, sort them accordingly
+		if z, err := strconv.Atoi(string(s[i])); err == nil {
+			if y, err := strconv.Atoi(string(s[j])); err == nil {
+				return y < z
+			}
+			// if we get only one number, always say its greater than letter
+			return true
+		}
+		// compare letters normally
+		return s[j] > s[i]
+	})
 }
