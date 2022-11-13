@@ -39,8 +39,13 @@ func SendErrorEmbed(c bot.Command, err error) {
 	_, _ = SendEmbed(c.E, "Error running `"+c.Name+"`", err.Error(), bot.ErrorColor)
 }
 
-func SendEmbed(e *gateway.MessageCreateEvent, title string, description string, color discord.Color) (*discord.Message, error) {
+func SendEmbed(e *gateway.MessageCreateEvent, title, description string, color discord.Color) (*discord.Message, error) {
+	return SendEmbedFooter(e, title, description, "", color)
+}
+
+func SendEmbedFooter(e *gateway.MessageCreateEvent, title, description, footer string, color discord.Color) (*discord.Message, error) {
 	embed := MakeEmbed(title, description, color)
+	embed.Footer = &discord.EmbedFooter{Text: footer}
 	msg, err := bot.Client.SendEmbeds(
 		e.ChannelID,
 		embed,
