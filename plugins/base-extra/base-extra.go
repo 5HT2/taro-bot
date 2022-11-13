@@ -397,41 +397,22 @@ func SudoCommand(c bot.Command) error {
 			}
 		})
 		return err
-	case "curl":
-		if args, err := cmd.ParseStringSliceArg(c.Args, 2, -1); err != nil {
-			return err
-		} else {
-			if len(args) == 0 {
-				_, err := cmd.SendEmbed(c.E, c.Name+" `curl`", "Expected arguments after `curl`!", bot.ErrorColor)
-				return err
-			}
-			if res, err := httpBashRequests.Run("curl " + strings.Join(args, " ") + " 2>&1"); err != nil {
-				return err
-			} else {
-				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
-				return err
-			}
-		}
-	case "./":
-		if args, err := cmd.ParseStringSliceArg(c.Args, 2, -1); err != nil {
-			return err
-		} else {
-			if len(args) == 0 {
-				_, err := cmd.SendEmbed(c.E, c.Name+" `./`", "Expected arguments after `./`!", bot.ErrorColor)
-				return err
-			}
-			if res, err := httpBashRequests.Run("./" + strings.Join(args, " ") + " 2>&1"); err != nil {
-				return err
-			} else {
-				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
-				return err
-			}
-		}
-	default:
+	case "-h":
 		_, err := cmd.SendEmbed(c.E,
 			c.Name,
-			"Available arguments are:\n- `curl [url]`\n- `alias <name> <command>`",
+			"Available arguments are:\n- `alias <name> <command>`",
 			bot.DefaultColor)
 		return err
+	default:
+		if args, err := cmd.ParseStringSliceArg(c.Args, 1, -1); err != nil {
+			return err
+		} else {
+			if res, err := httpBashRequests.Run(strings.Join(args, " ") + " 2>&1"); err != nil {
+				return err
+			} else {
+				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
+				return err
+			}
+		}
 	}
 }
