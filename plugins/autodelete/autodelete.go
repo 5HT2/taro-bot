@@ -9,9 +9,19 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/go-co-op/gocron"
 	"reflect"
+	"sync"
 )
 
-var p *plugins.Plugin
+var (
+	p     *plugins.Plugin
+	mutex sync.Mutex
+
+	additionQueue = make(chan QueuedMessage, 0) // For incoming messages, to be checked for deletion
+	deletionQueue = make(chan QueuedMessage, 0) // For messages marked for deletion
+
+	additionQueueProcessors = make(map[string]map[string]func(ChannelConfig)) // Processes messages in the additionQueue
+	deletionQueueProcessors = make(map[string]map[string]func(ChannelConfig)) // Processes messages in the deletionQueue
+)
 
 type config struct {
 	Guilds map[string]map[string]ChannelConfig `json:"guilds,omitempty"` // [guild id][channel id]ChannelConfig
@@ -20,6 +30,13 @@ type config struct {
 type ChannelConfig struct {
 	MaxMessages int64 `json:"max_messages,omitempty"`
 	MaxHours    int64 `json:"max_time,omitempty"`
+}
+
+type QueuedMessage struct {
+	Guild   int64  `json:"guild"`
+	Channel int64  `json:"channel"`
+	Message int64  `json:"message"`
+	Reason  string `json:"reason,omitempty"`
 }
 
 func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
@@ -34,17 +51,31 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"adl"},
 			Description: "Configure AutoDelete",
 		}},
+		Responses: []bot.ResponseInfo{{
+			Fn:       AutoDeleteResponse,
+			Regexes:  []string{"."},
+			MatchMin: 1,
+		}},
 		Jobs: []bot.JobInfo{{
 			Fn: func() (*gocron.Job, error) {
 				return bot.Scheduler.Every(10).Minutes().Do(purgeMessages)
 			},
 			Name: "autodelete-check-for-time-purge",
+		}, {
+			Fn: func() (*gocron.Job, error) {
+				return bot.Scheduler.Every(5).Minutes().Do(saveQueue)
+			},
+			Name: "autodelete-save-message-queue",
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 	}
 	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
 	return p
+}
+
+func AutoDeleteResponse(r bot.Response) {
+	additionQueue <- QueuedMessage{Guild: int64(r.E.GuildID), Channel: int64(r.E.ChannelID), Message: int64(r.E.ID)}
 }
 
 func AutoDeleteCommand(c bot.Command) error {
@@ -80,6 +111,9 @@ func AutoDeleteCommand(c bot.Command) error {
 		} else if channel.GuildID != c.E.GuildID {
 			return bot.GenericError(c.FnName, "getting channel", "channel not in current guild!")
 		} else {
+			mutex.Lock()
+			defer mutex.Unlock()
+
 			var err error
 			cfg := getConfig(c.E.GuildID.String(), channel.ID.String())
 			arg3, argErr := cmd.ParseInt64Arg(c.Args, 3)
@@ -140,7 +174,22 @@ func AutoDeleteCommand(c bot.Command) error {
 	}
 }
 
-func purgeMessages() {}
+func purgeMessages() {
+	if p.Config == nil {
+		return
+	}
+
+	for gID, gCfg := range p.Config.(config).Guilds { // range through each guild's config
+		for cID, cfg := range gCfg { // range through each guild's channel configs
+			go func(cfg ChannelConfig) {
+				if cfg.MaxHours == 0 && cfg.MaxMessages == 0 {
+					return
+				}
+
+			}(cfg)
+		}
+	}
+}
 
 func saveConfig(gID, cID string, cfg ChannelConfig) {
 	if p.Config == nil {
