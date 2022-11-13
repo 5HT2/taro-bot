@@ -16,6 +16,10 @@ var (
 
 // CommandHandler will parse commands and run the appropriate command func
 func CommandHandler(e *gateway.MessageCreateEvent) {
+	if e.GuildID.IsValid() && e.ChannelID.IsValid() && bot.C.OperatorChannel == int64(e.ChannelID) {
+		return
+	}
+
 	cmdName, cmdArgs := extractCommand(e.Message)
 	CommandHandlerWithCommand(e, cmdName, cmdArgs)
 }
@@ -36,6 +40,7 @@ func CommandHandlerWithCommand(e *gateway.MessageCreateEvent, cmdName string, cm
 	if cmdInfo != nil {
 		command := bot.Command{E: e, FnName: cmdInfo.FnName, Name: cmdName, Args: cmdArgs}
 
+		log.Printf("cmdInfo: %s\n command: %v\n", cmdInfo, command)
 		if cmdInfo.GuildOnly && !e.GuildID.IsValid() {
 			_, err := SendEmbed(e, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
 			if err != nil {
