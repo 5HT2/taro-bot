@@ -40,7 +40,7 @@ type Plugin struct {
 	ShutdownFn  func()             // ShutdownFn is a function to be called when the bot shuts down
 }
 
-func (p Plugin) String() string {
+func (p *Plugin) String() string {
 	return fmt.Sprintf("[%s, %s, %s, %s, %s, %s, %s, %s, %s]", p.Name, p.Description, p.Version, p.ConfigDir, p.ConfigType, p.Commands, p.Responses, p.Handlers, p.Jobs)
 }
 
@@ -124,7 +124,7 @@ func SaveConfig() {
 
 // SetupConfigSaving will run each plugin's SaveConfig every 5 minutes with a ticker
 func SetupConfigSaving() {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(20 * time.Second)
 	go func() {
 		for {
 			select {
