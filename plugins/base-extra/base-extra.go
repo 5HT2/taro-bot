@@ -45,8 +45,21 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"#", "su"},
 			Description: "Operator-only commands",
 		}},
-		Responses: []bot.ResponseInfo{},
+		Responses: []bot.ResponseInfo{{
+			Fn:           BashResponse,
+			Regexes:      []string{"."},
+			MatchMin:     1,
+			LockChannels: []int64{bot.C.OperatorChannel},
+		}},
 	}
+}
+
+func BashResponse(r bot.Response) {
+	if !r.E.GuildID.IsValid() {
+		return
+	}
+
+	cmd.CommandHandlerWithCommand(r.E, "#", strings.Split(r.E.Message.Content, " "))
 }
 
 func ChannelCommand(c bot.Command) error {
