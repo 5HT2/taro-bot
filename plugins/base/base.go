@@ -100,10 +100,10 @@ func OperatorConfigCommand(c bot.Command) error {
 	case "operator_channel":
 		bot.C.Run(func(co *bot.Config) {
 			if argInt == -1 {
-				_, err = cmd.SendEmbed(c.E, t+"`operator_channel`", fmt.Sprintf("The current `operator_channel` is `%v`", co.OperatorChannel), bot.DefaultColor)
+				_, err = cmd.SendEmbedFooter(c.E, t+"`operator_channel`", fmt.Sprintf("The current `operator_channel` is `%v`", co.OperatorChannel), "This change might take a reload to apply!", bot.DefaultColor)
 			} else {
 				co.OperatorChannel = argInt
-				_, err = cmd.SendEmbed(c.E, t+"`operator_channel`", fmt.Sprintf("Set `operator_channel` to `%v`", co.OperatorChannel), bot.SuccessColor)
+				_, err = cmd.SendEmbedFooter(c.E, t+"`operator_channel`", fmt.Sprintf("Set `operator_channel` to `%v`", co.OperatorChannel), "This change might take a reload to apply!", bot.WarnColor)
 			}
 		})
 	case "operator_ids":
