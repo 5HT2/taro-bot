@@ -40,7 +40,6 @@ func CommandHandlerWithCommand(e *gateway.MessageCreateEvent, cmdName string, cm
 	if cmdInfo != nil {
 		command := bot.Command{E: e, FnName: cmdInfo.FnName, Name: cmdName, Args: cmdArgs}
 
-		log.Printf("cmdInfo: %s\n command: %v\n", cmdInfo, command)
 		if cmdInfo.GuildOnly && !e.GuildID.IsValid() {
 			_, err := SendEmbed(e, "Error", "The `"+cmdInfo.Name+"` command only works in guilds!", bot.ErrorColor)
 			if err != nil {
