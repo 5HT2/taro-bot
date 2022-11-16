@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,7 +25,8 @@ var (
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z\d]\S{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \\\| Spotify`)
 
-	instances []InvidiousInstance
+	instances     []InvidiousInstance
+	cachedResults = make(map[string]string, 0) // [spotify ID]YouTube ID
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -120,6 +122,22 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
+	parsedSpotifyUrl, err := url.Parse(spotifyUrl[0])
+	if err != nil {
+		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
+		return
+	}
+
+	spotifyID := path.Base(parsedSpotifyUrl.Path)
+	log.Printf("spotifyID: %s\n\n", spotifyID)
+
+	if ytID, ok := cachedResults[spotifyID]; ok {
+		log.Printf("spotifyID: found ytID cache: %s\n", ytID)
+
+		_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+ytID)
+		return
+	}
+
 	// Get Artist and Song Title from Spotify
 	//
 
@@ -170,6 +188,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 		return
 	}
 
+	cachedResults[spotifyID] = searchResult.ID
 	_, _ = cmd.SendMessage(r.E, "https://youtu.be/"+searchResult.ID)
 }
 
