@@ -22,6 +22,7 @@ import (
 
 var (
 	p                 *plugins.Plugin
+	spotifyBaseUrl    = `https://open.spotify.com/track/`
 	spotifyRegex      = regexp.MustCompile(`https?://open\.spotify\.com/track/[a-zA-Z\d]\S{2,}`)
 	spotifyTitleRegex = regexp.MustCompile(`(.*) - song( and lyrics)? by (.*) \\\| Spotify`)
 
@@ -141,7 +142,7 @@ func SpotifyToYoutubeResponse(r bot.Response) {
 	// Get Artist and Song Title from Spotify
 	//
 
-	content, resp, err := util.RequestUrl(spotifyUrl[0], http.MethodGet)
+	content, resp, err := util.RequestUrl(spotifyBaseUrl+spotifyID, http.MethodGet)
 	if err != nil {
 		_, _ = cmd.SendEmbed(r.E, p.Name, "Error: "+err.Error(), bot.ErrorColor)
 		return
