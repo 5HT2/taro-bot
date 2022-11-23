@@ -20,7 +20,7 @@ var (
 	DefaultPlugins = []string{"base", "base-extra", "base-fun", "bookmarker", "leave-join-msg", "message-roles",
 		"role-menu", "spotifytoyoutube", "starboard", "remindme", "sys-stats", "suggest-topic", "tenor-delete"}
 
-	fileMode = os.FileMode(0700)
+	FileMode = os.FileMode(0700)
 )
 
 type configOperation func(*Config)
@@ -147,7 +147,7 @@ func SaveConfig() {
 		return
 	}
 
-	err = os.WriteFile("config/config.json", bytes, fileMode)
+	err = os.WriteFile("config/config.json", bytes, FileMode)
 	if err != nil {
 		log.Printf("failed to write config: %v\n", err)
 	} else {
@@ -177,7 +177,7 @@ func SavePluginConfig() {
 		return
 	}
 
-	err = os.WriteFile("config/plugins.json", bytes, fileMode)
+	err = os.WriteFile("config/plugins.json", bytes, FileMode)
 	if err != nil {
 		log.Printf("failed to write plugin config: %v\n", err)
 	} else {
