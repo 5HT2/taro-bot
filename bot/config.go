@@ -73,9 +73,14 @@ type Config struct {
 	Mutex           sync.Mutex          `json:"-"` // not saved in DB
 	PrefixCache     map[int64]string    `json:"-"` // not saved in DB // [guild id]prefix
 	BotToken        string              `json:"bot_token"`
-	ActivityName    string              `json:"activity_name,omitempty"` // See LoadActivityStatus
-	ActivityUrl     string              `json:"activity_url,omitempty"`  // See LoadActivityStatus
-	ActivityType    uint8               `json:"activity_type,omitempty"` // See LoadActivityStatus
+	FohToken        string              `json:"foh_token"`
+	FohPublicUrl    string              `json:"foh_public_url,omitempty"`  // See LoadConfig
+	FohPublicDir    string              `json:"foh_public_dir,omitempty"`  // See LoadConfig
+	FohPrivateUrl   string              `json:"foh_private_url,omitempty"` // See LoadConfig
+	FohPrivateDir   string              `json:"foh_private_dir,omitempty"` // See LoadConfig
+	ActivityName    string              `json:"activity_name,omitempty"`   // See LoadActivityStatus
+	ActivityUrl     string              `json:"activity_url,omitempty"`    // See LoadActivityStatus
+	ActivityType    uint8               `json:"activity_type,omitempty"`   // See LoadActivityStatus
 	OperatorChannel int64               `json:"operator_channel,omitempty"`
 	OperatorIDs     []int64             `json:"operator_ids,omitempty"`
 	OperatorAliases map[string][]string `json:"operator_aliases,omitempty"`
@@ -124,13 +129,19 @@ func LoadConfig() {
 		log.Fatalf("error unmarshalling config: %v\n", err)
 	}
 
-	// Load prefix cache
 	C.Run(func(c *Config) {
+		// Load prefix cache
 		c.PrefixCache = make(map[int64]string, 0)
 
 		for _, g := range c.GuildConfigs {
 			c.PrefixCache[g.ID] = g.Prefix
 		}
+
+		// Load default fs-over-http urls and dir if not set
+		c.FohPrivateUrl = valueOrDefault(c.FohPrivateUrl, "http://localhost:6010")
+		c.FohPrivateDir = valueOrDefault(c.FohPrivateDir, "/public/media/")
+		c.FohPublicUrl = valueOrDefault(c.FohPublicUrl, "https://cdn.l1v.in")
+		c.FohPublicDir = valueOrDefault(c.FohPublicDir, "/")
 	})
 }
 
@@ -229,4 +240,13 @@ func SetPrefix(fnName string, id discord.GuildID, prefix string) (string, error)
 	})
 
 	return prefix, nil
+}
+
+// valueOrDefault is used to get a default value if the current value length is 0
+func valueOrDefault(val, def string) string {
+	if len(val) == 0 {
+		return def
+	}
+
+	return val
 }
