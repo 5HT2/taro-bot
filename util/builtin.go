@@ -107,3 +107,13 @@ func SliceSortAlphanumeric[S ~[]T, T string](s S) {
 		return s[j] > s[i]
 	})
 }
+
+// SlicesCondition will return if all values of []T match condition c
+func SlicesCondition[T comparable](s []T, c func(s T) bool) bool {
+	for _, v := range s {
+		if !c(v) {
+			return false
+		}
+	}
+	return true
+}
