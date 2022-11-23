@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	UrlRegex          = regexp.MustCompile(`https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)`)
+	UrlRegex          = regexp.MustCompile(`https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}([.:])[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)`)
 	emojiUrlRegex     = regexp.MustCompile(`^http(s)?://cdn\.discordapp\.com/emojis/([0-9]+)`)
 	discordEmojiRegex = regexp.MustCompile("<(a|):([A-z0-9_]+):([0-9]+)>")
 	pingRegex         = regexp.MustCompile("<@!?[0-9]+>")
