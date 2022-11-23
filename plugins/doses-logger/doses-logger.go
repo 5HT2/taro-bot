@@ -44,14 +44,15 @@ func DoseCommand(c bot.Command) error {
 	}
 
 	file := fmt.Sprintf("http://localhost:6010/media/doses-%v.json", c.E.Author.ID)
-
 	args, _ := cmd.ParseStringSliceArg(c.Args, 1, -1)
+	res, _ := http.Get(file)
 
-	if len(args) > 0 && args[0] == "-mkuser" {
-		if err := cmd.HasPermission(c, cmd.PermOperator); err != nil {
-			return err
-		}
+	if res == nil {
+		_, err := cmd.SendEmbed(c.E, c.Name, "`res` was nil, is fs-over-http running?", bot.ErrorColor)
+		return err
+	}
 
+	if res.StatusCode == 404 {
 		if id, err := cmd.ParseUserArg(c.Args, 2); err != nil {
 			return err
 		} else {
@@ -59,19 +60,14 @@ func DoseCommand(c bot.Command) error {
 
 			if res, err := httpBashRequests.Run(fmt.Sprintf("curl -i -s -X POST -H \"Auth: %s\" %s -F \"content=[]\"", p.Config.(config).FohToken, file)); err != nil {
 				return err
-			} else {
-				_, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor)
+			} else if _, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor); err != nil {
 				return err
 			}
 		}
-	}
 
-	res, _ := http.Get(file)
-	if res == nil {
-		_, err := cmd.SendEmbed(c.E, c.Name, "`res` was nil, is fs-over-http running?", bot.ErrorColor)
-		return err
-	}
-	if res.StatusCode != 200 {
+		cmd.CommandHandlerWithCommand(c.E, c.Name, c.Args)
+		return nil
+	} else if res.StatusCode != 200 {
 		_, err := cmd.SendEmbed(c.E, c.Name, fmt.Sprintf("Status for %s was %v, do you need to make a new file?", file, res.StatusCode), bot.ErrorColor)
 		return err
 	}
