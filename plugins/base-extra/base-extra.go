@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
@@ -10,7 +13,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/api"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
+	"log"
+	"mime/multipart"
+	"net/http"
 	"strings"
+	"time"
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -374,18 +381,26 @@ func SudoCommand(c bot.Command) error {
 				cf.OperatorAliases = make(map[string][]string, 0)
 			}
 
-			switch aliasName {
-			case "-l":
+			getAliases := func(arg string) (*discord.Message, error) {
+				var err error
+				var msg *discord.Message
 				if len(cf.OperatorAliases) == 0 {
-					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -l`", fmt.Sprintf("No aliases are currently set! Use the `%s alias [alias]` command to set an alias.", c.Name), bot.ErrorColor)
+					msg, err = cmd.SendEmbed(c.E, c.Name+" `alias "+arg+"`", fmt.Sprintf("No aliases are currently set! Use the `%s alias [alias]` command to set an alias.", c.Name), bot.ErrorColor)
 				} else {
 					aliases := make([]string, 0)
 					for name, _ := range cf.OperatorAliases {
 						aliases = append(aliases, fmt.Sprintf("- `%s`", name))
 					}
 					util.SliceSortAlphanumeric(aliases)
-					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -l`", fmt.Sprintf("The following aliases are currently set:\n%s\n", strings.Join(aliases, "\n")), bot.DefaultColor)
+					msg, err = cmd.SendEmbed(c.E, c.Name+" `alias "+arg+"`", fmt.Sprintf("The following aliases are currently set:\n%s\n", strings.Join(aliases, "\n")), bot.DefaultColor)
 				}
+
+				return msg, err
+			}
+
+			switch aliasName {
+			case "-l":
+				_, err = getAliases("-l")
 			case "-r":
 				if len(args) > 0 {
 					if _, ok := cf.OperatorAliases[args[0]]; !ok {
@@ -396,6 +411,165 @@ func SudoCommand(c bot.Command) error {
 					}
 				} else {
 					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", "You need to specify which alias to remove!", bot.ErrorColor)
+				}
+			case "--export":
+				if c.E.GuildID.IsValid() {
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias --export`", "Cannot import aliases while in guilds! (You could potentially leak private information).", bot.ErrorColor)
+				} else {
+					if j, err1 := json.Marshal(cf.OperatorAliases); err1 != nil {
+						err = err1
+					} else {
+						b64 := base64.StdEncoding.EncodeToString(j)
+						if len(b64) > 4088 {
+							if len(cf.FohToken) == 0 {
+								_, err = cmd.SendEmbed(c.E, c.Name+" `alias --export`", "Config is more than 4088 chars but fs-over-http token is not set, cannot upload.", bot.ErrorColor)
+							} else {
+								msgL, _ := getAliases("--export")
+								msgW, _ := cmd.SendEmbed(c.E, c.Name+" `alias --export`", "Config is more than 4088 chars.\nAttempting to upload to fs-over-http", bot.WarnColor)
+
+								cleanupMsg := func(msg *discord.Message, sleep time.Duration) {
+									if sleep > 0 {
+										time.Sleep(sleep * time.Second)
+									}
+									_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+								}
+
+								go func() {
+									cleanupMsg(msgW, 5) // Delete warning after 5 seconds
+								}()
+
+								// Create body and writer
+								body := &bytes.Buffer{}
+								writer := multipart.NewWriter(body)
+
+								// Create form file from b64
+								cfgName := fmt.Sprintf("alias-config-%s%v.txt", bot.User.ID, time.Now().UnixMilli())
+								part, _ := writer.CreateFormFile("file", cfgName)
+								encoder := base64.NewEncoder(base64.StdEncoding, part)
+
+								if _, err1 := encoder.Write(j); err1 != nil {
+									_ = writer.Close()
+									go cleanupMsg(msgL, 1)
+									go cleanupMsg(msgW, 1)
+									err = err1
+								} else {
+									// We HAVE to close the writer on our own before making a request otherwise we will be led on a wild goose chase into the http lib.
+									// Please do not try to debug why this fails to close on its own and why a `defer writer.Close()` isn't good enough.
+									// For some reason this has to be closed before the form is parsed, I presume because there's a stack that needs to be pushed by it.
+									// TIME WASTED HERE: 4 hours on the dot.
+									_ = writer.Close()
+
+									// Upload file
+									r, _ := http.NewRequest("POST", fmt.Sprintf("%s%s%s", cf.FohPrivateUrl, cf.FohPrivateDir, cfgName), body)
+									r.Header.Add("Content-Type", writer.FormDataContentType())
+									r.Header.Set("Auth", cf.FohToken)
+
+									if err1 := r.ParseForm(); err1 != nil {
+										go cleanupMsg(msgL, 1)
+										go cleanupMsg(msgW, 1)
+										err = err1
+									} else {
+										if content, res, err1 := util.RequestUrlReq(r); err1 != nil {
+											go cleanupMsg(msgL, 1)
+											go cleanupMsg(msgW, 1)
+											err = err1
+										} else if res != nil && res.StatusCode != 200 {
+											go cleanupMsg(msgL, 1)
+											go cleanupMsg(msgW, 1)
+											_, err = cmd.SendEmbed(c.E, c.Name+" `alias --export`", fmt.Sprintf("Config is more than 4088 chars.\nFailed to upload with the following status:\n```\n%v: %s\n```", res.StatusCode, content), bot.ErrorColor)
+										} else {
+											_, err = cmd.SendEmbed(c.E, c.Name+" `alias --export`", fmt.Sprintf("Config is more than 4088 chars.\nUploaded to %s%s%s", cf.FohPublicUrl, cf.FohPublicDir, cfgName), bot.SuccessColor)
+										}
+									}
+								}
+							}
+						} else {
+							_, _ = getAliases("--export")
+							_, err = cmd.SendEmbed(c.E, c.Name+" `alias --export`", fmt.Sprintf("```\n%s\n```", b64), bot.SuccessColor)
+						}
+					}
+				}
+			case "--import":
+				if c.E.GuildID.IsValid() {
+					var err1 error
+					if len(args) > 0 {
+						err1 = bot.Client.DeleteMessage(c.E.ChannelID, c.E.ID, "Removing potentially sensitive information (`# alias --import`)")
+					}
+
+					embed := cmd.MakeEmbed(c.Name+" `alias --import`", "Cannot import aliases while in guilds! (You could potentially leak private information).", bot.ErrorColor)
+					if err1 != nil {
+						embed.Description += " \nFailed to delete original message: " + err1.Error()
+					}
+
+					_, err = cmd.SendCustomEmbed(c.E.ChannelID, embed)
+				} else {
+					if len(args) == 0 {
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias --import`", "You need to specify a `base64` alias config to import!", bot.ErrorColor)
+					} else {
+						var b64 []byte
+
+						// Get a config from a URL
+						urlMatch := cmd.UrlRegex.FindStringSubmatch(args[0])
+						log.Printf("urlMatch: %s\n", urlMatch)
+						if len(urlMatch) != -1 {
+							go func() {
+								msg, _ := cmd.SendEmbed(c.E, c.Name+" `alias --import`", "Found URL as parameter, attempting to load from URL", bot.WarnColor)
+								time.Sleep(5 * time.Second)
+								_ = bot.Client.DeleteMessage(msg.ChannelID, msg.ID, "cleaning up log msg")
+							}()
+
+							// If all values are set, update request URL
+							if strings.HasPrefix(urlMatch[0], cf.FohPublicUrl+cf.FohPublicDir) &&
+								util.SlicesCondition([]string{cf.FohToken, cf.FohPublicUrl, cf.FohPublicDir, cf.FohPrivateUrl, cf.FohPrivateDir},
+									// Ensure that each variable is not empty
+									func(c string) bool {
+										return len(c) > 0
+									},
+								) {
+								// Replace beginning of public URL with private when requesting, if cf.FohToken and all other variables are set
+								urlMatch[0] = cf.FohPrivateUrl + cf.FohPrivateDir + strings.TrimPrefix(urlMatch[0], cf.FohPublicUrl+cf.FohPublicDir)
+							}
+
+							log.Printf("urlMatch: %s\n", urlMatch)
+
+							// Request b64 content from URL
+							if content, _, err1 := util.RequestUrlFn(urlMatch[0], http.MethodGet, func(req *http.Request) {
+								if len(cf.FohToken) > 0 {
+									req.Header.Add("Auth", cf.FohToken)
+								}
+							}); err1 == nil {
+								b64 = content
+							} else {
+								err = err1
+							}
+						} else { // Default to reading base64 from the message
+							if content, err1 := base64.StdEncoding.DecodeString(strings.Join(args, "")); err1 == nil {
+								b64 = content
+							} else {
+								err = err1
+							}
+						}
+
+						// Parse config, either from a message or a URL, and import it
+						if err == nil {
+							j := make([]byte, base64.StdEncoding.DecodedLen(len(b64)))
+							if _, err1 := base64.StdEncoding.Decode(j, b64); err1 == nil {
+								var aliases map[string][]string
+								if err1 := json.Unmarshal(j, &aliases); err1 != nil {
+									err = err1
+								} else {
+									cf.OperatorAliases = aliases
+									if _, err1 = cmd.SendEmbed(c.E, c.Name+" `alias --import`", "Imported aliases!", bot.SuccessColor); err1 != nil {
+										err = err1
+									} else {
+										_, err = getAliases("--import")
+									}
+								}
+							} else {
+								err = err1
+							}
+						}
+					}
 				}
 			default:
 				if len(args) == 0 {
@@ -417,7 +591,7 @@ func SudoCommand(c bot.Command) error {
 			"Available arguments are:\n- `alias <name> <command>`",
 			bot.DefaultColor)
 		return err
-	default:
+	default: // Default to running a bash shell
 		if args, err := cmd.ParseStringSliceArg(c.Args, 1, -1); err != nil {
 			return err
 		} else {
