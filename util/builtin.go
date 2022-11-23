@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -116,4 +117,15 @@ func SlicesCondition[T comparable](s []T, c func(s T) bool) bool {
 		}
 	}
 	return true
+}
+
+// SliceJoin will join any slice based on the property or value that c returns
+func SliceJoin[T any](s []T, sep string, c func(s T) *string) string {
+	ns := make([]string, 0)
+	for _, v := range s {
+		if n := c(v); n != nil {
+			ns = append(ns, *n)
+		}
+	}
+	return strings.Join(ns, sep)
 }
