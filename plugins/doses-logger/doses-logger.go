@@ -53,16 +53,12 @@ func DoseCommand(c bot.Command) error {
 	}
 
 	if res.StatusCode == 404 {
-		if id, err := cmd.ParseUserArg(c.Args, 2); err != nil {
-			return err
-		} else {
-			file = fmt.Sprintf("http://localhost:6010/public/media/doses-%v.json", id)
+		file = fmt.Sprintf("http://localhost:6010/public/media/doses-%v.json", c.E.Author.ID)
 
-			if res, err := httpBashRequests.Run(fmt.Sprintf("curl -i -s -X POST -H \"Auth: %s\" %s -F \"content=[]\"", p.Config.(config).FohToken, file)); err != nil {
-				return err
-			} else if _, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor); err != nil {
-				return err
-			}
+		if res, err := httpBashRequests.Run(fmt.Sprintf("curl -i -s -X POST -H \"Auth: %s\" %s -F \"content=[]\"", p.Config.(config).FohToken, file)); err != nil {
+			return err
+		} else if _, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor); err != nil {
+			return err
 		}
 
 		cmd.CommandHandlerWithCommand(c.E, c.Name, c.Args)
