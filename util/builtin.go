@@ -129,3 +129,16 @@ func SliceJoin[T any](s []T, sep string, c func(s T) *string) string {
 	}
 	return strings.Join(ns, sep)
 }
+
+// SliceEqual returns true if all bytes of a and b are the same
+func SliceEqual[T comparable](a []T, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
