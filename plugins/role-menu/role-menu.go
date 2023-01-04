@@ -380,6 +380,11 @@ func RoleMenuReactionAddHandler(i interface{}) {
 		return
 	}
 
+	if util.SliceContains(e.Member.RoleIDs, discord.RoleID(roleID)) {
+		log.Printf("can't add, user already has role: %v (%s)\n", roleID, auditLogReason)
+		return
+	}
+
 	log.Printf("trying to add role: %v (%s)\n", roleID, auditLogReason)
 
 	if err := bot.Client.AddRole(e.GuildID, e.UserID, discord.RoleID(roleID), api.AddRoleData{AuditLogReason: auditLogReason}); err != nil {
