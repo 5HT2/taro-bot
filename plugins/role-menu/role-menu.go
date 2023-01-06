@@ -66,10 +66,6 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Fn:     RoleMenuReactionAddHandler,
 			FnName: "RoleMenuReactionAddHandler",
 			FnType: reflect.TypeOf(func(*gateway.MessageReactionAddEvent) {}),
-		}, {
-			Fn:     RoleMenuReactionRemoveHandler,
-			FnName: "RoleMenuReactionRemoveHandler",
-			FnType: reflect.TypeOf(func(event *gateway.MessageReactionRemoveEvent) {}),
 		}},
 	}
 	p.ConfigDir = i.ConfigDir
@@ -390,28 +386,11 @@ func RoleMenuReactionAddHandler(i interface{}) {
 		return
 	}
 
+	// Otherwise, we add the role
 	log.Printf("trying to add role: %v (%s)\n", roleID, auditLogReason)
 
 	if err := bot.Client.AddRole(e.GuildID, e.UserID, discord.RoleID(roleID), api.AddRoleData{AuditLogReason: auditLogReason}); err != nil {
 		log.Printf("failed to add reaction role: %v\n", err)
-	}
-}
-
-func RoleMenuReactionRemoveHandler(i interface{}) {
-	defer util.LogPanic()
-	e := i.(*gateway.MessageReactionRemoveEvent)
-
-	// Can't return for non-bot here, too lazy to lookup user. This shouldn't be possible, anyways.
-
-	roleID, auditLogReason := getRoleFromEvent(e.GuildID, e.MessageID, e.ChannelID, e.Emoji, false)
-	if roleID == 0 || roleID == -1 {
-		return
-	}
-
-	log.Printf("trying to remove role: %v (%s)\n", roleID, auditLogReason)
-
-	if err := bot.Client.RemoveRole(e.GuildID, e.UserID, discord.RoleID(roleID), auditLogReason); err != nil {
-		log.Printf("failed to remove reaction role: %v\n", err)
 	}
 }
 
