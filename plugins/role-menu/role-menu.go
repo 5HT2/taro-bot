@@ -380,8 +380,13 @@ func RoleMenuReactionAddHandler(i interface{}) {
 		return
 	}
 
+	// Remove role if user already has it
 	if util.SliceContains(e.Member.RoleIDs, discord.RoleID(roleID)) {
-		log.Printf("can't add, user already has role: %v (%s)\n", roleID, auditLogReason)
+		log.Printf("trying to remove role (toggle): %v (%s)\n", roleID, auditLogReason)
+
+		if err := bot.Client.RemoveRole(e.GuildID, e.UserID, discord.RoleID(roleID), auditLogReason); err != nil {
+			log.Printf("failed to remove reaction role (toggle): %v\n", err)
+		}
 		return
 	}
 
