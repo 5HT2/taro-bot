@@ -273,6 +273,7 @@ func StarboardReactionHandler(i interface{}) {
 				IsNsfw: channel.NSFW,
 				Stars:  make([]int64, 0),
 			}
+			log.Printf("Making new starboard message: %v\n", sMsg)
 		}
 
 		// Channel to send starboard message to
