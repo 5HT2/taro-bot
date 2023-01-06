@@ -335,7 +335,7 @@ func StarboardReactionHandler(i interface{}) {
 		// Attempt to get existing message, and make a new one if it isn't there
 		pMsg, err := bot.Client.Message(postChannel.ID, discord.MessageID(sMsg.PostID))
 		if err != nil {
-			log.Printf("Couldn't get pMsg %v\n", err)
+			log.Printf("Couldn't get pMsg (%v / %v) %v / %s\n", postChannel.ID, sMsg.PostID, err, cmd.CreateMessageLink(int64(e.GuildID), pMsg, false, false))
 
 			//
 			// Construct new starboard post if it couldn't retrieve an existing one
