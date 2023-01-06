@@ -243,7 +243,8 @@ func StarboardReactionHandler(i interface{}) {
 		// If user reacts to a post in a starboard channel
 		if cID == g.Starboard.Channel || cID == g.Starboard.NsfwChannel {
 			for _, m := range g.Starboard.Messages {
-				if m.PostID == int64(msg.ID) {
+				// If the reaction message ID matches a starboard post, or if it matches an original message that *has* a starboard post
+				if m.PostID == int64(msg.ID) || m.ID == int64(msg.ID) {
 					sMsg = &m
 					newPost = false
 					break
