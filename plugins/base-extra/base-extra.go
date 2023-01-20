@@ -403,11 +403,11 @@ func SudoCommand(c bot.Command) error {
 				_, err = getAliases("-l")
 			case "-r":
 				if len(args) > 0 {
-					if _, ok := cf.OperatorAliases[args[0]]; !ok {
+					if alias, ok := cf.OperatorAliases[args[0]]; !ok {
 						_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", fmt.Sprintf("Could not find any alias with the name `%s`!", args[0]), bot.ErrorColor)
 					} else {
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", fmt.Sprintf("```\nalias %s %s\n```", args[0], strings.Join(alias, " ")), bot.ErrorColor)
 						delete(cf.OperatorAliases, args[0])
-						_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", fmt.Sprintf("Removed alias `%s`!", args[0]), bot.SuccessColor)
 					}
 				} else {
 					_, err = cmd.SendEmbed(c.E, c.Name+" `alias -r`", "You need to specify which alias to remove!", bot.ErrorColor)
@@ -576,11 +576,11 @@ func SudoCommand(c bot.Command) error {
 					if alias, ok := cf.OperatorAliases[aliasName]; !ok {
 						_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Could not find any alias with the name `%s`!", aliasName), bot.ErrorColor)
 					} else {
-						_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Alias for `%s` is set to ```\n%s\n```", aliasName, strings.Join(alias, " ")), bot.DefaultColor)
+						_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("```\nalias %s %s\n```", aliasName, strings.Join(alias, " ")), bot.DefaultColor)
 					}
 				} else {
 					cf.OperatorAliases[aliasName] = args
-					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("Set alias for `%s` to ```\n%s\n```", aliasName, strings.Join(args, " ")), bot.SuccessColor)
+					_, err = cmd.SendEmbed(c.E, c.Name+" `alias`", fmt.Sprintf("```\nalias %s %s\n```", aliasName, strings.Join(args, " ")), bot.SuccessColor)
 				}
 			}
 		})
