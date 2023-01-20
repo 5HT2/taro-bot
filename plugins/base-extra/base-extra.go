@@ -588,7 +588,7 @@ func SudoCommand(c bot.Command) error {
 	case "-h":
 		_, err := cmd.SendEmbed(c.E,
 			c.Name,
-			"Available arguments are:\n- `alias <name> <command>`",
+			"Available arguments are:\n- `alias <name> [command]`\n- `alias -r <name>`\n- `alias -l|-h|--export|--import`",
 			bot.DefaultColor)
 		return err
 	default: // Default to running a bash shell
