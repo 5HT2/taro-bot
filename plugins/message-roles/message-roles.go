@@ -10,9 +10,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/discord"
 	"log"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var (
@@ -21,6 +23,7 @@ var (
 )
 
 type config struct {
+	StartDate  time.Time                  `json:"start_date"`              // Date bot started keeping track of User.TotalMsgs
 	GuildUsers map[string]map[string]User `json:"guild_users,omitempty"`   // [guild id][user id]User
 	GuildRoles map[string][]Role          `json:"guild_configs,omitempty"` // [guild id][]Role
 	// this could also be a [guild id][role id]Role for performance reasons, but it's only loop-searched in commands,
@@ -28,8 +31,10 @@ type config struct {
 }
 
 type User struct {
-	Msgs       map[string]int64 `json:"msgs"`        // [role id]number of messages
-	GivenRoles map[string]bool  `json:"given_roles"` // [role id]given role
+	TotalMsgs     int64            `json:"total_msgs"`      // number of messages sent while in that guild, ignoring any kind of whitelist / blacklist rules
+	TotalRoleMsgs int64            `json:"total_role_msgs"` // number of messages sent, respecting whitelist / blacklist
+	Msgs          map[string]int64 `json:"msgs"`            // [role id]number of messages
+	GivenRoles    map[string]bool  `json:"given_roles"`     // [role id]given role
 }
 
 type Role struct {
@@ -51,6 +56,13 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Aliases:     []string{"mrcfg"},
 			Description: "Edit message roles config",
 			GuildOnly:   true,
+		}, {
+			Fn:          MessageTopCommand,
+			FnName:      "MessageTopCommand",
+			Name:        "messagetop",
+			Aliases:     []string{"msgtop", "leaderboard"},
+			Description: "Message Leaderboard",
+			GuildOnly:   true,
 		}},
 		ConfigType: reflect.TypeOf(config{}),
 		Responses: []bot.ResponseInfo{{
@@ -58,6 +70,17 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Regexes:  []string{"."},
 			MatchMin: 1,
 		}},
+		StartupFn: func() {
+			if cfg, ok := p.Config.(config); ok {
+				if cfg.StartDate.IsZero() {
+					cfg.StartDate = time.Now()
+				}
+
+				p.Config = cfg
+			} else {
+				p.Config = config{StartDate: time.Now()}
+			}
+		},
 	}
 	p.ConfigDir = i.ConfigDir
 	p.Config = p.LoadConfig()
@@ -75,6 +98,8 @@ func MsgThresholdMsgResponse(r bot.Response) {
 
 	// this will go and validate if the message channel is in the whitelist or blacklist, or neither, and bump the message count for said role
 	bumpMessages := func(roles []Role, user User, channel discord.ChannelID) User {
+		user.TotalMsgs += 1
+
 		for _, role := range roles {
 			roleID := strconv.FormatInt(role.ID, 10)
 
@@ -84,6 +109,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 				// and the channel ISN'T in the whitelist.
 				if util.SliceContains(role.Whitelist, int64(channel)) {
 					user.Msgs[roleID] += 1
+					user.TotalRoleMsgs += 1
 				}
 			} else if len(role.Blacklist) > 0 {
 				// If a blacklist is enabled and the channel IS NOT in the blacklist.
@@ -91,9 +117,11 @@ func MsgThresholdMsgResponse(r bot.Response) {
 				// and the channel IS in the blacklist.
 				if !util.SliceContains(role.Blacklist, int64(channel)) {
 					user.Msgs[roleID] += 1
+					user.TotalRoleMsgs += 1
 				}
 			} else {
 				user.Msgs[roleID] += 1
+				user.TotalRoleMsgs += 1
 			}
 		}
 
@@ -119,6 +147,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 				}
 			}
 		}
+
 		return user
 	}
 
@@ -172,16 +201,12 @@ func MessageRolesConfigCommand(c bot.Command) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	arg, _ := cmd.ParseStringArg(c.Args, 1, true)
-
 	roles := make([]Role, 0)
-
-	if p.Config != nil {
-		if guildRoles, ok := p.Config.(config).GuildRoles[c.E.GuildID.String()]; ok {
-			roles = guildRoles
-		}
+	if guildRoles, ok := p.Config.(config).GuildRoles[c.E.GuildID.String()]; ok {
+		roles = guildRoles
 	}
 
+	arg, _ := cmd.ParseStringArg(c.Args, 1, true)
 	var err error = nil
 
 	switch arg {
@@ -380,5 +405,81 @@ func MessageRolesConfigCommand(c bot.Command) error {
 		p.Config.(config).GuildRoles[c.E.GuildID.String()] = roles
 	}
 
+	return err
+}
+
+func MessageTopCommand(c bot.Command) error {
+	if cfg, ok := p.Config.(config).GuildUsers[c.E.GuildID.String()]; ok {
+		topUsers := make([]string, 0)
+
+		for k := range cfg {
+			if len(k) == 0 {
+				continue
+			}
+
+			topUsers = append(topUsers, k)
+		}
+
+		sort.SliceStable(topUsers, func(i, j int) bool {
+			return cfg[topUsers[i]].TotalMsgs > cfg[topUsers[j]].TotalMsgs
+		})
+
+		lines := make([]string, 0)
+		fields := make([]discord.EmbedField, 0)
+
+		id := c.E.Author.ID.String()
+		selfPos := 0
+		selfNum := ""
+
+		for n, u := range topUsers {
+			if u == id {
+				selfPos = n + 1
+				selfNum = util.FormattedNum(cfg[u].TotalMsgs)
+			}
+
+			if n < 3 {
+				emoji := ""
+				switch n {
+				case 0:
+					emoji = "🥇"
+				case 1:
+					emoji = "🥈"
+				case 2:
+					emoji = "🥉"
+				}
+
+				fields = append(fields, discord.EmbedField{
+					Name:  emoji,
+					Value: fmt.Sprintf("<@%s>: %s", u, util.FormattedNum(cfg[u].TotalMsgs)),
+				})
+			} else {
+				lines = append(lines, fmt.Sprintf("#%v <@%s>: %s", n+1, u, util.FormattedNum(cfg[u].TotalMsgs)))
+			}
+		}
+
+		if len(lines) > 0 {
+			fields = append(fields, discord.EmbedField{
+				Name: "​", Value: util.HeadLinesLimit(strings.Join(lines, "\n"), 1024),
+			})
+		}
+
+		author := cmd.CreateEmbedAuthor(*c.E.Member)
+		if selfPos != 0 {
+			author.Name += fmt.Sprintf(" (#%v: %s)", selfPos, selfNum)
+		}
+
+		_, err := cmd.SendCustomEmbed(c.E.ChannelID, discord.Embed{
+			Title:     "Message Leaderboard",
+			Author:    author,
+			Fields:    fields,
+			Footer:    &discord.EmbedFooter{Text: "Messages sent since"},
+			Timestamp: discord.Timestamp(p.Config.(config).StartDate),
+			Color:     bot.DefaultColor,
+		})
+
+		return err
+	}
+
+	_, err := cmd.SendEmbed(c.E, p.Name, "GuildUsers config for this guild is missing! Contact a developer for help, this shouldn't ever happen.", bot.ErrorColor)
 	return err
 }
