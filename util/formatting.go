@@ -12,6 +12,35 @@ var (
 	printer = message.NewPrinter(language.English)
 )
 
+// HeadLinesLimit will take the first amount of lines that fit into the X char limit
+// If the string does not consist of split lines, instead just fit the first amount of chars.
+func HeadLinesLimit(s string, limit int) string {
+	lines := strings.Split(s, "\n")
+
+	// We don't have any lines to work with - just get the first chars in s that fit into limit
+	if len(lines) <= 1 {
+		if limit > len(s) { // Don't slice out of bounds
+			limit = len(s)
+		}
+
+		return s[:limit]
+	}
+
+	reached := 0
+	headedLines := make([]string, 0)
+	for _, line := range lines {
+		if len(line)+reached <= limit {
+			reached += len(line)
+			reached += 1 // for newline
+			headedLines = append(headedLines, line)
+		} else {
+			break
+		}
+	}
+
+	return strings.Join(headedLines, "\n")
+}
+
 // TailLinesLimit will take the last amount of lines that fit into the X char limit.
 // If the string does not consist of split lines, instead just fit the last amount of chars.
 func TailLinesLimit(s string, limit int) string {
