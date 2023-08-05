@@ -101,6 +101,10 @@ func MsgThresholdMsgResponse(r bot.Response) {
 		user.TotalMsgs += 1
 
 		for _, role := range roles {
+			if role.Threshold < 0 { // Role is "removed" (disabled)
+				continue
+			}
+
 			roleID := strconv.FormatInt(role.ID, 10)
 
 			if len(role.Whitelist) > 0 {
@@ -131,6 +135,10 @@ func MsgThresholdMsgResponse(r bot.Response) {
 	// this will check each role if the threshold is met or not, and assign it if so
 	checkThreshold := func(roles []Role, user User) User {
 		for _, role := range roles {
+			if role.Threshold < 0 { // Role is "removed" (disabled)
+				continue
+			}
+
 			roleID := strconv.FormatInt(role.ID, 10)
 			givenRole, _ := user.GivenRoles[roleID]
 
@@ -244,6 +252,28 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			roles = append(roles, newRole)
 
 			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Created role <@&%v> with threshold %s!", role, util.FormattedNum(threshold)), bot.SuccessColor)
+		}
+	case "remove":
+		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+
+		if argErr1 != nil {
+			return argErr1
+		}
+
+		found := false
+		for n, r := range roles {
+			if r.ID == role {
+				r.Threshold = -1
+				roles[n] = r
+				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed role <@&%v>!", r.ID), bot.ErrorColor)
+
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
 		}
 	case "whitelist":
 		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
@@ -371,22 +401,27 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			return blacklistUser()
 		}
 	case "list":
+		lines := make([]string, 0)
+		for _, role := range roles {
+			if role.Threshold < 0 { // Role is "removed" (disabled)
+				continue
+			}
+
+			a1 := ""
+			a2 := ""
+			if len(role.Whitelist) > 0 {
+				a1 = "\n✅ Whitelist: " + util.JoinInt64Slice(role.Whitelist, ", ", "<#", ">")
+			}
+			if len(role.Blacklist) > 0 {
+				a2 = "\n⛔ Blacklist: " + util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">")
+			}
+
+			lines = append(lines, fmt.Sprintf("<@&%v> (%s messages)%s%s", role.ID, util.FormattedNum(role.Threshold), a1, a2))
+		}
+
 		if len(roles) == 0 {
 			_, err = cmd.SendEmbed(c.E, p.Name, "No message roles setup!", bot.WarnColor)
 		} else {
-			lines := make([]string, 0)
-			for _, role := range roles {
-				a1 := ""
-				a2 := ""
-				if len(role.Whitelist) > 0 {
-					a1 = "\n✅ Whitelist: " + util.JoinInt64Slice(role.Whitelist, ", ", "<#", ">")
-				}
-				if len(role.Blacklist) > 0 {
-					a2 = "\n⛔ Blacklist: " + util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">")
-				}
-
-				lines = append(lines, fmt.Sprintf("<@&%v> (%s messages)%s%s", role.ID, util.FormattedNum(role.Threshold), a1, a2))
-			}
 			_, err = cmd.SendEmbed(c.E, p.Name, strings.Join(lines, "\n\n"), bot.DefaultColor)
 		}
 	default:
