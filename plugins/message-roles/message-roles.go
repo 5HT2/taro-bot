@@ -431,6 +431,9 @@ func MessageRolesConfigCommand(c bot.Command) error {
 }
 
 func MessageTopCommand(c bot.Command) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if cfg, ok := p.Config.(config).GuildUsers[c.E.GuildID.String()]; ok {
 		topUsers := make([]string, 0)
 
