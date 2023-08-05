@@ -260,13 +260,13 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			}
 		}
 
-		roles = orderedRoles
-
 		if len(orderedRoles) < len(roles) {
 			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed role <@&%v>!", role), bot.ErrorColor)
 		} else {
 			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
 		}
+
+		roles = orderedRoles
 	case "whitelist":
 		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
 		channel, argErr2 := cmd.ParseChannelArg(c.Args, 3)
