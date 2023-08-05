@@ -65,22 +65,13 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 }
 
 func MsgThresholdMsgResponse(r bot.Response) {
-	if p.Config == nil {
-		return
-	}
-
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	roles, ok := p.Config.(config).GuildRoles[r.E.GuildID.String()]
-	if !ok {
-		return
+	roles := make([]Role, 0)
+	if guildRoles, ok := p.Config.(config).GuildRoles[r.E.GuildID.String()]; ok {
+		roles = guildRoles
 	}
-
-	// This guild has ExcludeChannels enabled and the message is from one of them
-	//if len(guildConfig.ExcludeChannels) > 0 && util.SliceContains(guildConfig.ExcludeChannels, int64(r.E.ChannelID)) {
-	//	return
-	//}
 
 	// this will go and validate if the message channel is in the whitelist or blacklist, or neither, and bump the message count for said role
 	bumpMessages := func(roles []Role, user User, channel discord.ChannelID) User {
@@ -133,6 +124,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 
 	// Check if the guild has an existing config
 	if cfg, ok := p.Config.(config).GuildUsers[r.E.GuildID.String()]; ok {
+		// Make a new user, populate it
 		user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
 
 		// If the guild has an existing config, does this user exist in it yet?
@@ -150,6 +142,7 @@ func MsgThresholdMsgResponse(r bot.Response) {
 		// Make a new user, populate it
 		user := User{Msgs: make(map[string]int64), GivenRoles: make(map[string]bool)}
 		user = bumpMessages(roles, user, r.E.ChannelID)
+		user = checkThreshold(roles, user)
 
 		// Users map not found, create it
 		users := make(map[string]User)
@@ -339,7 +332,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 					p.Config.(config).GuildUsers[c.E.GuildID.String()] = users
 				}
 
-				_, err := cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Succesfully blacklisted <@%v> from getting <@&%v>!", user, role), bot.SuccessColor)
+				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Succesfully blacklisted <@%v> from getting <@&%v>!", user, role), bot.SuccessColor)
 				return err
 			}
 		}
