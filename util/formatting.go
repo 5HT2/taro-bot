@@ -12,16 +12,20 @@ var (
 	printer = message.NewPrinter(language.English)
 )
 
-// TailLinesLimit will take the last amount of lines that fit into the X char limit
+// TailLinesLimit will take the last amount of lines that fit into the X char limit.
+// If the string does not consist of split lines, instead just fit the last amount of chars.
 func TailLinesLimit(s string, limit int) string {
 	lines := strings.Split(s, "\n")
 
-	// We don't have any lines to work with - just do a raw char limit
+	// We don't have any lines to work with - just get the last chars in s that fit into limit
 	if len(lines) <= 1 {
-        if limit > len(s) { // Don't slice out of bounds
-            limit = len(s)
-        }
-		return s[:limit]
+		last := len(s) - limit
+
+		if last < 0 { // Don't slice out of bounds
+			last = 0
+		}
+
+		return s[last:]
 	}
 
 	// Reverse the order of the lines, we want to Tail them
