@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/diamondburned/arikawa/v3/discord"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"strconv"
@@ -115,6 +116,15 @@ func FormattedTime(secondsIn int64) string {
 // FormattedNum will insert commas as necessary in large numbers
 func FormattedNum(num int64) string {
 	return printer.Sprintf("%d", num)
+}
+
+// FormattedUserTag will return the user#discrim if it's non-0 otherwise just username
+func FormattedUserTag(u discord.User) string {
+	if u.Discriminator == "0" {
+		return u.Username
+	}
+
+	return u.Tag()
 }
 
 // JoinInt64AndStr will join and add a plural s to the str if int is not 1, for example, "0 hours", "1 hour", "2 hours".
