@@ -11,6 +11,11 @@ import (
 	"github.com/diamondburned/arikawa/v3/utils/json/option"
 	"reflect"
 	"strconv"
+	"strings"
+)
+
+var (
+	escapedCheckmark = "%E2%9C%85"
 )
 
 func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
@@ -53,109 +58,114 @@ func TopicConfigCommand(c bot.Command) error {
 	}
 	channelsStr := util.JoinInt64Slice(channels, ", ", "<#", ">")
 
-	if arg1, err := cmd.ParseStringArg(c.Args, 1, true); err != nil {
+	arg1, err := cmd.ParseStringArg(c.Args, 1, true)
+	if err != nil {
+		arg1 = "help"
+		err = nil
+	}
+
+	switch arg1 {
+	case "enable":
+		bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			for _, channel := range channels {
+				if !util.SliceContains(g.EnabledTopicChannels, channel) {
+					g.EnabledTopicChannels = append(g.EnabledTopicChannels, channel)
+				}
+			}
+			return g, "TopicConfigCommand: topic enable"
+		})
+		_, err := cmd.SendEmbed(c.E, "Configure Topics", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
 		return err
-	} else {
-		switch arg1 {
-		case "enable":
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				for _, channel := range channels {
-					if !util.SliceContains(g.EnabledTopicChannels, channel) {
-						g.EnabledTopicChannels = append(g.EnabledTopicChannels, channel)
-					}
+	case "disable":
+		bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			for _, channel := range channels {
+				if util.SliceContains(g.EnabledTopicChannels, channel) {
+					g.EnabledTopicChannels = util.SliceRemove(g.EnabledTopicChannels, channel)
 				}
-				return g, "TopicConfigCommand: topic enable"
-			})
-			_, err := cmd.SendEmbed(c.E, "Configure Topics", "✅ Added "+channelsStr+" to the allowed topic channels", bot.SuccessColor)
-			return err
-		case "disable":
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				for _, channel := range channels {
-					if util.SliceContains(g.EnabledTopicChannels, channel) {
-						g.EnabledTopicChannels = util.SliceRemove(g.EnabledTopicChannels, channel)
-					}
-				}
-				return g, "TopicConfigCommand: topic disable"
-			})
-			_, err := cmd.SendEmbed(c.E, "Configure Topics", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
-			return err
-		case "emoji":
-			arg2, animated, err3 := cmd.ParseEmojiArg(c.Args, 2, true)
-			if err3 != nil {
-				return err3
 			}
+			return g, "TopicConfigCommand: topic disable"
+		})
+		_, err := cmd.SendEmbed(c.E, "Configure Topics", "⛔ Removed "+channelsStr+" from the allowed topic channels", bot.ErrorColor)
+		return err
+	case "emoji":
+		arg2, animated, err3 := cmd.ParseEmojiArg(c.Args, 2, true)
+		if err3 != nil {
+			return err3
+		}
 
-			if arg2 == nil {
-				if emoji, err := util.GuildTopicVoteEmoji(c.E.GuildID); err != nil {
-					return err
-				} else {
-					_, err = cmd.SendEmbed(c.E, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
-					return err
-				}
+		if arg2 == nil {
+			if emoji, err := topicVoteEmoji(c.E.GuildID); err != nil {
+				return err
 			} else {
-				configEmoji := util.ApiEmojiAsConfig(arg2, animated)
-				emoji, err := util.FormatEncodedEmoji(configEmoji)
-				if err != nil {
-					return err
-				}
-
-				bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-					g.TopicVoteEmoji = configEmoji
-					return g, "TopicConfigCommand: update TopicVoteEmoji"
-				})
-
-				_, err = cmd.SendEmbed(c.E, "Set Topic Vote Emoji To:", emoji, bot.SuccessColor)
+				_, err = cmd.SendEmbed(c.E, "Current Topic Vote Emoji:", emoji, bot.DefaultColor)
 				return err
 			}
-		case "threshold":
-			arg2, err2 := cmd.ParseInt64Arg(c.Args, 2)
-			if err2 != nil {
-				return err2
-			}
-
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				if arg2 <= 0 {
-					arg2 = 3
-				}
-
-				g.TopicVoteThreshold = arg2
-				return g, "TopicConfigCommand: update topic vote threshold"
-			})
-
-			_, err := cmd.SendEmbed(c.E, "Set Topic Vote Threshold To:", strconv.FormatInt(arg2, 10), bot.SuccessColor)
-			return err
-		case "list":
-			noTopicChan := false
-			formattedChannels := ""
-
-			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
-				formattedChannels = util.JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
-				noTopicChan = len(g.EnabledTopicChannels) == 0
-				return g, "TopicConfigCommand: get enabled topic channels"
-			})
-
-			if noTopicChan {
-				_, err := cmd.SendEmbed(c.E, "Configure Topics", "There are currently no allowed topic channels", bot.DefaultColor)
+		} else {
+			configEmoji := bot.ApiEmojiAsConfig(arg2, animated)
+			emoji, err := bot.FormatEncodedEmoji(configEmoji)
+			if err != nil {
 				return err
 			}
 
-			_, err := cmd.SendEmbed(c.E, "Configure Topics", "Allowed Topic Channels:\n\n"+formattedChannels, bot.DefaultColor)
-			return err
+			bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+				g.TopicVoteEmoji = configEmoji
+				return g, "TopicConfigCommand: update TopicVoteEmoji"
+			})
 
-		default:
-			_, err := cmd.SendEmbed(c.E,
-				"Configure Topics",
-				"Available arguments are:\n- `list`\n- `threshold [threshold]`\n- `enable|disable [channel]`",
-				bot.DefaultColor)
+			_, err = cmd.SendEmbed(c.E, "Set Topic Vote Emoji To:", emoji, bot.SuccessColor)
 			return err
 		}
+	case "threshold":
+		arg2, err2 := cmd.ParseInt64Arg(c.Args, 2)
+		if err2 != nil {
+			return err2
+		}
+
+		bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			if arg2 <= 0 {
+				arg2 = 3
+			}
+
+			g.TopicVoteThreshold = arg2
+			return g, "TopicConfigCommand: update topic vote threshold"
+		})
+
+		_, err := cmd.SendEmbed(c.E, "Set Topic Vote Threshold To:", strconv.FormatInt(arg2, 10), bot.SuccessColor)
+		return err
+	case "list":
+		noTopicChan := false
+		formattedChannels := ""
+
+		bot.GuildContext(c.E.GuildID, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+			formattedChannels = util.JoinInt64Slice(g.EnabledTopicChannels, "\n", "✅ <#", ">")
+			noTopicChan = len(g.EnabledTopicChannels) == 0
+			return g, "TopicConfigCommand: get enabled topic channels"
+		})
+
+		if noTopicChan {
+			_, err := cmd.SendEmbed(c.E, "Configure Topics", "There are currently no allowed topic channels", bot.DefaultColor)
+			return err
+		}
+
+		_, err := cmd.SendEmbed(c.E, "Configure Topics", "Allowed Topic Channels:\n\n"+formattedChannels, bot.DefaultColor)
+		return err
+	default:
+		_, err := cmd.SendEmbed(c.E,
+			"Configure Topics",
+			"Available arguments are:\n- `list`\n- `threshold [threshold]`\n- `enable|disable [channel]`",
+			bot.DefaultColor)
+		return err
 	}
 }
 
 func TopicCommand(c bot.Command) error {
 	topic, argErr := cmd.ParseAllArgs(c.Args)
 	if argErr != nil {
-		return argErr
+		_, err := cmd.SendEmbed(c.E,
+			"Suggest Topic",
+			"Available arguments are:\n- `[topic to suggest]`\nUse the `topicconfig` command to figure topic channels!",
+			bot.DefaultColor)
+		return err
 	}
 
 	topicsEnabled := false
@@ -174,7 +184,7 @@ func TopicCommand(c bot.Command) error {
 		return err
 	}
 
-	emoji, err := util.GuildTopicVoteApiEmoji(c.E.GuildID)
+	emoji, err := topicVoteApiEmoji(c.E.GuildID)
 	if err != nil {
 		return err
 	}
@@ -218,7 +228,7 @@ func TopicReactionHandler(i interface{}) {
 			return
 		}
 
-		emoji, err := util.GuildTopicVoteApiEmoji(e.GuildID)
+		emoji, err := topicVoteApiEmoji(e.GuildID)
 		if err != nil {
 			return
 		}
@@ -288,4 +298,34 @@ func removeActiveVote(e *gateway.MessageReactionAddEvent) bot.ActiveTopicVote {
 	})
 
 	return removedVote
+}
+
+func topicVoteEmoji(id discord.GuildID) (string, error) {
+	e := ""
+	bot.GuildContext(id, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		e = g.TopicVoteEmoji
+
+		if len(e) == 0 {
+			g.TopicVoteEmoji = escapedCheckmark
+		} else {
+			e = strings.TrimSuffix(e, "a:")
+		}
+		return g, "topicVoteEmoji"
+	})
+
+	return bot.FormatEncodedEmoji(e)
+}
+
+func topicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
+	e := ""
+	bot.GuildContext(id, func(g *bot.GuildConfig) (*bot.GuildConfig, string) {
+		e = g.TopicVoteEmoji
+
+		if len(e) == 0 {
+			g.TopicVoteEmoji = escapedCheckmark
+		}
+		return g, "topicVoteApiEmoji"
+	})
+
+	return bot.ConfigEmojiAsApiEmoji(e)
 }
