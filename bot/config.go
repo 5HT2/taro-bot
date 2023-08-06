@@ -3,6 +3,7 @@ package bot
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/5HT2/taro-bot/util"
 	"github.com/diamondburned/arikawa/v3/discord"
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"log"
@@ -211,7 +212,7 @@ func LoadActivityStatus() {
 		activityType = c.ActivityType
 	})
 	name = strings.ReplaceAll(name, "USER_ID", fmt.Sprintf("%v", User.ID))
-	name = strings.ReplaceAll(name, "USER_TAG", fmt.Sprintf("%v", User.Tag()))
+	name = strings.ReplaceAll(name, "USER_TAG", fmt.Sprintf("%v", util.FormattedUserTag(*User)))
 	name = strings.ReplaceAll(name, "USER_USERNAME", fmt.Sprintf("%v", User.Username))
 
 	if err := Client.Gateway().Send(Ctx, &gateway.UpdatePresenceCommand{

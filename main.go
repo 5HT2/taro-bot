@@ -90,7 +90,7 @@ func main() {
 	go bot.SetupConfigSaving()
 	go bot.Scheduler.StartAsync()
 
-	log.Printf("Started as %v (%s#%s). Debugging is set to `%v`.\n", u.ID, u.Username, u.Discriminator, *debugLog)
+	log.Printf("Started as %v (%s). Debugging is set to `%v`.\n", u.ID, util.FormattedUserTag(*u), *debugLog)
 
 	go checkGuildCounts(s)
 
