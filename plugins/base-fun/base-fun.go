@@ -52,7 +52,7 @@ func FrogCommand(c bot.Command) error {
 
 	color, err := util.ParseHexColorFast("#" + frogPicture.MedianColor)
 	if err != nil {
-		return err
+		return bot.SyntaxError("ParseHexColorFast", err.Error())
 	}
 
 	embed := discord.Embed{
