@@ -112,7 +112,7 @@ func RoleMenuCommand(c bot.Command) error {
 			return argErr
 		}
 
-		parsedEmoji := util.ApiEmojiAsConfig(emoji, animated)
+		parsedEmoji := bot.ApiEmojiAsConfig(emoji, animated)
 		roles[parsedEmoji] = Role{rc.RoleID}    // use config emoji, roles is used for the menu creation
 		roleConfig.Roles[n].Emoji = parsedEmoji // use config emoji. roleConfig is only used for add and remove later on
 	}
@@ -127,7 +127,7 @@ func RoleMenuCommand(c bot.Command) error {
 			if strings.Contains(parsedEmoji, ":") {
 				parsedEmoji = "<" + parsedEmoji + ">" // embed
 			} else {
-				apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
+				apiEmoji, _ := bot.ConfigEmojiAsApiEmoji(parsedEmoji)
 				parsedEmoji = string(apiEmoji)
 			}
 			lines = append(lines, fmt.Sprintf("%s <@&%v>", parsedEmoji, role.RoleID))
@@ -225,7 +225,7 @@ func RoleMenuCommand(c bot.Command) error {
 
 		// Add the emojis for the new roles
 		for n, parsedEmoji := range roleConfig.Roles {
-			apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
+			apiEmoji, _ := bot.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
 			if err := bot.Client.React(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), apiEmoji); err != nil {
 				log.Printf("failed to react when creating role menu: %v\n", err)
 			}
@@ -284,7 +284,7 @@ func RoleMenuCommand(c bot.Command) error {
 
 		// Remove the emojis for the removed roles
 		for n, parsedEmoji := range roleConfig.Roles {
-			apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
+			apiEmoji, _ := bot.ConfigEmojiAsApiEmoji(parsedEmoji.Emoji)
 			if err := bot.Client.Unreact(discord.ChannelID(roleConfig.ChannelID), discord.MessageID(roleConfig.MessageID), apiEmoji); err != nil {
 				log.Printf("failed to unreact when creating role menu: %v\n", err)
 			}
@@ -334,7 +334,7 @@ func RoleMenuCommand(c bot.Command) error {
 
 				// Add reactions to menu
 				for parsedEmoji := range roles {
-					apiEmoji, _ := util.ConfigEmojiAsApiEmoji(parsedEmoji)
+					apiEmoji, _ := bot.ConfigEmojiAsApiEmoji(parsedEmoji)
 					if err := bot.Client.React(msg.ChannelID, msg.ID, apiEmoji); err != nil {
 						log.Printf("failed to react when creating role menu: %v\n", err)
 					}
@@ -410,7 +410,7 @@ func getRoleFromEvent(id discord.GuildID, messageID discord.MessageID, channelID
 	}
 
 	apiEmoji := emoji.APIString()
-	role, ok := menu.Roles[util.ApiEmojiAsConfig(&apiEmoji, emoji.Animated)]
+	role, ok := menu.Roles[bot.ApiEmojiAsConfig(&apiEmoji, emoji.Animated)]
 
 	textReacted := "reacted"
 	textTo := "to"
