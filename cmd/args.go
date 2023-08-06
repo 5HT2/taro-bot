@@ -42,6 +42,29 @@ func ParseInt64Arg(a []string, pos int) (int64, *bot.Error) {
 	return i, nil
 }
 
+// ParseInt64SliceArg will return an []int64, or nil and an error
+func ParseInt64SliceArg(a []string, pos1 int, pos2 int) ([]int64, *bot.Error) {
+	if pos2 == -1 {
+		pos2 = len(a)
+	}
+
+	s, err := getArgRange(a, pos1, pos2, "ParseInt64SliceArg")
+	if err != nil {
+		return nil, err
+	}
+
+	elems := make([]int64, 0)
+	for _, c := range s {
+		if i, err := strconv.ParseInt(c, 10, 64); err != nil {
+			return nil, bot.GenericSyntaxError("ParseInt64SliceArg", c, "expected int64")
+		} else {
+			elems = append(elems, i)
+		}
+	}
+
+	return elems, nil
+}
+
 // ParseUserArg will return the ID of a mentioned user, or -1 and an error
 func ParseUserArg(a []string, pos int) (int64, *bot.Error) {
 	s, argErr := checkArgExists(a, pos, "ParseUserArg")
