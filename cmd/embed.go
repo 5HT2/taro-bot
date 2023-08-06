@@ -10,13 +10,13 @@ import (
 	"strings"
 )
 
-func SendCustomEmbed(c discord.ChannelID, embed discord.Embed) (*discord.Message, error) {
+func SendCustomEmbed(c discord.ChannelID, e ...discord.Embed) (*discord.Message, error) {
 	msg, err := bot.Client.SendEmbeds(
 		c,
-		embed,
+		e...,
 	)
 	if err != nil {
-		log.Printf("Error sending embed: %v (%v)", err, embed)
+		log.Printf("Error sending embed: %v (%v)", err, e)
 	}
 	return msg, err
 }
