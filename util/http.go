@@ -1,7 +1,6 @@
 package util
 
 import (
-	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2C/http-bash-requests/httpBashRequests"
 	"io"
 	"net/http"
@@ -31,7 +30,7 @@ func RequestUrlFn(url string, method string, fn func(req *http.Request)) ([]byte
 
 // RequestUrlReq will return the bytes of the body of request
 func RequestUrlReq(req *http.Request) ([]byte, *http.Response, error) {
-	res, err := bot.HttpClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}

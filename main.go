@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/arikawa/v3/gateway"
 	"github.com/diamondburned/arikawa/v3/state"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -73,6 +74,7 @@ func main() {
 		log.Fatalln("Failed to get bot user:", err)
 	}
 	bot.User = u
+	http.DefaultClient = &bot.HttpClient
 
 	// We want http bash requests immediately accessible just in case something needs them.
 	// Though, this shouldn't really ever happen, it doesn't hurt.
