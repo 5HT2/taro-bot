@@ -11,20 +11,10 @@ var (
 	warningEmoji   = discord.APIEmoji(escapedWarning)
 )
 
-func ConfigEmojiAsApiEmoji(e string) (discord.APIEmoji, error) {
-	e = strings.TrimPrefix(e, "a:")
-
-	str, err := url.QueryUnescape(e)
-	if err != nil {
-		return warningEmoji, err
-	}
-
-	return discord.APIEmoji(str), nil
-}
-
-func ApiEmojiAsConfig(e *discord.APIEmoji, animated bool) string {
+// EmojiApiAsConfig will convert a discord.APIEmoji to our own config format, to preserve the animated attribute
+func EmojiApiAsConfig(e *discord.APIEmoji, animated bool) string {
 	if e == nil {
-		return ApiEmojiAsConfig(&warningEmoji, animated)
+		return EmojiApiAsConfig(&warningEmoji, animated)
 	}
 
 	a := ":"
@@ -40,15 +30,29 @@ func ApiEmojiAsConfig(e *discord.APIEmoji, animated bool) string {
 	return str
 }
 
-func ApiEmojiAsFormatted(e *discord.APIEmoji, animated bool) (string, error) {
-	return FormatEncodedEmoji(ApiEmojiAsConfig(e, animated))
-}
+// EmojiConfigAsApi will convert our own emoji format back to a discord.APIEmoji
+func EmojiConfigAsApi(e string) (discord.APIEmoji, error) {
+	e = strings.TrimPrefix(e, "a:")
 
-func FormatEncodedEmoji(e string) (string, error) {
-	split := strings.Split(e, ":")
-	if len(split) > 1 {
-		return "<" + e + ">", nil
+	str, err := url.QueryUnescape(e)
+	if err != nil {
+		return warningEmoji, err
 	}
 
-	return url.QueryUnescape(e)
+	return discord.APIEmoji(str), nil
+}
+
+// EmojiApiFormatted will format a discord.APIEmoji for display in a message
+func EmojiApiFormatted(e *discord.APIEmoji, animated bool) (string, error) {
+	return EmojiConfigFormatted(EmojiApiAsConfig(e, animated))
+}
+
+// EmojiConfigFormatted will format a taro config emoji for display in a message
+func EmojiConfigFormatted(e string) (string, error) {
+	split := strings.Split(e, ":")
+	if len(split) > 1 {
+		return "<" + e + ">", nil // Discord custom emojis
+	}
+
+	return url.QueryUnescape(e) // Unicode emojis
 }

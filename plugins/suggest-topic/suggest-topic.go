@@ -101,8 +101,8 @@ func TopicConfigCommand(c bot.Command) error {
 				return err
 			}
 		} else {
-			configEmoji := bot.ApiEmojiAsConfig(arg2, animated)
-			emoji, err := bot.FormatEncodedEmoji(configEmoji)
+			configEmoji := bot.EmojiApiAsConfig(arg2, animated)
+			emoji, err := bot.EmojiConfigFormatted(configEmoji)
 			if err != nil {
 				return err
 			}
@@ -313,7 +313,7 @@ func topicVoteEmoji(id discord.GuildID) (string, error) {
 		return g, "topicVoteEmoji"
 	})
 
-	return bot.FormatEncodedEmoji(e)
+	return bot.EmojiConfigFormatted(e)
 }
 
 func topicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
@@ -327,5 +327,5 @@ func topicVoteApiEmoji(id discord.GuildID) (discord.APIEmoji, error) {
 		return g, "topicVoteApiEmoji"
 	})
 
-	return bot.ConfigEmojiAsApiEmoji(e)
+	return bot.EmojiConfigAsApi(e)
 }
