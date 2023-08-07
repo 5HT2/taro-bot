@@ -101,7 +101,7 @@ func extractCommand(message discord.Message) (string, []string) {
 
 // getCommandWithName will return the found CommandInfo with a matching name or alias
 func getCommandWithName(name string) *bot.CommandInfo {
-	for _, cmd := range bot.Commands {
+	for _, cmd := range bot.Commands { // TODO: Use hashmap for performance with lots of commands
 		if cmd.Name == name || util.SliceContains(cmd.Aliases, name) {
 			return &cmd
 		}
