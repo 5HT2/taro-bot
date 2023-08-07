@@ -38,10 +38,11 @@ type User struct {
 }
 
 type Role struct {
-	Threshold int64   `json:"threshold"`
-	ID        int64   `json:"role"`
-	Whitelist []int64 `json:"whitelist"`
-	Blacklist []int64 `json:"blacklist"`
+	LevelUpMsg bool    `json:"level_up_msg"`
+	Threshold  int64   `json:"threshold"`
+	ID         int64   `json:"role"`
+	Whitelist  []int64 `json:"whitelist"`
+	Blacklist  []int64 `json:"blacklist"`
 }
 
 func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
@@ -144,6 +145,16 @@ func MsgThresholdMsgResponse(r bot.Response) {
 					log.Printf("failed to add threshold role: %v\n", err)
 				} else {
 					user.GivenRoles[roleID] = true
+
+					author := cmd.CreateEmbedAuthor(*r.E.Member)
+					_, _ = cmd.SendMessageEmbedSafe(r.E.ChannelID, r.E.Author.Mention(), &discord.Embed{
+						Title:       "Role Level Up!",
+						Description: fmt.Sprintf("Congrats! 🎉 You've earned the role <@&%v>!", role.ID),
+						Author:      author,
+						Footer:      &discord.EmbedFooter{Text: "Messages sent since"},
+						Timestamp:   discord.Timestamp(p.Config.(config).StartDate),
+						Color:       bot.DefaultColor,
+					})
 				}
 			}
 		}
@@ -201,6 +212,30 @@ func MessageRolesConfigCommand(c bot.Command) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	getPrintEmbed := func(title string, roles ...Role) discord.Embed {
+		lines := make([]string, 0)
+		for _, role := range roles {
+			lu := "🔕"
+			if role.LevelUpMsg {
+				lu = "🔔"
+			}
+
+			a1 := ""
+			a2 := ""
+			if len(role.Whitelist) > 0 {
+				a1 = fmt.Sprintf("\n✅ Whitelist: %s", util.JoinInt64Slice(role.Whitelist, ", ", "<#", ">"))
+			}
+			if len(role.Blacklist) > 0 {
+				a2 = fmt.Sprintf("\n⛔ Blacklist: %s", util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">"))
+			}
+
+			lines = append(lines, fmt.Sprintf("<@&%v> %s (%s messages)%s%s", role.ID, lu, util.FormattedNum(role.Threshold), a1, a2))
+		}
+
+		embed := cmd.MakeEmbed(title, strings.Join(lines, "\n\n"), bot.DefaultColor)
+		return embed
+	}
+
 	roles := make([]Role, 0)
 	if guildRoles, ok := p.Config.(config).GuildRoles[c.E.GuildID.String()]; ok {
 		roles = guildRoles
@@ -211,7 +246,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 
 	switch arg {
 	case "role":
-		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+		roleID, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
 		threshold, argErr2 := cmd.ParseInt64Arg(c.Args, 3)
 
 		// For the future: some people might expect that setting a threshold to 0 will "auto-role" people, when in
@@ -229,10 +264,13 @@ func MessageRolesConfigCommand(c bot.Command) error {
 
 		found := false
 		for n, r := range roles {
-			if r.ID == role {
+			if r.ID == roleID {
 				r.Threshold = threshold
 				roles[n] = r
-				_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Changed threshold for <@&%v> to %s!", r.ID, util.FormattedNum(r.Threshold)), bot.SuccessColor)
+				_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+					cmd.MakeEmbed(p.Name, fmt.Sprintf("Changed threshold for <@&%v> to %s!", r.ID, util.FormattedNum(r.Threshold)), bot.SuccessColor),
+					getPrintEmbed("", r),
+				)
 
 				found = true
 				break
@@ -240,28 +278,41 @@ func MessageRolesConfigCommand(c bot.Command) error {
 		}
 
 		if !found {
-			newRole := Role{Threshold: threshold, ID: role}
+			newRole := Role{Threshold: threshold, ID: roleID}
 			roles = append(roles, newRole)
 
-			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Created role <@&%v> with threshold %s!", role, util.FormattedNum(threshold)), bot.SuccessColor)
+			_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+				cmd.MakeEmbed(p.Name, fmt.Sprintf("Created role <@&%v> with threshold %s!", roleID, util.FormattedNum(threshold)), bot.SuccessColor),
+				getPrintEmbed("", newRole),
+			)
 		}
-	case "remove":
-		role, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
+	case "remove": // TODO: This should also reset the given roles for each user
+		roleID, argErr1 := cmd.ParseInt64Arg(c.Args, 2)
 
 		if argErr1 != nil {
 			return argErr1
 		}
 
 		orderedRoles := make([]Role, 0)
+		roleRm := Role{}
 
 		for _, r := range roles {
-			if r.ID != role {
+			if r.ID != roleID {
 				orderedRoles = append(orderedRoles, r)
+			} else {
+				roleRm = r
 			}
 		}
 
 		if len(orderedRoles) < len(roles) {
-			_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed role <@&%v>!", role), bot.ErrorColor)
+			e1 := getPrintEmbed("", roleRm)
+			e2 := getPrintEmbed("", orderedRoles...)
+			e1.Color = bot.ErrorColor
+
+			_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+				cmd.MakeEmbed(p.Name, fmt.Sprintf("Removed role <@&%v>!", roleID), bot.SuccessColor),
+				e1, e2,
+			)
 		} else {
 			_, err = cmd.SendEmbed(c.E, p.Name, "This role is not setup for Message Roles! Add it using the `role` argument.", bot.ErrorColor)
 		}
@@ -283,10 +334,16 @@ func MessageRolesConfigCommand(c bot.Command) error {
 			if r.ID == role {
 				if util.SliceContains(r.Whitelist, channel) {
 					r.Whitelist = util.SliceRemove(r.Whitelist, channel)
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s whitelist", channel, r.ID), bot.ErrorColor)
+					_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+						cmd.MakeEmbed(p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s whitelist", channel, r.ID), bot.SuccessColor),
+						getPrintEmbed("", r),
+					)
 				} else {
 					r.Whitelist = append(r.Whitelist, channel)
-					_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s whitelist", channel, r.ID), bot.SuccessColor)
+					_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+						cmd.MakeEmbed(p.Name, fmt.Sprintf("Added <#%v> from <@&%v>'s whitelist", channel, r.ID), bot.SuccessColor),
+						getPrintEmbed("", r),
+					)
 				}
 
 				roles[n] = r
@@ -310,10 +367,17 @@ func MessageRolesConfigCommand(c bot.Command) error {
 				if r.ID == role {
 					if util.SliceContains(r.Blacklist, channel) {
 						r.Blacklist = util.SliceRemove(r.Blacklist, channel)
-						_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s blacklist", channel, r.ID), bot.ErrorColor)
+						_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+							cmd.MakeEmbed(p.Name, fmt.Sprintf("Removed <#%v> from <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor),
+							getPrintEmbed("", r),
+						)
+
 					} else {
 						r.Blacklist = append(r.Blacklist, channel)
-						_, err = cmd.SendEmbed(c.E, p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor)
+						_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+							cmd.MakeEmbed(p.Name, fmt.Sprintf("Added <#%v> to <@&%v>'s blacklist", channel, r.ID), bot.SuccessColor),
+							getPrintEmbed("", r),
+						)
 					}
 
 					roles[n] = r
@@ -392,29 +456,79 @@ func MessageRolesConfigCommand(c bot.Command) error {
 		} else { // didn't parse a channel, blacklistUser will check if the new arg is a user or not
 			return blacklistUser()
 		}
+	case "lvlupmsg":
+		mode, argErr1 := cmd.ParseStringArg(c.Args, 2, true)
+		if argErr1 != nil {
+			return argErr1
+		}
+
+		if mode != "enable" && mode != "disable" {
+			return bot.GenericSyntaxError("MessageRolesConfigCommand", mode, "expected `enable` or `disable`")
+		}
+
+		roleAll, argErr2 := cmd.ParseStringArg(c.Args, 3, true)
+		roleList, argErr3 := cmd.ParseInt64SliceArg(c.Args, 3, -1)
+
+		if argErr2 != nil && argErr3 != nil {
+			return argErr2
+		}
+
+		if roleAll != "all" && argErr3 != nil {
+			return argErr3
+		}
+
+		cfg, ok := p.Config.(config).GuildRoles[c.E.GuildID.String()]
+		if !ok {
+			_, err = cmd.SendEmbed(c.E, p.Name, "You don't have any roles setup for Message Roles! Add one using the `role` argument.", bot.ErrorColor)
+			return err
+		}
+
+		modifiedRoles := make([]Role, 0)
+		toggleMsg := mode == "enable"
+
+		if roleAll == "all" {
+			for _, role := range cfg { // for every role in the config
+				role.LevelUpMsg = toggleMsg // modify it
+				modifiedRoles = append(modifiedRoles, role)
+			}
+		} else {
+			for _, role := range cfg { // for every role in the config
+				for _, selectedRole := range roleList { // for every role in the args
+					if role.ID == selectedRole {
+						role.LevelUpMsg = toggleMsg // modify it
+						modifiedRoles = append(modifiedRoles, role)
+					}
+				}
+			}
+		}
+
+		// Update the config
+		p.Config.(config).GuildRoles[c.E.GuildID.String()] = cfg
+
+		_, err = cmd.SendCustomEmbed(c.E.ChannelID,
+			cmd.MakeEmbed(p.Name, "Updated level up messages:", bot.SuccessColor),
+			getPrintEmbed("", modifiedRoles...),
+		)
+		return err
+
 	case "list":
 		if len(roles) == 0 {
 			_, err = cmd.SendEmbed(c.E, p.Name, "No message roles setup!", bot.WarnColor)
 		} else {
-			lines := make([]string, 0)
-			for _, role := range roles {
-				a1 := ""
-				a2 := ""
-				if len(role.Whitelist) > 0 {
-					a1 = "\n✅ Whitelist: " + util.JoinInt64Slice(role.Whitelist, ", ", "<#", ">")
-				}
-				if len(role.Blacklist) > 0 {
-					a2 = "\n⛔ Blacklist: " + util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">")
-				}
-
-				lines = append(lines, fmt.Sprintf("<@&%v> (%s messages)%s%s", role.ID, util.FormattedNum(role.Threshold), a1, a2))
-			}
-			_, err = cmd.SendEmbed(c.E, p.Name, strings.Join(lines, "\n\n"), bot.DefaultColor)
+			_, err = cmd.SendCustomEmbed(c.E.ChannelID, getPrintEmbed(p.Name, roles...))
 		}
 	default:
 		_, err = cmd.SendEmbed(c.E,
 			"Configure Message Roles",
-			"Available arguments are:\n- `role [role id] [threshold]`\n- remove [role id]`\n- `whitelist [role id] [channel]`\n- `blacklist [role id] [channel]`\n- `blacklist [role id] [user]`\n- `list`",
+			"Available arguments are:\n"+
+				"- `role [role id] [threshold]`\n"+
+				"- `remove [role id]`\n"+
+				"- `whitelist [role id] [channel]`\n"+
+				"- `blacklist [role id] [channel]`\n"+
+				"- `blacklist [role id] [user]`\n"+
+				"- `lvlupmsg enable|disable all`\n"+
+				"- `lvlupmsg enable|disable [role ids]`\n"+
+				"- `list`",
 			bot.DefaultColor)
 	}
 
