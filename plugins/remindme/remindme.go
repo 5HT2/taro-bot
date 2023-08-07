@@ -66,7 +66,7 @@ func RemindMeCommand(c bot.Command) error {
 	}
 
 	if duration < 0 {
-		return bot.GenericError("RemindMeCommand", "getting date", fmt.Sprintf("you cannot set reminders in the past (%s ago)", duration))
+		return bot.GenericError(c.FnName, "getting date", fmt.Sprintf("you cannot set reminders in the past (%s ago)", duration))
 	}
 
 	args, _ := cmd.ParseStringSliceArg(c.Args, 2, -1)

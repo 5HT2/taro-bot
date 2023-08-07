@@ -85,7 +85,7 @@ func StealEmojiCommand(c bot.Command) error {
 
 	emojiName, argErr := cmd.ParseStringArg(c.Args, 2, false)
 	if argErr != nil {
-		return bot.GenericError("StealEmojiCommand", "getting emoji name", "expected emoji name")
+		return bot.GenericError(c.FnName, "getting emoji name", "expected emoji name")
 	}
 
 	//
@@ -103,7 +103,7 @@ func StealEmojiCommand(c bot.Command) error {
 		}
 
 		if res.StatusCode != 200 {
-			return bot.GenericError("StealEmojiCommand", "getting emoji bytes", "status was "+res.Status)
+			return bot.GenericError(c.FnName, "getting emoji bytes", "status was "+res.Status)
 		}
 	}
 
@@ -120,7 +120,7 @@ func StealEmojiCommand(c bot.Command) error {
 
 	if emoji, err := bot.Client.CreateEmoji(c.E.GuildID, createEmojiData); err != nil {
 		// error with uploading
-		return bot.GenericError("StealEmojiCommand", "uploading emoji", err.Error())
+		return bot.GenericError(c.FnName, "uploading emoji", err.Error())
 	} else {
 		// uploaded successfully, send a nice embed
 		_, err := bot.Client.SendMessage(

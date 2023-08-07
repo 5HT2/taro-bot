@@ -65,12 +65,12 @@ func InitPlugin(i *plugins.PluginInit) *plugins.Plugin {
 			Description: "Message Leaderboard",
 			GuildOnly:   true,
 		}},
-		ConfigType: reflect.TypeOf(config{}),
 		Responses: []bot.ResponseInfo{{
 			Fn:       MsgThresholdMsgResponse,
 			Regexes:  []string{"."},
 			MatchMin: 1,
 		}},
+		ConfigType: reflect.TypeOf(config{}),
 		StartupFn: func() {
 			if cfg, ok := p.Config.(config); ok {
 				if cfg.StartDate.IsZero() {
@@ -463,7 +463,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 		}
 
 		if mode != "enable" && mode != "disable" {
-			return bot.GenericSyntaxError("MessageRolesConfigCommand", mode, "expected `enable` or `disable`")
+			return bot.GenericSyntaxError(c.FnName, mode, "expected `enable` or `disable`")
 		}
 
 		roleAll, argErr2 := cmd.ParseStringArg(c.Args, 3, true)

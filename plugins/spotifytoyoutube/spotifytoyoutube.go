@@ -96,7 +96,7 @@ func YoutubeCommand(c bot.Command) error {
 	args, _ := cmd.ParseStringSliceArg(c.Args, 1, -1)
 	s := strings.Join(args, " ")
 	if len(s) == 0 {
-		return bot.GenericSyntaxError("YoutubeCommand", s, "expected video title")
+		return bot.GenericSyntaxError(c.FnName, s, "expected video title")
 	}
 
 	searchResult, err := queryYoutube(s, true)

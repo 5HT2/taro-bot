@@ -138,7 +138,7 @@ func RoleMenuCommand(c bot.Command) error {
 	messageIDCheck := func(rc RoleConfig) (RoleConfig, *discord.Message, error) {
 		if rc.MessageID == 0 {
 			msg, _ := cmd.SendEmbed(c.E, p.Name, "`message_id` must be set to add to an existing role menu!", bot.ErrorColor)
-			return rc, msg, bot.GenericError("RoleMenuCommand", "modifying role menu", "`message_id` not set")
+			return rc, msg, bot.GenericError(c.FnName, "modifying role menu", "`message_id` not set")
 		}
 		if rc.ChannelID == 0 {
 			rc.ChannelID = int64(c.E.ChannelID)
@@ -161,7 +161,7 @@ func RoleMenuCommand(c bot.Command) error {
 		}
 
 		if menu == nil {
-			return nil, bot.GenericError("RoleMenuCommand", "getting existing role menu", "none found")
+			return nil, bot.GenericError(c.FnName, "getting existing role menu", "none found")
 		}
 		return menu, nil
 	}
