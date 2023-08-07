@@ -229,7 +229,7 @@ func MessageRolesConfigCommand(c bot.Command) error {
 				a2 = fmt.Sprintf("\n⛔ Blacklist: %s", util.JoinInt64Slice(role.Blacklist, ", ", "<#", ">"))
 			}
 
-			lines = append(lines, fmt.Sprintf("<@&%v> %s (%s messages)%s%s", role.ID, lu, util.FormattedNum(role.Threshold), a1, a2))
+			lines = append(lines, fmt.Sprintf("<@&%v>\n%s %s messages%s%s", role.ID, lu, util.FormattedNum(role.Threshold), a1, a2))
 		}
 
 		embed := cmd.MakeEmbed(title, strings.Join(lines, "\n\n"), bot.DefaultColor)
