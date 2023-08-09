@@ -47,19 +47,44 @@ func DoseCommand(c bot.Command) error {
 	file := fmt.Sprintf("http://localhost:6010/media/doses-%v.json", c.E.Author.ID)
 
 	// Get args to pass to command
-	args, _ := cmd.ParseStringSliceArg(c.Args, 1, -1)
+	argsTmp, _ := cmd.ParseStringSliceArg(c.Args, 1, -1)
+	args := make([]string, 0)
+	frog := false
+
+	// Strip non-allowed args being passed
+	for _, arg := range argsTmp {
+		// Strip leading dashes until we only have one
+		for {
+			// arg needs to be longer than 2, if it's shorter it can't have --[some flag]
+			// arg also needs to have a dash in the first and second position, otherwise we don't need to strip a dash
+			if len(arg) <= 2 || arg[0] != '-' || arg[1] != '-' {
+				break
+			}
+
+			arg = arg[1:]
+		}
+
+		switch strings.ToLower(arg) {
+		case "-url", "-token":
+			continue
+		case "-frog":
+			frog = true
+			file = "http://localhost:6010/media/doses.json"
+			continue
+		default:
+			args = append(args, arg)
+		}
+	}
+
+	// final arg parsing
 	pArgs := strings.Join(args, " ")
 	sep := ""
 	if len(pArgs) > 0 {
 		sep = " "
 	}
 
-	if strings.Contains(pArgs, "-frog") {
-		file = "http://localhost:6010/media/doses.json"
-
-		if strings.Contains(pArgs, "-add") || strings.Contains(pArgs, "-rm") {
-			return bot.GenericError(c.FnName, "parsing args", "`-frog` cannot be used with `-add` or `-rm`!")
-		}
+	if frog && (strings.Contains(pArgs, "-add") || strings.Contains(pArgs, "-rm")) {
+		return bot.GenericError(c.FnName, "parsing args", "`-frog` cannot be used with `-add` or `-rm`!")
 	}
 
 	parsedArgs := fmt.Sprintf(`%s%s-token=%s -url=%s`, pArgs, sep, p.Config.(config).FohToken, file)
