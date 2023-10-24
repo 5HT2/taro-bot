@@ -5,7 +5,7 @@ import (
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
-	cpuutil "github.com/5HT2/taro-bot/util/cpu"
+	cu "github.com/5HT2/taro-bot/util/cpu"
 	"github.com/mackerelio/go-osstat/cpu"
 	"github.com/mackerelio/go-osstat/memory"
 	"github.com/mackerelio/go-osstat/uptime"
@@ -152,7 +152,7 @@ func SysStatsCommand(c bot.Command) error {
 				s[3] = fmt.Sprintf(
 					"%.2f%% (%v cores)",
 					float64(cpuAfter.User-cpuBefore.User)/float64(cpuAfter.Total-cpuBefore.Total)*100,
-					cpuutil.GetCoresStr(cpuAfter),
+					cu.GetCoresStr(cpuAfter),
 				)
 
 				s[4] = fmt.Sprintf(
