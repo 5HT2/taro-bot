@@ -11,6 +11,7 @@ import (
 	"github.com/mackerelio/go-osstat/uptime"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -66,7 +67,12 @@ func SysStatsCommand(c bot.Command) error {
 	// Get kernel release number
 	kernelRelease, err := os.ReadFile("/proc/sys/kernel/osrelease")
 	if err != nil {
-		return bot.GenericSyntaxError(c.FnName, "getting kernel release", err.Error())
+		// Try for darwin
+		if out, err := exec.Command("uname", "-r").CombinedOutput(); err != nil {
+			return bot.GenericSyntaxError(c.FnName, "getting kernel release", err.Error())
+		} else {
+			kernelRelease = append(out, []byte("-macOS")...)
+		}
 	}
 
 	// Get current uptime
