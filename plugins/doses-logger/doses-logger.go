@@ -102,7 +102,7 @@ func DoseCommand(c bot.Command) error {
 		file = fmt.Sprintf("http://localhost:6010/public/media/doses-%v.json", c.E.Author.ID)
 
 		// TODO: Use http stdlib
-		if res, err := httpBashRequests.Run(fmt.Sprintf("curl -i -s -X POST -H \"Auth: %s\" %s -F \"content=[]\"", p.Config.(config).FohToken, file)); err != nil {
+		if res, err := httpBashRequests.Run(fmt.Sprintf("curl -X POST -H \"Auth: %s\" %s -F \"content=[]\"", p.Config.(config).FohToken, file)); err != nil {
 			return err
 		} else if _, err := cmd.SendEmbed(c.E, "", fmt.Sprintf("```\n%s\n```", util.TailLinesLimit(string(res), 2040)), bot.DefaultColor); err != nil {
 			return err
