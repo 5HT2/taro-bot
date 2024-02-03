@@ -29,7 +29,7 @@ func InitPlugin(_ *plugins.PluginInit) *plugins.Plugin {
 			Fn:          SysStatsCommand,
 			FnName:      "SysStatsCommand",
 			Name:        "systemstats",
-			Aliases:     []string{"stats"},
+			Aliases:     []string{"stats", "stat", "sysstat"},
 			Description: "Provides system statistics",
 		}},
 	}
