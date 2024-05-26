@@ -2,6 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
+
 	"github.com/5HT2/taro-bot/bot"
 	"github.com/5HT2/taro-bot/cmd"
 	"github.com/5HT2/taro-bot/plugins"
@@ -9,11 +15,6 @@ import (
 	"github.com/mackerelio/go-osstat/cpu"
 	"github.com/mackerelio/go-osstat/memory"
 	"github.com/mackerelio/go-osstat/uptime"
-	"log"
-	"os"
-	"os/exec"
-	"strings"
-	"time"
 )
 
 var (
@@ -43,10 +44,10 @@ func SysStatsCommand(c bot.Command) error {
 	// If we have a running fetch command in this guild, cancel it
 	if quit, ok := runningFetches[c.E.GuildID.String()]; ok {
 		quit <- true
+	} else {
+		// Start a new quit channel
+		runningFetches[c.E.GuildID.String()] = make(chan bool)
 	}
-
-	// Start a new quit channel
-	runningFetches[c.E.GuildID.String()] = make(chan bool)
 
 	// Determine displayed shell based on
 	shell := "$"
