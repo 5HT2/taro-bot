@@ -53,8 +53,7 @@ func ParseHexColorFast(s string) (c color.RGBA, err error) {
 	c.A = 0xff
 
 	if s[0] != '#' {
-		err = errors.New(fmt.Sprintf("`%s` must start with #", s))
-		return
+		s = "#" + s
 	}
 
 	hexToByte := func(b byte) byte {
